@@ -8,6 +8,7 @@ const ApplicationSchema = new mongoose.Schema({
     candidateUserID:String,
     status: Array,
     jobID:String,
+    rejectionReason:String,
     JobAppliedOnDate: String,
 })
 

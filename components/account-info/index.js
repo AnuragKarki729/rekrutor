@@ -4,75 +4,146 @@ import { candidateOnBoardFormControls, initialCandidateAccountFormData, initialC
 import { useEffect, useState } from "react";
 import CommonForm from "../common-form";
 import { updateProfileAction } from "@/actions";
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseClient = createClient(
+    "https://hwbttezjdwqixmaftiyl.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YnR0ZXpqZHdxaXhtYWZ0aXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0Mjc1MjksImV4cCI6MjA0ODAwMzUyOX0.giYTTB68BJchfDZdqnsMDpt7rhgVPOvPwYp90-Heo4c"
+)
 
 function AccountInfo({ profileInfo }) {
-    const [candidateFormData, setCandidateFormData] = useState(initialCandidateAccountFormData)
-    const [recruiterFormData, setRecruiterFormData] = useState(initialRecruiterFormData)
+    const [candidateFormData, setCandidateFormData] = useState({});
+    const [recruiterFormData, setRecruiterFormData] = useState({});
+    const [newResume, setNewResume] = useState(null); // Store the new resume file
+
     useEffect(() => {
         if (profileInfo?.role === 'recruiter') {
-            setRecruiterFormData(profileInfo?.recruiterInfo)
+            setRecruiterFormData(profileInfo?.recruiterInfo);
+        } else if (profileInfo?.role === 'candidate') {
+            setCandidateFormData(profileInfo?.candidateInfo);
         }
-        else if (profileInfo?.role === 'candidate') {
-            setCandidateFormData(profileInfo?.candidateInfo)
-        }
-    }, [profileInfo])
+    }, [profileInfo]);
 
     async function handleUpdateAccount() {
-        await updateProfileAction(profileInfo?.role === 'candidate' ?
-            {
-                _id :profileInfo?._id,
-                userId: profileInfo?.userId,
-                role: profileInfo?.role,
-                email: profileInfo?.email,
-                isPremiumUser: profileInfo?.isPremiumUser,
-                memberShipType: profileInfo?.memberShipType,
-                memberShipEndDate: profileInfo?.memberShipEndDate,
-                memberShipStartDate: profileInfo?.memberShipStartDate,
-                candidateInfo: {
-                    ...candidateFormData,
-                    resume: profileInfo?.candidateInfo.resume
-                }
-            } :
-            {
-                _id :profileInfo?._id,
-                userId: profileInfo?.userId,
-                role: profileInfo?.role,
-                email: profileInfo?.email,
-                isPremiumUser: profileInfo?.isPremiumUser,
-                memberShipType: profileInfo?.memberShipType,
-                memberShipEndDate: profileInfo?.memberShipEndDate,
-                memberShipStartDate: profileInfo?.memberShipStartDate,
-                recruiterInfo: {
-                    ...recruiterFormData
-                },
-            }, "/account")
+        let updatedResume = candidateFormData.resume;
+
+        // If a new resume is uploaded, handle the upload
+        if (newResume) {
+            const { data, error } = await supabaseClient.storage
+                .from("rekrutor-public")
+                .upload(`/public/${newResume.name}`, newResume, {
+                    cacheControl: "3600",
+                    upsert: false,
+                });
+    
+
+            if (error) {
+                console.error("Error uploading resume:", error);
+                return;
+            }
+
+            // Update the resume URL
+            updatedResume = data.path;
+        }
+
+        // Call the `updateProfileAction` to update the profile
+        await updateProfileAction(
+            profileInfo?.role === "candidate"
+                ? {
+                      _id: profileInfo?._id,
+                      userId: profileInfo?.userId,
+                      role: profileInfo?.role,
+                      email: profileInfo?.email,
+                      isPremiumUser: profileInfo?.isPremiumUser,
+                      memberShipType: profileInfo?.memberShipType,
+                      memberShipEndDate: profileInfo?.memberShipEndDate,
+                      memberShipStartDate: profileInfo?.memberShipStartDate,
+                      candidateInfo: {
+                          ...candidateFormData,
+                          resume: updatedResume, // Set the updated resume path
+                      },
+                  }
+                : {
+                      _id: profileInfo?._id,
+                      userId: profileInfo?.userId,
+                      role: profileInfo?.role,
+                      email: profileInfo?.email,
+                      isPremiumUser: profileInfo?.isPremiumUser,
+                      memberShipType: profileInfo?.memberShipType,
+                      memberShipEndDate: profileInfo?.memberShipEndDate,
+                      memberShipStartDate: profileInfo?.memberShipStartDate,
+                      recruiterInfo: {
+                          ...recruiterFormData,
+                      },
+                  },
+            "/account" // Path to revalidate
+        );
+
+        // Clear the new resume state
+        setNewResume(null);
     }
 
-    console.log(candidateFormData, 'candidateInfo', profileInfo)
-
-    return (<div className="mx-auto max-w-7xl">
-        <div className="flex items-baseline justify-between pb-6 border-b pt-24">
-            <h1 className="text-4xl font-bold tracking-tight text-grey-950">Account Page</h1>
-        </div>
-        <div className="py-20 pb-24 pt-6">
-            <div className="container mx-auto p=0 space-y-8">
-                <CommonForm
-                    formControls={
-                        profileInfo?.role === 'candidate' ?
-                            candidateOnBoardFormControls.filter(formControl => formControl.name !== 'resume') :
-                            recruiterOnBoardFormControls
-                    }
-                    formData={profileInfo?.role === 'candidate' ? candidateFormData : recruiterFormData}
-                    setFormData={
-                        profileInfo?.role === 'candidate' ? setCandidateFormData : setRecruiterFormData
-
-                    }
-                    buttonText={'Update Profile'}
-                    action={handleUpdateAccount}
-                />
+    return (
+        <div className="mx-auto max-w-7xl">
+            <div className="flex items-baseline justify-between pb-6 border-b pt-24">
+                <h1 className="text-4xl font-bold tracking-tight text-grey-950">
+                    Account Page
+                </h1>
+            </div>
+            <div className="py-20 pb-24 pt-6">
+                <div className="container mx-auto p=0 space-y-8">
+                    <CommonForm
+                        formControls={
+                            profileInfo?.role === "candidate"
+                                ? candidateOnBoardFormControls
+                                : recruiterOnBoardFormControls
+                        }
+                        formData={
+                            profileInfo?.role === "candidate"
+                                ? candidateFormData
+                                : recruiterFormData
+                        }
+                        setFormData={
+                            profileInfo?.role === "candidate"
+                                ? setCandidateFormData
+                                : setRecruiterFormData
+                        }
+                        buttonText={"Update Profile"}
+                        action={handleUpdateAccount}
+                    />
+                    {profileInfo?.role === "candidate" && (
+                        <div className="mt-4">
+                            <label
+                                htmlFor="resume-upload"
+                                className="block text-sm font-medium text-gray-700"
+                            >
+                                Upload New Resume
+                            </label>
+                            <input
+                                id="resume-upload"
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={(e) => setNewResume(e.target.files[0])}
+                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
+                            />
+                            {candidateFormData?.resume && (
+                                <p className="mt-2 text-sm text-gray-600">
+                                    Current Resume:{" "}
+                                    <a
+                                        href={`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/${candidateFormData.resume}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline"
+                                    >
+                                        View Current Resume
+                                    </a>
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
-    </div>
     );
 }
 

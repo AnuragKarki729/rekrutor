@@ -1,16 +1,77 @@
-import { fetchProfileAction } from "@/actions";
+'use client'
+import { useState, useEffect } from 'react'
 import AccountInfo from "@/components/account-info";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/dist/server/api-utils";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from 'next/navigation'
 
+export default function AccountPage() {
+    const [profile, setProfile] = useState(null)
+    const router = useRouter()
+    const { user, isLoaded } = useUser()
 
-export default async function AccountPage(){
-    const user = await currentUser();
-    const profileInfo = await fetchProfileAction(user?.id)
-    if (!profileInfo) redirect ("/onboard")
+    useEffect(() => {
+        if (isLoaded) {
+            if (user) {
+                fetchProfile(user.id)
+            } else {
+                router.push("/onboard")
+            }
+        }
+    }, [isLoaded, user])
+
+    // Fetch profile
+    async function fetchProfile(id) {
+        try {
+            const response = await fetch(`/api/profiles/${id}`)
+            if (!response.ok) throw new Error('Failed to fetch profile')
+            const data = await response.json()
+            setProfile(data)
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+
+    // Create profile
+    async function createProfile(formData) {
+        try {
+            const response = await fetch('/api/profiles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            if (!response.ok) throw new Error('Failed to create profile')
+            const data = await response.json()
+            setProfile(data)
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+
+    // Update profile
+    async function updateProfile(id, formData) {
+        try {
+            const response = await fetch(`/api/profiles/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            if (!response.ok) throw new Error('Failed to update profile')
+            const data = await response.json()
+            setProfile(data)
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
+
+    if (!isLoaded) return <div>Loading...</div>
+
     return (
         <div>
-            <AccountInfo profileInfo={profileInfo}/>
+            {profile && <AccountInfo profileInfo={profile}/>}
         </div>
     )
 }

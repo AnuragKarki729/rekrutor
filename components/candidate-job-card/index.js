@@ -15,22 +15,69 @@ import {
 
 import JobIcon from "../job-icon"
 import { Button } from "../ui/button"
-import { createJobApplicationAction } from "@/actions"
 
 function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
     const [showJobDetailsDrawer, setShowJobDetailsDrawer] = useState(false)
+    const [showMatchDetails, setShowMatchDetails] = useState(false)
+    const [applying, setApplying] = useState(false)
+
+
+    console.log(jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()))
+    const jobExperience = parseFloat(jobItem?.experience?.match(/[\d.]+/)?.[0]) || 0
+    const candidateExperience = profileInfo?.candidateInfo?.totalExperience || 0
+    const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+    const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+
+    const ExperienceGap = jobExperience - candidateExperience
+
+    const HighexperienceMatch = ExperienceGap <= 0
+    const LowExperienceMatch = ExperienceGap > 0
+
+
+
+    const HighSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
+    const LowSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
+
+    const matchPotential = HighexperienceMatch && HighSkillsMatch ? "High Match Potential" :
+        LowExperienceMatch && HighSkillsMatch ? "Not Enough Experience" :
+            HighexperienceMatch && LowSkillsMatch ? "Low Skill Match" :
+                LowExperienceMatch && LowSkillsMatch ? "Low Match Potential" : "No Match"
+
     console.log(jobApplications, 'jobApplications')
+    console.log(profileInfo, "profileInfo")
+
     async function handleJobApply() {
-        await createJobApplicationAction({
-            recruiterUserID: jobItem?.recruiterId,
-            name: profileInfo?.candidateInfo?.name,
-            email: profileInfo?.email,
-            candidateUserID: profileInfo?.userId,
-            status: ['Applied'],
-            jobID: jobItem?._id,
-            JobAppliedOnDate: new Date().toLocaleDateString(),
-        }, '/jobs')
-        setShowJobDetailsDrawer(false)
+        try {
+            setApplying(true) // Show loading state
+            const response = await fetch('/api/applications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-revalidate-path': '/jobs' // For revalidation
+                },
+                body: JSON.stringify({
+                    recruiterUserID: jobItem?.recruiterId,
+                    name: profileInfo?.candidateInfo?.name,
+                    email: profileInfo?.email,
+                    candidateUserID: profileInfo?.userId,
+                    status: ['Applied'],
+                    jobID: jobItem?._id,
+                    JobAppliedOnDate: new Date().toLocaleDateString(),
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to apply for job')
+            }
+
+            // Close drawer after successful application
+            setShowJobDetailsDrawer(false)
+        } catch (error) {
+            console.error('Error applying to job:', error)
+            // You might want to show an error message to the user
+        } finally {
+            setApplying(false) // Hide loading state
+        }
     }
 
 
@@ -42,11 +89,23 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                     title={jobItem?.title}
                     description={jobItem?.companyName}
                     footerContent={
-                        <DrawerTrigger asChild>
-                            <Button className="flex h-11 items-center justify-center px-5">
+                        <div className="flex space-x-2">
+                            <Button
+                                onClick={() => setShowJobDetailsDrawer(true)}
+                                className="flex h-11 items-center justify-center px-5"
+                            >
                                 View Details
                             </Button>
-                        </DrawerTrigger>
+                            <Button
+                                onClick={() => setShowMatchDetails(true)}
+                                className={`flex h-11 items-center justify-center px-5 ${matchPotential === "High Match Potential"
+                                    ? "bg-green-500 text-white"
+                                    : "bg-red-500 text-white"
+                                    }`}
+                            >
+                                {matchPotential}
+                            </Button>
+                        </div>
                     }
                 />
                 <DrawerContent className="p-6">
@@ -64,13 +123,17 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                             <div className="flex gap-2">
                                 <Button
                                     onClick={handleJobApply}
-                                    disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1}
+                                    disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 || applying}
                                     className={`flex h-11 items-center justify-center px-5 ${jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
                                             ? 'bg-green-500 text-white cursor-not-allowed'
                                             : ''
                                         }`}
                                 >
-                                    {jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 ? 'Applied' : 'Apply'}
+                                    {applying ? 'Applying...' :
+                                        jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
+                                            ? 'Applied'
+                                            : 'Apply'
+                                    }
                                 </Button>
 
 
@@ -115,6 +178,46 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                             ))}
                         </div>
                     </div>
+                </DrawerContent>
+            </Drawer>
+            <Drawer open={showMatchDetails} onOpenChange={setShowMatchDetails}>
+                <DrawerContent className="p-6">
+                    <DrawerHeader>
+                        <DrawerTitle className="text-2xl font-bold">
+                            Match Details
+                        </DrawerTitle>
+                    </DrawerHeader>
+                    <DrawerDescription>
+                        <div className="mb-4">
+                            <h3 className="text-lg font-semibold">Experience</h3>
+                            <p>
+                                <span className="font-bold">Job Required:</span> {jobItem?.experience} years
+                            </p>
+                            <p>
+                                <span className="font-bold">Candidate Experience:</span> {candidateExperience} years
+                            </p>
+                        </div>
+                        <div className="mb-4">
+                            <h3 className="text-lg font-semibold">Skills</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {jobSkills.map((skill, index) => (
+                                    <div
+                                        key={index}
+                                        className={`px-3 py-1 rounded-md text-white font-medium ${candidateSkills.includes(skill) ? "bg-green-500" : "bg-red-500"
+                                            }`}
+                                    >
+                                        {skill}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <Button
+                            onClick={() => setShowMatchDetails(false)}
+                            className="mt-4 bg-gray-500 text-white"
+                        >
+                            Close
+                        </Button>
+                    </DrawerDescription>
                 </DrawerContent>
             </Drawer>
         </Fragment>

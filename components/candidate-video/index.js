@@ -88,7 +88,7 @@ function CandidateVideo() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-8 max-w-5xl">
       <div className="flex flex-col items-center space-y-4">
         <Webcam
           audio
@@ -96,6 +96,14 @@ function CandidateVideo() {
           ref={webcamRef}
           videoConstraints={videoConstraints}
           className="rounded-lg w-full transform scale-x-[-1]" // Mirroring
+          style={{
+            marginTop: "100px",
+            width:"500px",
+            height: "500px",
+             border: "2px solid #ccc",
+             borderRadius: "12px", // Rounded corners for a smooth look
+            objectFit: "cover",
+          }}
         />
         <div className="flex space-x-4">
           {capturing ? (

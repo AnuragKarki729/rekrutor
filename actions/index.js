@@ -34,20 +34,32 @@ export async function fetchJobsForRecruiterAction(id) {
     
 }
 
+export async function fetchJobDetailsByIDAction(id){
+    await connectToDB()
+    const result = await Job.findOne({ _id: id })
+    return JSON.parse(JSON.stringify(result))
+}
+
 export async function fetchJobsForCandidateAction(filterParams = {}) {
     await connectToDB();
 
     let updatedParams = {};
-    Object.keys(filterParams).forEach((filterKey) => {
-        if (filterParams[filterKey]) {
-            updatedParams[filterKey] = { $in: filterParams[filterKey].split(",") };
+    
+    // Convert searchParams to regular object and handle async
+    const params = filterParams ? Object.fromEntries(
+        Object.entries(filterParams).map(([key, value]) => [key, value?.toString()])
+    ) : {};
+
+    // Now process the params
+    Object.keys(params).forEach((filterKey) => {
+        if (params[filterKey]) {
+            updatedParams[filterKey] = { 
+                $in: params[filterKey].toString().split(",") 
+            };
         }
     });
-
-    console.log(updatedParams, "Updated Params");
     
-    // Fetch jobs using the updated parameters
-    const result = await Job.find(filterParams && Object.keys(filterParams).length > 0? updatedParams : {});
+    const result = await Job.find(Object.keys(updatedParams).length > 0 ? updatedParams : {});
     return JSON.parse(JSON.stringify(result));
 }
 
@@ -80,26 +92,52 @@ export async function getCandidateDetailsByIDAction(currentCandidateID) {
     
 }
 
-export async function updateJobApplicationAction(data,pathToRevalidate) {
-    await connectToDB()
-    const{ recruiterUserID,
+export async function updateJobApplicationAction(data, pathToRevalidate) {
+    await connectToDB();
+
+    const {
+        recruiterUserID,
         name,
         email,
         candidateUserID,
         status,
         jobID,
-        JobAppliedOnDate, _id} = data;
-        const result = await Application.findByIdAndUpdate({_id: _id}, {recruiterUserID,
-            name,
-            email,
-            candidateUserID,
-            status,
-            jobID,
-            JobAppliedOnDate
-        },
-        {new: true})
-        revalidatePath(pathToRevalidate)
+        JobAppliedOnDate,
+        rejectionReason, // Include rejectionReason
+        _id,
+    } = data;
+
+
+    // Add rejectionReason to the update data if provided
+
+    try {
+        const result = await Application.findByIdAndUpdate(
+            { _id: _id },
+            { $set: {recruiterUserID,
+                name,
+                email,
+                candidateUserID,
+                status,
+                jobID,
+                rejectionReason, 
+                JobAppliedOnDate,
+                
+            },
+        }, // Use $set to update specific fields
+            { new: true } // Return the updated document
+        );
+
+        console.log('Result', result)
+
+        revalidatePath(pathToRevalidate);
+
+        return JSON.parse(JSON.stringify(result)); // Optionally return the updated document for frontend reference
+    } catch (error) {
+        console.error("Error updating job application:", error);
+        throw new Error("Failed to update job application.");
+    }
 }
+
 
 export async function createFilterCategoryAction(){
     await connectToDB()

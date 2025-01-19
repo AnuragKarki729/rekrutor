@@ -8,27 +8,51 @@ import { initialPostNewJobFormData, postNewJobFormControls } from "@/utils"
 import { postNewJobAction } from "@/actions"
 
 function PostNewJob({profileInfo, user}){
-
     const [showJobDialog, setShowJobDialog] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [jobFormData, setJobFormData] = useState({
-        ...initialPostNewJobFormData, companyName: profileInfo?.recruiterInfo?.companyName})
+        ...initialPostNewJobFormData, 
+        companyName: profileInfo?.recruiterInfo?.companyName
+    })
 
-    
     function handlePostNewBtnValid(){
         return Object.keys(jobFormData).every(control => jobFormData[control].trim() !== "");
     }
 
     async function createNewJob(){
-        await postNewJobAction({...jobFormData, 
-            recruiterId: user?.id,
-            applicants:[]},
-            '/jobs'
-        )
+        try {
+            setLoading(true)
+            const response = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-revalidate-path': '/jobs'
+                },
+                body: JSON.stringify({
+                    ...jobFormData,
+                    recruiterId: user?.id,
+                    applicants: []
+                })
+            });
 
-        setJobFormData({...initialPostNewJobFormData, companyName: profileInfo?.recruiterInfo?.companyName})
-        setShowJobDialog(false)
+            if (!response.ok) {
+                throw new Error('Failed to create job');
+            }
+
+            // Reset form and close dialog on success
+            setJobFormData({
+                ...initialPostNewJobFormData, 
+                companyName: profileInfo?.recruiterInfo?.companyName
+            });
+            setShowJobDialog(false);
+
+        } catch (error) {
+            console.error('Error creating job:', error);
+            // You might want to show an error message to the user
+        } finally {
+            setLoading(false);
+        }
     }
-
     return(
         <div>
             <Button

@@ -16,7 +16,7 @@ function CandidateActivity({ jobList, jobApplicants }) {
         )
     ];
 
-    console.log(uniqueStatusArray);
+    // console.log("Array",uniqueStatusArray);
 
     return (
         <div className="mx-auto max-w-7xl">
@@ -24,15 +24,15 @@ function CandidateActivity({ jobList, jobApplicants }) {
                 <div className="flex items-baseline justify-between border-b pb-6 pt-24">
                     <h1 className="text-4xl font-bold tracking-tight text-gray-950">Your Activity</h1>
                     <TabsList>
-                    {uniqueStatusArray.map((status, index) => (
-                        <TabsTrigger key={index} value={status} className= "font-bold text-lg">
-                            {status}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+                        {uniqueStatusArray.map((status, index) => (
+                            <TabsTrigger key={index} value={status} className="font-bold text-lg">
+                                {status}
+                            </TabsTrigger>
+                        ))}
+                    </TabsList>
                 </div>
                 <div className="pb-24 pt-6">
-                    <div className="container mx-auto p-0 spacr-y-8">
+                    <div className="container mx-auto p-0 space-y-8">
                         <div className="flex flex-col gap-4">
                             {uniqueStatusArray.map((status, index) => (
                                 <TabsContent key={index} value={status}>
@@ -48,14 +48,39 @@ function CandidateActivity({ jobList, jobApplicants }) {
                                                         jobItem._id === filteredItemByStatus.jobID
                                                 )
                                         )
-                                        .map(finalFilteredItem => (
-                                            <CommonCard
-                                                key={finalFilteredItem._id}
-                                                icon={<JobIcon/>}
-                                                title={finalFilteredItem?.title}
-                                                description={finalFilteredItem?.companyName}
-                                            />
-                                        ))}
+                                        .map(finalFilteredItem => {
+                                            // Find the corresponding job application for this job
+                                            const relatedApplication = jobApplicants.find(
+                                                jobApplication =>
+                                                    jobApplication.jobID === finalFilteredItem._id &&
+                                                    jobApplication.status.slice(-1)[0] === status
+                                            );
+                                            
+                                            console.log ("relatedAPplication",relatedApplication)
+                                            return (
+                                                <CommonCard
+                                                    key={finalFilteredItem._id}
+                                                    icon={<JobIcon />}
+                                                    title={finalFilteredItem?.title}
+                                                    description={
+                                                        <>
+                                                            {finalFilteredItem?.companyName}
+                                                            {console.log(status,relatedApplication.rejectionReason)}
+                                                            {status === "Rejected" && relatedApplication?.rejectionReason && (
+                                                                <div className="text-red-600 font-semibold mt-2">
+                                                                    Reason: {relatedApplication.rejectionReason}
+                                                                </div>
+                                                            )}
+                                                            {status === "Rejected" && relatedApplication?.rejectionReason === null && (
+                                                                <div className="text-red-600 font-semibold mt-2">
+                                                                    Reason: Reason Not Specified
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    }
+                                                />
+                                            );
+                                        })}
                                 </TabsContent>
                             ))}
                         </div>
