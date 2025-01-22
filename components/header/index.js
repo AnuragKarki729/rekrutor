@@ -7,86 +7,126 @@ import Link from "next/link";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { UserButton, useClerk } from "@clerk/nextjs";
 
-
 function Header({ user, profileInfo }) {
     const { signOut } = useClerk()
 
     const handleSignOut = async () => {
         try {
             console.log("Signing out...");
-            await signOut(); // Sign out the user
+            await signOut();
             console.log("Sign-out successful!");
-            window.location.href = "/sign-in"; // Redirect to the sign-in page
+            window.location.href = "/sign-in";
         } catch (error) {
             console.error("Sign-out failed:", error);
         }
     };
 
-
-
     const menuItems = [
-        { label: 'Home', path: '/', show: true },
-        { label: 'Login', path: '/sign-in', show: !user },
-        { label: 'Register', path: '/sign-up', show: !user },
-        { label: 'Jobs', path: '/jobs', show: user },
-        { label: 'Activity', path: '/activity', show: profileInfo?.role === 'candidate' },
-        { label: 'Video CV', path: '/membership', show: profileInfo?.role === 'candidate' },
-        { label: 'Account', path: '/account', show: user },
-        ]
-    return (<div>
-        <header className="flex h-16 w-full shrink-0 items-center">
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button className="lg:hidden">
-                        <AlignJustify className="h-6 w-6" />
-                        <DialogTitle className="sr-only">
-                            Toggle navigation Menu
-                        </DialogTitle>
-                    </Button>
-                </SheetTrigger>
+        { id: 'home', label: 'Home', path: '/', show: true },
+        { id: 'login', label: 'Login', path: '/sign-in', show: !user },
+        { id: 'register', label: 'Register', path: '/sign-up', show: !user },
+        { id: 'jobs', label: 'Jobs', path: '/jobs', show: user },
+        { id: 'activity', label: 'Activity', path: '/activity', show: profileInfo?.role === 'candidate' },
+        { 
+            id: 'nudge',
+            label: (
+                <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
+                    Nudge Mail
+                </div>
+            ), 
+            path: '/mailto', 
+            show: profileInfo?.role === 'candidate' 
+        },
+        { 
+            id: 'video',
+            label: (
+                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-transparent bg-clip-text font-semibold">
+                    Video CV
+                </div>
+            ), 
+            path: '/membership', 
+            show: profileInfo?.role === 'candidate' 
+        },
+        { id: 'account', label: 'Account', path: '/account', show: user },
+    ]
 
-                <SheetContent side="left">
-                    <Link href={'#'} className="font-bold text-8xl">
-                        <h2>reKrutor</h2>
-                    </Link>
-                    <div className="grid gap-2 py-6">
-                        {
-                            menuItems.map(menuItem =>
+    return (
+        <div className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+            <header className="container mx-auto flex h-16 items-center justify-between px-4">
+                {/* Mobile Menu */}
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" className="lg:hidden -ml-4 px-4">
+                            <AlignJustify className="h-5 w-5" />
+                            <DialogTitle className="sr-only">
+                                Toggle navigation Menu
+                            </DialogTitle>
+                        </Button>
+                    </SheetTrigger>
+
+                    <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                        <Link href={'/'} className="flex items-center space-x-2">
+                            <span className="font-bold text-2xl">reKrutor</span>
+                        </Link>
+                        <nav className="mt-8 flex flex-col space-y-3">
+                            {menuItems.map(menuItem =>
                                 menuItem.show ? (
-                                    <Link key={menuItem.label} href={menuItem.path} 
-                                    onClick={()=> sessionStorage.removeItem("filterParams")} className="flex w-full items-center py-2 text-lg font-semibold">
+                                    <Link 
+                                        key={menuItem.id} 
+                                        href={menuItem.path} 
+                                        onClick={() => sessionStorage.removeItem("filterParams")}
+                                        className="flex items-center space-x-2 text-lg font-medium transition-colors hover:text-blue-500"
+                                    >
                                         {menuItem.label}
                                     </Link>
                                 ) : null
                             )}
-                        {user && (
-                            <button
-                                onClick={handleSignOut}
-                                className="flex w-full items-center py-2 text-lg font-semibold text-red-500 hover:underline"
-                            >
-                                Logout
-                            </button>
-                        )}
+                            {user && (
+                                <button
+                                    onClick={handleSignOut}
+                                    className="flex items-center space-x-2 text-lg font-medium text-red-500 transition-colors hover:text-red-600"
+                                >
+                                    Logout
+                                </button>
+                            )}
+                        </nav>
+                    </SheetContent>
+                </Sheet>
 
-                    </div>
-                </SheetContent>
-            </Sheet>
-            <Link className="hidden lg:flex mr-6 font-bold text-4xl" href={'/'}>reKrutor</Link>
-            <nav className="ml-auto hidden lg:flex gap-6">
-                {
-                    menuItems.map((menuItem) => menuItem.show ? (
-                        <Link key={menuItem.label} href={menuItem.path} onClick={()=> sessionStorage.removeItem("filterParams")}
-                            className="group inline-flex h-9 w-max items-center rounded-md bg-white px-4 py-2 text-sm font-medium">
+                {/* Desktop Logo */}
+                <Link 
+                    href={'/'} 
+                    className="hidden lg:flex items-center space-x-2 font-bold text-2xl hover:opacity-90 transition-opacity"
+                >
+                    reKrutor
+                </Link>
+
+                {/* Desktop Navigation */}
+                <nav className="ml-auto hidden lg:flex items-center space-x-6">
+                    {menuItems.map((menuItem) => menuItem.show ? (
+                        <Link 
+                            key={menuItem.id} 
+                            href={menuItem.path} 
+                            onClick={() => sessionStorage.removeItem("filterParams")}
+                            className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-500"
+                        >
                             {menuItem.label}
                         </Link>
-                    ) : null
-                    )
-                }
-                <UserButton afterSignOutUrl="/sign-in" signOutForceRedirectUrl="/sign-in"/>
-            </nav>
-
-        </header>
-    </div>
+                    ) : null)}
+                    <div className="pl-2">
+                        <UserButton 
+                            afterSignOutUrl="/sign-in" 
+                            signOutForceRedirectUrl="/sign-in"
+                            appearance={{
+                                elements: {
+                                    avatarBox: "h-8 w-8"
+                                }
+                            }}
+                        />
+                    </div>
+                </nav>
+            </header>
+        </div>
     )
 }
 

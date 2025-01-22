@@ -14,8 +14,21 @@ async function Home() {
   if (!user) {
     console.log("No user logged in, redirecting to login");
     redirect("/sign-in");
-    return null; // Stop further rendering
+    return null;
   }
+
+  // Check email domain
+  const email = user.emailAddresses[0]?.emailAddress;
+  console.log("User email:", email);
+  
+  const isGmail = email?.toLowerCase().endsWith('@gmail.com');
+  const isCompanyEmail = !isGmail && email?.includes('@');
+  
+  console.log({
+    isGmail,
+    isCompanyEmail,
+    emailDomain: email?.split('@')[1]
+  });
 
   // Fetch profile information from the database
   const profileInfo = await fetchProfileAction(user.id);

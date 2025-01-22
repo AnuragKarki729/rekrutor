@@ -35,88 +35,91 @@ export const candidateOnBoardFormControls = [
     {
         label: 'Resume',
         name: 'resume',
-        placeholder: 'Upload your Resume',
-        componentType: 'file'
+        placeholder: 'Upload your Resume (PDF format)',
+        componentType: 'file',
+        accept: '.pdf, .doc, .docx'
     },
     {
         label: 'Name',
         name: 'name',
-        placeholder: 'Enter your Name',
-        componentType: 'input'
+        placeholder: 'First Name Last Name',
+        componentType: 'text'
     },
     {
         label: 'Current Company',
         name: 'currentCompany',
-        placeholder: 'Enter your current Company',
-        componentType: 'input'
+        placeholder: 'e.g., Google, Microsoft, etc.',
+        componentType: 'text'
     },
     {
         label: 'Current Job Location',
         name: 'currentJobLocation',
-        placeholder: 'Enter your current Job Location',
-        componentType: 'input'
+        placeholder: 'City, Country (e.g., New York, USA)',
+        componentType: 'text'
     },
     {
-        label: 'Prefered Job Location',
+        label: 'Preferred Job Location',
         name: 'preferedJobLocation',
-        placeholder: 'Enter your prefered Job Location',
-        componentType: 'input'
+        placeholder: 'City, Country or Remote',
+        componentType: 'text'
     },
     {
-        label: 'Current Salary',
+        label: 'Current Salary (USD/year)',
         name: 'currentSalary',
-        placeholder: 'Enter your current Salary',
-        componentType: 'input'
+        placeholder: 'e.g., 75000',
+        componentType: 'number'
     },
     {
         label: 'Notice Period',
         name: 'noticePeriod',
-        placeholder: 'Enter your Notice Period',
-        componentType: 'input'
+        placeholder: 'e.g., 30 days, 2 months, Immediate',
+        componentType: 'text'
     },
     {
         label: 'Skills',
         name: 'skills',
-        placeholder: 'Enter your skills',
-        componentType: 'input'
+        placeholder: 'Separate skills with commas (e.g., React, Node.js, Python)',
+        componentType: 'text'
     },
     {
         label: 'Previous Companies',
         name: 'previousCompanies',
-        placeholder: 'Enter Previous Companies youve worked for',
-        componentType: 'input'
+        placeholder: 'Separate with commas (e.g., Amazon, Facebook)',
+        componentType: 'text'
     },
     {
-        label: 'Total Experience',
+        label: 'Total Experience (years)',
         name: 'totalExperience',
-        placeholder: 'Enter your total years of experience',
-        componentType: 'input'
+        placeholder: 'e.g., 3.5',
+        componentType: 'number',
+        step: '0.5'
     },
     {
-        label: 'College',
+        label: 'College/University',
         name: 'college',
-        placeholder: 'Enter your college',
-        componentType: 'input'
+        placeholder: 'e.g., Massachusetts Institute of Technology',
+        componentType: 'text'
     },
     {
         label: 'College Location',
         name: 'collegeLocation',
-        placeholder: 'Enter your college location',
-        componentType: 'input'
+        placeholder: 'City, Country (e.g., Cambridge, USA)',
+        componentType: 'text'
     },
     {
-        label: 'Graduated Year',
+        label: 'Graduation Year',
         name: 'graduatedYear',
-        placeholder: 'Enter your graduated year',
-        componentType: 'input'
+        placeholder: 'e.g., 2022',
+        componentType: 'number',
+        min: '1950',
+        max: new Date().getFullYear()
     },
     {
-        label: 'Significant Links',
+        label: 'Profile Links',
         name: 'profileLinks',
-        placeholder: 'Enter your links that may be significant',
-        componentType: 'input'
+        placeholder: 'LinkedIn, GitHub, Portfolio (separate with commas)',
+        componentType: 'text'
     },
-
 ]
 
 export const initialCandidateFormData = {

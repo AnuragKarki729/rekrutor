@@ -1,4 +1,4 @@
-import { SignIn, SignedIn, SignedOut } from "@clerk/nextjs"
+import { SignIn } from "@clerk/nextjs"
 export default function Login(){
     return (
         <div>
