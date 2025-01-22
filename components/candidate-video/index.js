@@ -30,10 +30,10 @@ function CandidateVideo() {
   useEffect(() => {
     const fetchPreviousVideo = async () => {
       try {
-        const response = await fetch(`/api/profiles/${user.id}`);
-        const data = await response.json();
-        setPreviousVideo(data.candidateInfo?.videoCV);
-        console.log(data.candidateInfo)
+        const response = await fetch(`/api/profile/${user.id}`);
+        const profile = await response.json();
+        setPreviousVideo(profile?.candidateInfo?.videoCV);
+        console.log('Profile data:', profile?.candidateInfo);
       } catch (error) {
         console.error("Error fetching previous video:", error);
       }
@@ -95,7 +95,7 @@ function CandidateVideo() {
 
       // Upload new video
       const blob = new Blob(recordedChunks, { type: "video/webm" });
-      const fileName = `${user.id}-${Date.now()}.webm`;
+      const fileName = `${user.id}.webm`;
 
       const { data: uploadData, error } = await supabaseClient.storage
         .from("rekrutor-public")
