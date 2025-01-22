@@ -1,11 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import AccountInfo from "@/components/account-info";
+import Loading from "@/components/Loading";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/navigation'
 
 export default function AccountPage() {
     const [profile, setProfile] = useState(null)
+    const [isProfileLoading, setIsProfileLoading] = useState(true)
     const router = useRouter()
     const { user, isLoaded } = useUser()
 
@@ -21,6 +23,7 @@ export default function AccountPage() {
 
     // Fetch profile
     async function fetchProfile(id) {
+        setIsProfileLoading(true)
         try {
             const response = await fetch(`/api/profiles/${id}`)
             if (!response.ok) throw new Error('Failed to fetch profile')
@@ -28,6 +31,8 @@ export default function AccountPage() {
             setProfile(data)
         } catch (error) {
             console.error('Error:', error)
+        } finally {
+            setIsProfileLoading(false)
         }
     }
 
@@ -67,7 +72,7 @@ export default function AccountPage() {
         }
     }
 
-    if (!isLoaded) return <div>Loading...</div>
+    if (!isLoaded || isProfileLoading) return <Loading />
 
     return (
         <div>

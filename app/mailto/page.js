@@ -7,10 +7,13 @@ import {
   fetchJobsForCandidateAction,
 } from '@/actions';
 import Profile from '@/models/profile';
+import Loading from "@/components/Loading";
 
 export default async function MailPage() {
   const user = await currentUser();
   const userID = user?.id;
+  
+
 
   const userInfo = await fetchProfileAction(userID);
   console.log(userInfo)
@@ -51,6 +54,7 @@ export default async function MailPage() {
         })
       );
 
+
     
 
     const rejectedData = await Promise.all(
@@ -68,6 +72,8 @@ export default async function MailPage() {
           return [recruiterEmail, jobDetails?.title, jobDetails?.companyName];
         })
       );
+
+    if (!selectedData || !rejectedData) return <Loading />
 
     // console.log("HELLO", rejectedData)
     return (
@@ -98,7 +104,8 @@ export default async function MailPage() {
         jobDetails?.companyName, // Company name
       ];
     });
-    
+  
+    if (!selectedData) return <Loading />
     return (
       <MailComponent
         selectedData={selectedData}

@@ -1,6 +1,8 @@
 import { createFilterCategoryAction, fetchJobApplicationsForCandidate, fetchJobApplicationsForRecruiter, fetchJobsForCandidateAction, fetchJobsForRecruiterAction, fetchProfileAction } from "@/actions";
 import JobListing from "@/components/job-listing"
 import { currentUser } from "@clerk/nextjs/server";
+import Loading from "@/components/Loading";
+
 
 async function JobPage({ searchParams }) {
     // Convert searchParams to a regular object
@@ -21,8 +23,10 @@ async function JobPage({ searchParams }) {
         await fetchJobApplicationsForRecruiter(user?.id)
 
     const fetchFilterCategories = await createFilterCategoryAction()
+    if (!jobList || !getJobApplicationList || !fetchFilterCategories) return <Loading />
 
     return (
+
         <div>
             <JobListing
             user = {JSON.parse(JSON.stringify(user))}

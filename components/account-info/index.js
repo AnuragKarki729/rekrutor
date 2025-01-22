@@ -15,6 +15,7 @@ function AccountInfo({ profileInfo }) {
     const [candidateFormData, setCandidateFormData] = useState({});
     const [recruiterFormData, setRecruiterFormData] = useState({});
     const [newResume, setNewResume] = useState(null); // Store the new resume file
+    
 
     useEffect(() => {
         if (profileInfo?.role === 'recruiter') {
