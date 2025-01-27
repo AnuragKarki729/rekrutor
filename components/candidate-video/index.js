@@ -21,6 +21,9 @@ function CandidateVideo() {
   const { user } = useUser();
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [previousVideo, setPreviousVideo] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const timerRef = useRef(null);
 
   const videoConstraints = {
     facingMode: "user",
@@ -44,28 +47,82 @@ function CandidateVideo() {
     }
   }, [user?.id]);
 
-  // Start recording
+  // Add timer effect
+  useEffect(() => {
+    if (capturing) {
+      timerRef.current = setInterval(() => {
+        setRecordingTime((time) => {
+          if (time >= 30) {
+            handleStopCaptureClick();
+            return 30;
+          }
+          return time + 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+      setRecordingTime(0);
+    }
+
+    return () => {
+      clearInterval(timerRef.current);
+    };
+  }, [capturing]);
+
+  // Modify handleStopCaptureClick to properly handle the recorded chunks
+  const handleStopCaptureClick = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setCapturing(false);
+      clearInterval(timerRef.current);
+    }
+  }, []);
+
+  // Add dataavailable event handler outside of handleStartCaptureClick
+  useEffect(() => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.addEventListener("dataavailable", handleDataAvailable);
+    }
+    return () => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.removeEventListener("dataavailable", handleDataAvailable);
+      }
+    };
+  }, [mediaRecorderRef.current]);
+
+  const handleDataAvailable = useCallback(({ data }) => {
+    if (data.size > 0) {
+      setRecordedChunks((prev) => {
+        const newChunks = [...prev, data];
+        // Create preview URL when recording is complete
+        const blob = new Blob(newChunks, { type: "video/webm" });
+        setPreviewUrl(URL.createObjectURL(blob));
+        return newChunks;
+      });
+    }
+  }, []);
+
+  // Modify handleStartCaptureClick to clear previous recording
   const handleStartCaptureClick = useCallback(() => {
     setRecordedChunks([]);
     setCapturing(true);
+    setPreviewUrl(null);
+    
     mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
       mimeType: "video/webm",
-    });
-
-    mediaRecorderRef.current.addEventListener("dataavailable", ({ data }) => {
-      if (data.size > 0) {
-        setRecordedChunks((prev) => [...prev, data]);
-      }
     });
 
     mediaRecorderRef.current.start();
   }, []);
 
-  // Stop recording
-  const handleStopCaptureClick = useCallback(() => {
-    mediaRecorderRef.current.stop();
-    setCapturing(false);
-  }, []);
+  // Clean up preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Upload video to Supabase
   const handleUpload = async () => {
@@ -152,26 +209,54 @@ function CandidateVideo() {
     setIsCameraOn(!isCameraOn);
   }, [isCameraOn]);
 
+  const handleRecordAgain = useCallback(() => {
+    window.location.reload();
+  }, []);
+
   return (
     <div className="flex flex-row gap-8 mx-8 max-w-7xl">
       {/* Main recording section */}
       <div className="flex-1 flex flex-col items-center space-y-4">
         {isCameraOn ? (
-          <Webcam
-            audio
-            muted
-            ref={webcamRef}
-            videoConstraints={videoConstraints}
-            className="rounded-lg w-full transform scale-x-[-1]"
-            style={{
-              marginTop: "100px",
-              width: "500px",
-              height: "500px",
-              border: "2px solid #ccc",
-              borderRadius: "12px",
-              objectFit: "cover",
-            }}
-          />
+          <>
+            {!previewUrl ? (
+              <Webcam
+                audio
+                muted
+                mirrored = {true}
+                ref={webcamRef}
+                videoConstraints={videoConstraints}
+                className="rounded-lg w-full transform scale-x-[-1]"
+                style={{
+                  marginTop: "100px",
+                  width: "500px",
+                  height: "500px",
+                  border: "2px solid #ccc",
+                  borderRadius: "12px",
+                  objectFit: "cover",
+                 }}
+              />
+            ) : (
+              <video
+                src={previewUrl}
+                controls
+                
+                style={{
+                  marginTop: "100px",
+                  width: "500px",
+                  height: "500px",
+                  border: "2px solid #ccc",
+                  borderRadius: "12px",
+                  objectFit: "cover",
+                  }}
+              />
+            )}
+            {capturing && (
+              <div className="absolute top-28 right-[calc(50%-230px)] bg-red-500 text-white px-3 py-1 rounded-full">
+                Recording: {recordingTime}s / 30s
+              </div>
+            )}
+          </>
         ) : (
           <div 
             className="flex items-center justify-center bg-gray-100"
@@ -214,20 +299,32 @@ function CandidateVideo() {
                   Stop Recording
                 </button>
               ) : (
-                <button onClick={handleStartCaptureClick} className="px-6 py-2 bg-blue-500 text-white font-bold rounded-lg">
-                  Start Recording
-                </button>
+                <>
+                  {!previewUrl && (
+                    <button onClick={handleStartCaptureClick} className="px-6 py-2 bg-blue-500 text-white font-bold rounded-lg">
+                      Start Recording
+                    </button>
+                  )}
+                </>
               )}
-              {recordedChunks.length > 0 && (
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className={`px-6 py-2 font-bold rounded-lg ${
-                    uploading ? "bg-gray-400" : "bg-green-500 text-white"
-                  }`}
-                >
-                  {uploading ? "Uploading..." : "Upload Video"}
-                </button>
+              {previewUrl && (
+                <>
+                  <button
+                    onClick={handleRecordAgain}
+                    className="px-6 py-2 bg-blue-500 text-white font-bold rounded-lg"
+                  >
+                    Record Again
+                  </button>
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className={`px-6 py-2 font-bold rounded-lg ${
+                      uploading ? "bg-gray-400" : "bg-green-500 text-white"
+                    }`}
+                  >
+                    {uploading ? "Uploading..." : "Upload Video"}
+                  </button>
+                </>
               )}
             </>
           )}
@@ -236,7 +333,8 @@ function CandidateVideo() {
 
       {/* Previous video section */}
       {previousVideo && (
-        <div className="w-80 shrink-0">
+        <div className="w-80 shrink-0 flex flex-col justify-center">
+
           <div className="sticky top-24 rounded-lg overflow-hidden bg-white shadow-md">
             <div className="aspect-video w-full bg-black">
               <video 

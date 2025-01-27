@@ -100,7 +100,7 @@ function OnBoard(){
             );
 
             setFile(renamedFile);
-            console.log("Selected file renamed to:", newFileName);
+            console.log("Selected file renamed to:", newFileName, " ", user?.id);
         }
     }
 
@@ -132,6 +132,7 @@ function OnBoard(){
     }, [file]);
 
     function handleCandidateFormValid() {
+        console.log("Candidate form data:", candidateFormData, " ", user);
         // Get only the required fields from candidateOnBoardFormControls
         const requiredFields = candidateOnBoardFormControls
             .filter(control => 
@@ -182,7 +183,8 @@ function OnBoard(){
             })
 
             if (!response.ok) {
-                throw new Error('Failed to create profile')
+                const errorData = await response.json()
+                throw new Error(errorData.message || 'Failed to create profile')
             }
 
             window.location.replace('/jobs')

@@ -72,7 +72,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                 setFormData({
                   ...formData,
                   [event.target.name]: newValue,
-                  ...(event.target.name === 'experience' && newValue === 'Fresh Graduate' 
+                  ...(event.target.name === 'experience' && newValue === 'Fresher' 
                     ? { yearsOfExperience: '', industry: '', previousCompanies: [] } 
                     : {})
                 });
@@ -209,6 +209,9 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
               fullWidth
               label={getCurrentControl.label}
               variant="outlined"
+              name={getCurrentControl.name}
+              placeholder={getCurrentControl.placeholder}
+              disabled={getCurrentControl.disabled}
               InputProps={{
                 endAdornment: (
                   <input

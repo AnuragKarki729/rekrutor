@@ -70,7 +70,7 @@ export const candidateOnBoardFormControls = [
         name: 'experienceLevel',
         placeholder: 'Select your experience level',
         componentType: 'select',
-        options: ['Fresh Graduate', 'Experienced'],
+        options: ['Fresher', 'Experienced'],
         required: true
     },
     {
@@ -204,7 +204,7 @@ export const initialCandidateFormData = {
     collegeLocation: '',
     graduatedYear: '',
     profileLinks: '',
-    experienceLevel: 'Fresh Graduate',
+    experienceLevel: 'Fresher',
     yearsOfExperience: '',
     industry: '',
     otherIndustry: '',
@@ -268,7 +268,7 @@ export const postNewJobFormControls = [
         name: 'experience',
         placeholder: 'Enter Experience required',
         componentType: 'selectJob',
-        options: ['Fresh Graduate', 'Experienced'],
+        options: ['Fresher', 'Experienced'],
         required: true
     },
     {

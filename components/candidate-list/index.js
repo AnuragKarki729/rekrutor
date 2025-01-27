@@ -329,7 +329,7 @@ function CandidateList({ jobApplications }) {
                                 />
                                 <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
                                 <h2 className="card-jobtitle text-center">
-                                    {candidate?.candidateDetails?.totalExperience === "" ? "Fresh Graduate" : candidate?.candidateDetails?.currentCompany}
+                                    {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
                                 </h2>
                             </div>
                             <div className="card-main">

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import CommonForm from "../common-form";
 import { updateProfileAction } from "@/actions";
 import { createClient } from "@supabase/supabase-js"
+import toast from "react-hot-toast"
 
 const supabaseClient = createClient(
     "https://hwbttezjdwqixmaftiyl.supabase.co",
@@ -34,9 +35,8 @@ function AccountInfo({ profileInfo }) {
                 .from("rekrutor-public")
                 .upload(`/public/${newResume.name}`, newResume, {
                     cacheControl: "3600",
-                    upsert: false,
+                    upsert: true,
                 });
-    
 
             if (error) {
                 console.error("Error uploading resume:", error);
@@ -48,13 +48,15 @@ function AccountInfo({ profileInfo }) {
         }
 
         // Call the `updateProfileAction` to update the profile
-        await updateProfileAction(
-            profileInfo?.role === "candidate"
-                ? {
-                      _id: profileInfo?._id,
-                      userId: profileInfo?.userId,
-                      role: profileInfo?.role,
-                      email: profileInfo?.email,
+        
+        try {
+            await updateProfileAction(
+                profileInfo?.role === "candidate"
+                    ? {
+                          _id: profileInfo?._id,
+                          userId: profileInfo?.userId,
+                          role: profileInfo?.role,
+                          email: profileInfo?.email,
                       isPremiumUser: profileInfo?.isPremiumUser,
                       memberShipType: profileInfo?.memberShipType,
                       memberShipEndDate: profileInfo?.memberShipEndDate,
@@ -82,6 +84,13 @@ function AccountInfo({ profileInfo }) {
 
         // Clear the new resume state
         setNewResume(null);
+        toast.success('Successfully updated!');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    } catch (error) {
+            toast.error('Failed to update profile');
+        }
     }
 
     return (
@@ -92,27 +101,10 @@ function AccountInfo({ profileInfo }) {
                 </h1>
             </div>
             <div className="py-20 pb-24 pt-6">
+                
                 <div className="container mx-auto p=0 space-y-8">
-                    <CommonForm
-                        formControls={
-                            profileInfo?.role === "candidate"
-                                ? candidateOnBoardFormControls
-                                : recruiterOnBoardFormControls
-                        }
-                        formData={
-                            profileInfo?.role === "candidate"
-                                ? candidateFormData
-                                : recruiterFormData
-                        }
-                        setFormData={
-                            profileInfo?.role === "candidate"
-                                ? setCandidateFormData
-                                : setRecruiterFormData
-                        }
-                        buttonText={"Update Profile"}
-                        action={handleUpdateAccount}
-                    />
-                    {profileInfo?.role === "candidate" && (
+                    
+                {profileInfo?.role === "candidate" && (
                         <div className="mt-4">
                             <label
                                 htmlFor="resume-upload"
@@ -130,18 +122,36 @@ function AccountInfo({ profileInfo }) {
                             {candidateFormData?.resume && (
                                 <p className="mt-2 text-sm text-gray-600">
                                     Current Resume:{" "}
-                                    <a
-                                        href={`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/${candidateFormData.resume}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <button
+                                        onClick={() => window.open(`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/${candidateFormData.resume}`, '_blank')}
                                         className="text-blue-600 hover:underline"
                                     >
-                                        View Current Resume
-                                    </a>
+                                        {candidateFormData.resume}
+                                    </button>
                                 </p>
                             )}
                         </div>
                     )}
+                    <CommonForm
+                        formControls={
+                            profileInfo?.role === "candidate"
+                                ? candidateOnBoardFormControls.filter(control => control.name !== 'resume')
+                                : recruiterOnBoardFormControls
+                        }
+                        formData={
+                            profileInfo?.role === "candidate"
+                                ? candidateFormData
+                                : recruiterFormData
+                        }
+                        setFormData={
+                            profileInfo?.role === "candidate"
+                                ? setCandidateFormData
+                                : setRecruiterFormData
+                        }
+                        buttonText={"Update Profile"}
+                        action={handleUpdateAccount}
+                    />
+                    
                 </div>
             </div>
         </div>

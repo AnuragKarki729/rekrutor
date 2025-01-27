@@ -10,6 +10,10 @@ import { Label } from "../ui/label"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "../ui/button"
 import { X } from "lucide-react"
+import {Alert, AlertDescription} from "../ui/alert"
+
+
+
 
 function JobListing({ user, profileInfo, jobList, jobApplications, filterCategories }) {
     console.log("All Jobs:", jobList);
@@ -18,6 +22,7 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
 
     const searchParams = useSearchParams()
     const router = useRouter()
+    const hasVideoCV= profileInfo?.candidateInfo?.hasVideoCV
 
 
     const filterMenu = filterMenuDataArray.map(item => ({

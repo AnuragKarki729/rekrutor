@@ -18,12 +18,15 @@ export async function GET() {
 export async function POST(request) {
     try {
         const data = await request.json()
+        
         await connectToDB()
+        console.log(data)
         const profile = await Profile.create(data)
+        
         return NextResponse.json(profile, { status: 201 })
     } catch (error) {
         return NextResponse.json(
-            { error: "Failed to create profile" },
+            { error: error?.message || "Failed to create profile" },
             { status: 500 }
         )
     }

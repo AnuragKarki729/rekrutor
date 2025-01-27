@@ -26,7 +26,7 @@ function RecruiterJobCard({jobItem, jobApplications}){
                     disabled = {jobApplications.filter (item => item.jobID === jobItem?._id).length ===0}>
                     {jobApplications.filter (item => item.jobID === jobItem?._id).length} Applicant(s)
                 </Button>
-                <PostNewJob className="mt-2" jobToEdit={jobItem} mode="edit" />
+                <PostNewJob jobToEdit={jobItem} mode="edit" />
             </div>
            }
            /> 
