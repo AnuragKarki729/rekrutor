@@ -60,7 +60,7 @@ function CandidateActivity({ jobList, jobApplicants }) {
                                             return (
                                                 <CommonCard
                                                     key={finalFilteredItem._id}
-                                                    icon={<JobIcon />}
+                                                    icon={<JobIcon industry={jobItem.industry} className="h-25 w-25"/>}
                                                     title={finalFilteredItem?.title}
                                                     description={
                                                         <>

@@ -5,6 +5,7 @@ import CommonCard from "../common-card"
 import JobIcon from "../job-icon"
 import { Button } from "../ui/button"
 import JobApplicants from "../job-applicants"
+import PostNewJob from "../post-new-job"
 
 function RecruiterJobCard({jobItem, jobApplications}){
     
@@ -16,15 +17,18 @@ function RecruiterJobCard({jobItem, jobApplications}){
     return (
         <div>
            <CommonCard
-           icon = {<JobIcon className="h-10 w-10" />}
+           icon = {<JobIcon industry={jobItem?.industry} />}
            title={jobItem?.title}
-           footerContent={<Button onClick={()=> setShowApplicantsDrawer(true)}
-            className="disabled:opacity-55 flex h-11 items-center justify-center px-5" 
-            disabled = {jobApplications.filter (item => item.jobID === jobItem?._id).length ===0}>
-            {
-                jobApplications.filter (item => item.jobID === jobItem?._id).length
-            } Applicant(s)
-           </Button>}
+           footerContent={
+            <div className="flex justify-between w-full">
+                <Button onClick={()=> setShowApplicantsDrawer(true)}
+                    className="disabled:opacity-55 flex h-11 items-center justify-center px-5" 
+                    disabled = {jobApplications.filter (item => item.jobID === jobItem?._id).length ===0}>
+                    {jobApplications.filter (item => item.jobID === jobItem?._id).length} Applicant(s)
+                </Button>
+                <PostNewJob className="mt-2" jobToEdit={jobItem} mode="edit" />
+            </div>
+           }
            /> 
            <JobApplicants
            showApplicantsDrawer={showApplicantsDrawer}

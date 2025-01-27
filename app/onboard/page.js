@@ -39,7 +39,7 @@ async function onBoardPage({ searchParams }) {
     }
 
     console.log("Rendering OnBoard component");
-    if (!profileInfo) return <Loading />
+    
     return <OnBoard />;
 }
 

@@ -85,7 +85,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
         <Fragment>
             <Drawer open={showJobDetailsDrawer} onOpenChange={setShowJobDetailsDrawer}>
                 <CommonCard
-                    icon={<JobIcon />}
+                    icon={<JobIcon industry={jobItem?.industry} className="h-25 w-25" />}
                     title={jobItem?.title}
                     description={jobItem?.companyName}
                     footerContent={

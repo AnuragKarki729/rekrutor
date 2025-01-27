@@ -5,25 +5,31 @@ import { Button } from "../ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
 import CommonForm from "../common-form"
 import { initialPostNewJobFormData, postNewJobFormControls } from "@/utils"
-import { postNewJobAction } from "@/actions"
 
-function PostNewJob({profileInfo, user}){
+function PostNewJob({profileInfo, user, jobToEdit = null, mode = "create"}){
     const [showJobDialog, setShowJobDialog] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [jobFormData, setJobFormData] = useState({
-        ...initialPostNewJobFormData, 
-        companyName: profileInfo?.recruiterInfo?.companyName
-    })
+    const [jobFormData, setJobFormData] = useState(
+        mode === "edit" ? jobToEdit : {
+            ...initialPostNewJobFormData, 
+            companyName: profileInfo?.recruiterInfo?.companyName
+        }
+    )
+
+    const isEditMode = mode === "edit"
 
     function handlePostNewBtnValid(){
-        return Object.keys(jobFormData).every(control => jobFormData[control].trim() !== "");
+        return Object.keys(jobFormData?.required === true).every(control => jobFormData[control].trim() !== "");
     }
 
-    async function createNewJob(){
+    async function handleJobSubmit(){
         try {
             setLoading(true)
-            const response = await fetch('/api/jobs', {
-                method: 'POST',
+            const url = isEditMode ? `/api/jobs/${jobToEdit._id}` : '/api/jobs'
+            const method = isEditMode ? 'PUT' : 'POST'
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'x-revalidate-path': '/jobs'
@@ -31,55 +37,52 @@ function PostNewJob({profileInfo, user}){
                 body: JSON.stringify({
                     ...jobFormData,
                     recruiterId: user?.id,
-                    applicants: []
+                    ...(method === 'POST' && { applicants: [] })
                 })
             });
 
             if (!response.ok) {
-                throw new Error('Failed to create job');
+                throw new Error(`Failed to ${isEditMode ? 'update' : 'create'} job`);
             }
 
-            // Reset form and close dialog on success
-            setJobFormData({
-                ...initialPostNewJobFormData, 
-                companyName: profileInfo?.recruiterInfo?.companyName
-            });
             setShowJobDialog(false);
+            window.location.reload()
 
         } catch (error) {
-            console.error('Error creating job:', error);
-            // You might want to show an error message to the user
+            console.error(`Error ${isEditMode ? 'updating' : 'creating'} job:`, error);
         } finally {
             setLoading(false);
         }
     }
+
     return(
-        <div>
+        <div className="relative">
             <Button
-            onClick={() => setShowJobDialog(true)}
-            className="disabled:opacity-60 flex h-11 items-center justify-center px-5">
-            Post New Job
+                onClick={() => setShowJobDialog(true)}
+                className={`disabled:opacity-60 flex h-11 items-center justify-center px-5 
+                    ${isEditMode ? 'absolute bottom-0.5 right-4 bg-blue-500 text-white' : ''}`}
+            >
+                {isEditMode ? 'Edit Vacancy' : 'Post New Job'}
             </Button>
-            <Dialog  open = {showJobDialog} onOpenChange={()=> {
-                setShowJobDialog(false)
-                setJobFormData({
-                    ...initialPostNewJobFormData, 
-                    companyName: profileInfo?.recruiterInfo?.companyName
-                })
-                }}>
-                <DialogContent className="sm:max-2-screen-md h-[600px] overflow-auto">
+            <Dialog 
+                open={showJobDialog} 
+                onOpenChange={setShowJobDialog}
+            >
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
-                            Post New Job
+                            {isEditMode ? 'Edit Job Vacancy' : 'Post New Job'}
                         </DialogTitle>
                         <div className="grid gap-4 py-4">
                             <CommonForm
-                            buttonText={'Add'}
-                            formData={jobFormData}
-                            setFormData={setJobFormData}
-                            formControls={postNewJobFormControls}
-                            isBtnDisabled={!handlePostNewBtnValid()}
-                            action={createNewJob}/>
+                                buttonText={isEditMode ? 'Update Vacancy' : 'Post Vacancy'}
+                                formData={jobFormData}
+                                setFormData={setJobFormData}
+                                formControls={postNewJobFormControls}
+                                isBtnDisabled={!handlePostNewBtnValid()}
+                                action={handleJobSubmit}
+                                loading={loading}
+                            />
                         </div>
                     </DialogHeader>
                 </DialogContent>

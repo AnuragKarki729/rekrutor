@@ -1,4 +1,8 @@
 import qs from 'query-string'
+import { arrayCountries } from '../lib/constants'
+
+
+
 
 export const recruiterOnBoardFormControls = [
     {
@@ -43,82 +47,145 @@ export const candidateOnBoardFormControls = [
         label: 'Name',
         name: 'name',
         placeholder: 'First Name Last Name',
-        componentType: 'text'
-    },
-    {
-        label: 'Current Company',
-        name: 'currentCompany',
-        placeholder: 'e.g., Google, Microsoft, etc.',
-        componentType: 'text'
-    },
-    {
-        label: 'Current Job Location',
-        name: 'currentJobLocation',
-        placeholder: 'City, Country (e.g., New York, USA)',
-        componentType: 'text'
-    },
-    {
-        label: 'Preferred Job Location',
-        name: 'preferedJobLocation',
-        placeholder: 'City, Country or Remote',
-        componentType: 'text'
-    },
-    {
-        label: 'Current Salary (USD/year)',
-        name: 'currentSalary',
-        placeholder: 'e.g., 75000',
-        componentType: 'number'
-    },
-    {
-        label: 'Notice Period',
-        name: 'noticePeriod',
-        placeholder: 'e.g., 30 days, 2 months, Immediate',
-        componentType: 'text'
-    },
-    {
-        label: 'Skills',
-        name: 'skills',
-        placeholder: 'Separate skills with commas (e.g., React, Node.js, Python)',
-        componentType: 'text'
-    },
-    {
-        label: 'Previous Companies',
-        name: 'previousCompanies',
-        placeholder: 'Separate with commas (e.g., Amazon, Facebook)',
-        componentType: 'text'
-    },
-    {
-        label: 'Total Experience (years)',
-        name: 'totalExperience',
-        placeholder: 'e.g., 3.5',
-        componentType: 'number',
-        step: '0.5'
+        componentType: 'text',
+        required: true
     },
     {
         label: 'College/University',
         name: 'college',
         placeholder: 'e.g., Massachusetts Institute of Technology',
-        componentType: 'text'
+        componentType: 'text',
+        required: true
     },
     {
         label: 'College Location',
         name: 'collegeLocation',
         placeholder: 'City, Country (e.g., Cambridge, USA)',
-        componentType: 'text'
+        componentType: 'select',
+        options: arrayCountries,
+        required: true
     },
     {
-        label: 'Graduation Year',
-        name: 'graduatedYear',
-        placeholder: 'e.g., 2022',
+        label: 'Experience Level',
+        name: 'experienceLevel',
+        placeholder: 'Select your experience level',
+        componentType: 'select',
+        options: ['Fresh Graduate', 'Experienced'],
+        required: true
+    },
+    {
+        label: 'Current Company',
+        name: 'currentCompany',
+        placeholder: 'e.g., Google, Microsoft, etc.',
+        componentType: 'text',
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    {
+        label: 'Current Job Location',
+        name: 'currentJobLocation',
+        placeholder: 'City, Country (e.g., New York, USA)',
+        componentType: 'select',
+        options: arrayCountries,
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    {
+        label: 'Preferred Job Location',
+        name: 'preferedJobLocation',
+        placeholder: 'Country or Remote',
+        componentType: 'select',
+        options: arrayCountries,
+        required: true
+    },
+    {
+        label: 'Current Salary (USD/year)',
+        name: 'currentSalary',
+        placeholder: 'e.g., 75000',
         componentType: 'number',
-        min: '1950',
-        max: new Date().getFullYear()
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    {
+        label: 'Notice Period',
+        name: 'noticePeriod',
+        placeholder: 'e.g., 30 days, 2 months, Immediate',
+        componentType: 'text',
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    
+    {
+        label: 'Previous Companies',
+        name: 'previousCompanies',
+        placeholder: 'Add your previous work experience',
+        componentType: 'previousCompanies',
+        showWhen: (formData) => formData.experienceLevel === 'Experienced',
+        fields: [
+            {
+                label: 'Company Name',
+                name: 'companyName',
+                placeholder: 'e.g., Amazon, Facebook',
+                componentType: 'text'
+            },
+            {
+                label: 'Position',
+                name: 'position',
+                placeholder: 'e.g., Software Engineer',
+                componentType: 'text'
+            },
+            {
+                label: 'Start Date',
+                name: 'startDate',
+                componentType: 'date'
+            },
+            {
+                label: 'End Date',
+                name: 'endDate',
+                componentType: 'date'
+            }
+        ]
+        
+    },
+    {
+        label: 'Total Experience',
+        name: 'totalExperience',
+        placeholder: 'Calculated from previous experience',
+        componentType: 'totalExperience',
+        showWhen: (formData) => formData.experienceLevel === 'Experienced',
+        disabled: true
+    },
+    {
+        label: 'Skills',
+        name: 'skills',
+        placeholder: 'Separate skills with commas (e.g., React, Node.js, Python)',
+        componentType: 'text',
+        required: true
     },
     {
         label: 'Profile Links',
         name: 'profileLinks',
         placeholder: 'LinkedIn, GitHub, Portfolio (separate with commas)',
         componentType: 'text'
+    },
+    {
+        label: 'Industry',
+        name: 'industry',
+        placeholder: 'Select your industry experience',
+        componentType: 'select',
+        options: [
+            'Technology',
+            'Healthcare',
+            'Finance',
+            'Education',
+            'Manufacturing',
+            'Retail',
+            'Other'
+        ],
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    {
+        label: 'Specify Industry',
+        name: 'otherIndustry',
+        placeholder: 'Please specify your industry',
+        componentType: 'text',
+        showWhen: (formData) => formData.industry === 'Other'
     },
 ]
 
@@ -131,12 +198,16 @@ export const initialCandidateFormData = {
     noticePeriod: '',
     skills: '',
     currentCompany: '',
-    previousCompanies: '',
+    previousCompanies: [],
     totalExperience: '',
     college: '',
     collegeLocation: '',
     graduatedYear: '',
     profileLinks: '',
+    experienceLevel: 'Fresh Graduate',
+    yearsOfExperience: '',
+    industry: '',
+    otherIndustry: '',
 
 }
 
@@ -148,12 +219,16 @@ export const initialCandidateAccountFormData = {
     noticePeriod: '',
     skills: '',
     currentCompany: '',
-    previousCompanies: '',
+    previousCompanies: [],
     totalExperience: '',
     college: '',
     collegeLocation: '',
     graduatedYear: '',
     profileLinks: '',
+    experienceLevel: '',
+    yearsOfExperience: '',
+    industry: '',
+    otherIndustry: '',
 
 }
 
@@ -167,40 +242,89 @@ export const postNewJobFormControls = [
         disabled: true
     },
     {
-        label: 'Title',
+        label: 'Job Title',
         name: 'title',
         placeholder: 'Job Title',
-        componentType: 'input'
+        componentType: 'input',
+        required: true
     },
     {
-        label: 'Type',
+        label: 'Job Type',
         name: 'type',
-        placeholder: 'Job Type',
-        componentType: 'input'
+        placeholder: 'Select Job Type',
+        componentType: 'selectJob',
+        options: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance', 'Temporary'],
+        required: true
     },
     {
-        label: 'Location',
+        label: 'Job Location eg. India, USA, Remote',
         name: 'location',
         placeholder: 'Job Location',
-        componentType: 'input'
+        componentType: 'input',
+        required: true
     },
     {
-        label: 'Experience',
+        label: 'Experience Required',
         name: 'experience',
         placeholder: 'Enter Experience required',
-        componentType: 'input'
+        componentType: 'selectJob',
+        options: ['Fresh Graduate', 'Experienced'],
+        required: true
+    },
+    {
+        label: 'Years of Experience',
+        name: 'yearsOfExperience',
+        placeholder: 'Select years of experience',
+        componentType: 'selectJob',
+        options: ['0-1 year', '1-2 years', '2-3 years', '3-5 years', '5+ years'],
+        showWhen: (formData) => formData.experience === 'Experienced'
+    },
+    {
+        label: 'Industry Experience',
+        name: 'industry',
+        placeholder: 'Select required industry experience',
+        componentType: 'selectJob',
+        options: [
+            'Technology',
+            'Healthcare',
+            'Finance',
+            'Education',
+            'Manufacturing',
+            'Retail',
+            'Other'
+        ],
+        showWhen: (formData) => formData.experience === 'Experienced'
+    },
+    {
+        label: 'Salary Offered (USD/year)',
+        name: 'salary',
+        placeholder: 'Enter Salary',
+        componentType: 'number',
+        step: 100,
+        min: 0,
+        showWhen: (formData) => formData.experience === 'Experienced'
+    },
+    {
+        label: 'Specify Industry',
+        name: 'otherIndustry',
+        placeholder: 'Please specify the industry',
+        componentType: 'text',
+        showWhen: (formData) => 
+            formData.experience === 'Experienced' && 
+            formData.industry === 'Other'
     },
     {
         label: 'Description',
         name: 'description',
         placeholder: 'Job Description',
-        componentType: 'input'
+        componentType: 'input',
     },
     {
-        label: 'Skills',
+        label: 'Skills Required: React, Node.js (Separate with commas)',
         name: 'skills',
         placeholder: 'Skills Required',
-        componentType: 'input'
+        componentType: 'input',
+        required: true
     },
 ]
 
@@ -211,7 +335,10 @@ export const initialPostNewJobFormData = {
     location: '',
     experience: '',
     description: '',
-    skills: ''
+    skills: '',
+    yearsOfExperience: '',
+    industry: '',
+    otherIndustry: '',
 }
 
 export const filterMenuDataArray = [
@@ -255,4 +382,12 @@ export function formUrlQuery({ params, dataToAdd }) {
         },
         { skipNull: true } // Skip keys with null values
     );
+}
+
+export const initialJobFormData = {
+    // ... existing fields ...
+    experience: '',
+    yearsOfExperience: '',
+    industry: '',
+    // ... rest of the fields ...
 }

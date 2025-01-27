@@ -16,9 +16,11 @@ function JobApplicants({
     jobApplications}){
     return(
         <Drawer open = {showApplicantsDrawer} onOpenChange = {setShowApplicantsDrawer}>
-            <DrawerContent className = "max-h-[50vh]">
+            <DrawerContent className = "h-[85vh] mt-24">
+                <div className="flex justify-center">
                 <DrawerTitle>Applicants: </DrawerTitle>
-                <ScrollArea className = "h-auto overflow-y-auto">
+                </div>
+                <ScrollArea className = "h-full pr-4">
                     <CandidateList
                     currentCandidateDetails = {currentCandidateDetails}
                     setCurrentCandidateDetails= {setCurrentCandidateDetails}

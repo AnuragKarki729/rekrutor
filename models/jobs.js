@@ -7,15 +7,18 @@ const JobSchema = new mongoose.Schema({
     location: String,
     type: String,
     description: String,
-    experience:String,
+    experience: String,
+    yearsOfExperience: String,
+    industry: String,
+    salary: String,
     skills: String,
-    recruiterId:String,
-    applicants:[
+    recruiterId: String,
+    applicants: [
         {
-            name:String,
-            email:String,
-            userId:String,
-            status:String
+            name: String,
+            email: String,
+            userId: String,
+            status: String
         }
     ]
 })

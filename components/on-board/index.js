@@ -132,13 +132,21 @@ function OnBoard(){
     }, [file]);
 
     function handleCandidateFormValid() {
-        return Object.keys(candidateFormData).every((key) => {
-            const value = candidateFormData[key]
+        // Get only the required fields from candidateOnBoardFormControls
+        const requiredFields = candidateOnBoardFormControls
+            .filter(control => 
+                control.required && 
+                (!control.showWhen || control.showWhen(candidateFormData))
+            )
+            .map(control => control.name);
+
+        return requiredFields.every(fieldName => {
+            const value = candidateFormData[fieldName];
             if (typeof value === "string") {
-                return value.trim() !== ""
+                return value.trim() !== "";
             }
-            return value !== null && value !== undefined
-        })
+            return value !== null && value !== undefined;
+        });
     }
 
     const handleRecruiterFormValid = () => {
@@ -168,8 +176,7 @@ function OnBoard(){
             const response = await fetch('/api/profiles', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-revalidate-path': '/onboard'
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             })
@@ -178,13 +185,10 @@ function OnBoard(){
                 throw new Error('Failed to create profile')
             }
 
-            // Optionally redirect or show success message
-            window.location.href = '/jobs' // or use router.push('/jobs')
+            window.location.replace('/jobs')
 
         } catch (error) {
             console.error('Error creating profile:', error)
-            // Handle error (show error message to user)
-        } finally {
             setLoading(false)
         }
     }

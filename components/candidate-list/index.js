@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { Button } from "../ui/button"
 import { Dialog, DialogTitle, DialogContent, DialogFooter, DialogHeader } from "../ui/dialog"
 import { createClient } from "@supabase/supabase-js"
+import Image from "next/image"
+import '../ui/new_card.css'
+import Loading from "@/components/Loading"
 
 const supabaseClient = createClient(
     "https://hwbttezjdwqixmaftiyl.supabase.co",
@@ -24,8 +27,11 @@ function CandidateList({ jobApplications }) {
     const [showReportDialog, setShowReportDialog] = useState(false);
     const [reportReason, setReportReason] = useState("");
     const [reportedVideos, setReportedVideos] = useState([]);
+    const [error, setError] = useState(null);
 
-    // Fetch all candidate and job details once
+    // Add default avatar as a constant
+    const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
+
     useEffect(() => {
         let isMounted = true;
 
@@ -33,52 +39,82 @@ function CandidateList({ jobApplications }) {
             try {
                 const detailedCandidates = await Promise.all(
                     jobApplications.map(async (jobApplicant) => {
-                        const jobID = jobApplicant?.jobID;
-                        const candidateID = jobApplicant?.candidateUserID;
+                        try {
+                            const jobID = jobApplicant?.jobID;
+                            const candidateID = jobApplicant?.candidateUserID;
 
-                        // Fetch job and candidate details using REST API
-                        const [jobResponse, candidateResponse] = await Promise.all([
-                            fetch(`/api/jobs/${jobID}`),
-                            fetch(`/api/profiles/${candidateID}`)
-                        ]);
+                            if (!jobID || !candidateID) {
+                                console.warn('Missing jobID or candidateID:', { jobID, candidateID });
+                                return null;
+                            }
 
-                        if (!jobResponse.ok || !candidateResponse.ok) {
-                            throw new Error('Failed to fetch details');
+                            // Fetch job and candidate details
+                            const jobResponse = await fetch(`/api/jobs/${jobID}`);
+                            const candidateResponse = await fetch(`/api/profiles/${candidateID}`);
+
+                            // Check individual responses
+                            if (!jobResponse.ok) {
+                                throw new Error(`Job API error: ${jobResponse.status}`);
+                            }
+                            if (!candidateResponse.ok) {
+                                throw new Error(`Profile API error: ${candidateResponse.status}`);
+                            }
+
+                            const jobData = await jobResponse.json();
+                            const candidateData = await candidateResponse.json();
+
+                            // Validate required data
+                            if (!jobData || !candidateData) {
+                                throw new Error('Missing job or candidate data');
+                            }
+
+                            // Calculate scores with null checks
+                            const candidateExperience = parseFloat(candidateData?.candidateInfo?.totalExperience) || 0;
+                            const requiredExperience = parseFloat(jobData?.experience?.match(/[\d.]+/)?.[0]) || 0;
+
+                            const candidateSkills = candidateData?.candidateInfo?.skills?.split(",")
+                                .map(skill => skill.trim().toLowerCase()) || [];
+                            const requiredSkills = jobData?.skills?.split(",")
+                                .map(skill => skill.trim().toLowerCase()) || [];
+
+                            const matchingSkillsCount = requiredSkills.filter(skill => 
+                                candidateSkills.includes(skill)
+                            ).length;
+
+                            const experienceScore = candidateExperience >= requiredExperience ? 1 : 0;
+                            const skillsMatchScore = requiredSkills.length > 0 
+                                ? matchingSkillsCount / requiredSkills.length 
+                                : 0;
+
+                            return {
+                                ...jobApplicant,
+                                candidateDetails: candidateData?.candidateInfo,
+                                jobDetails: jobData,
+                                totalScore: matchingSkillsCount + experienceScore,
+                                experienceScore,
+                                skillsMatchScore,
+                            };
+                        } catch (error) {
+                            console.warn('Error processing candidate:', error);
+                            return null;
                         }
-
-                        const [jobData, candidateData] = await Promise.all([
-                            jobResponse.json(),
-                            candidateResponse.json()
-                        ]);
-
-                        // Rest of your scoring logic remains the same
-                        const candidateExperience = candidateData?.candidateInfo?.totalExperience || 0;
-                        const requiredExperience = parseFloat(jobData?.experience?.match(/[\d.]+/)?.[0]) || 0;
-
-                        const candidateSkills = candidateData?.candidateInfo?.skills?.split(",").map((skill) => skill.trim().toLowerCase()) || [];
-                        const requiredSkills = jobData?.skills?.split(",").map((skill) => skill.trim().toLowerCase()) || [];
-
-                        const matchingSkillsCount = requiredSkills.filter((skill) => candidateSkills.includes(skill)).length;
-                        const experienceScore = candidateExperience >= requiredExperience ? 1 : 0;
-                        const totalScore = matchingSkillsCount + experienceScore;
-
-                        return {
-                            ...jobApplicant,
-                            candidateDetails: candidateData?.candidateInfo,
-                            jobDetails: jobData,
-                            totalScore,
-                            experienceScore,
-                            skillsMatchScore: requiredSkills.length > 0 ? matchingSkillsCount / requiredSkills.length : 0,
-                        };
                     })
                 );
 
                 if (isMounted) {
-                    setCandidatesWithDetails(detailedCandidates);
+                    // Filter out null values from failed fetches
+                    const validCandidates = detailedCandidates.filter(candidate => candidate !== null);
+                    setCandidatesWithDetails(validCandidates);
+                    
+                    if (validCandidates.length === 0) {
+                        setError('No valid candidates found');
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching candidate details:', error);
-                // Handle error (maybe show a toast notification)
+                if (isMounted) {
+                    setError('Failed to load candidates. Please try again later.');
+                }
             }
         }
 
@@ -167,7 +203,8 @@ function CandidateList({ jobApplications }) {
     // Handle resume download
     function handlePreviewResume(candidate) {
         const { data } = supabaseClient.storage.from('rekrutor-public')
-            .getPublicUrl(`/${candidate?.resume}`);
+            .getPublicUrl(`public/${candidate?.resume}`);
+        console.log(data);
 
         if (data?.publicUrl) {
             setResumeUrl(data.publicUrl); // Set the resume URL for the iframe
@@ -228,113 +265,185 @@ function CandidateList({ jobApplications }) {
         }
     }
 
+    const getDisplaySkills = (candidate) => {
+        const candidateSkills = candidate?.candidateDetails?.skills?.split(",").map(skill => skill.trim()) || [];
+        const jobSkills = candidate?.jobDetails?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || [];
+        
+        // Find matching skills
+        const matchingSkills = candidateSkills.filter(skill => 
+            jobSkills.includes(skill.toLowerCase())
+        );
+
+        // If there are matching skills, return them
+        if (matchingSkills.length > 0) {
+            return {
+                skills: matchingSkills,
+                isMatching: true
+            };
+        }
+
+        // If no matching skills, return first 4 skills
+        return {
+            skills: candidateSkills.slice(0, 4),
+            isMatching: false
+        };
+    };
+
+    // Add error display
+    if (error) {
+        return (
+            <div className="p-10 text-center">
+                <p className="text-red-500">{error}</p>
+            </div>
+        );
+    }
+
+    // Show loading state when no candidates are loaded yet
+    if (candidatesWithDetails.length === 0) {
+        return (
+            <Loading />
+        );
+    }
+
     return (
         <div>
-            <div className="grid grid-cols-1 gap-3 p-10 md:grid-cols-2 lg:grid-cols-3">
-                {candidatesWithDetails.map((candidate) => (
-                    <div
-                        key={candidate?.candidateUserID}
-                        className={`bg-white shadow-lg w-full max-2-sm rounded-lg overflow-hidden mx-auto mt-4`}
-                    >
-                        <div className="px-4 my-6 flex justify-between items-center">
-                            <h3 className="text-lg font-bold">{candidate?.candidateDetails?.name}</h3>
-                            <Button
-                                onClick={() => {
-                                    setCurrentCandidateDetails(candidate.candidateDetails);
-                                    setShowCurrentCandidateDetailsModal(true);
-                                }}
-                                className="flex h-11 items-center justify-center px-5"
-                            >
-                                View Profile
-                            </Button>
+            <div className="grid grid-cols-1 gap-6 p-10 md:grid-cols-2 lg:grid-cols-3 justify-center">
+                {candidatesWithDetails.map((candidate) => {
+                    const displaySkills = getDisplaySkills(candidate);
+                    
+                    return (
+                        <div key={candidate?.candidateUserID} className="card shadow-lg" data-state="#about">
+                            <div className="card-header">
+                                <div 
+                                    className="card-cover" 
+                                    style={{ 
+                                        backgroundImage: `url(https://images.unsplash.com/photo-1549068106-b024baf5062d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80)` 
+                                    }}
+                                ></div>
+                                <Image 
+                                    width={80}
+                                    height={80}
+                                    className="card-avatar" 
+                                    src={DEFAULT_AVATAR}
+                                    alt="avatar" 
+                                />
+                                <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
+                                <h2 className="card-jobtitle text-center">
+                                    {candidate?.candidateDetails?.totalExperience === "" ? "Fresh Graduate" : candidate?.candidateDetails?.currentCompany}
+                                </h2>
+                            </div>
+                            <div className="card-main">
+                                <div className="card-content">
+                                    <div className="card-subtitle text-center">Match Score</div>
+                                    <div className="flex justify-center">
+                                    <span
+                                        className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${
+                                            candidate.totalScore >= 1.5
+                                                ? "bg-green-500 text-white"
+                                                : candidate.totalScore >= 1
+                                                    ? "bg-yellow-500 text-black"
+                                                    : "bg-red-500 text-white"
+                                        }`}
+                                    >
+                                        {candidate.totalScore.toFixed(2)}
+                                    </span>
+                                    </div>
+                                    <div className="card-desc mt-2">
+                                        <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
+                                            {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
+                                        </p>
+                                        <div className="flex flex-wrap gap-1 justify-center">
+                                            {displaySkills.skills.map((skill, index) => (
+                                                <span 
+                                                    key={index}
+                                                    className={`text-xs px-2 py-1 rounded text-center ${
+                                                        displaySkills.isMatching 
+                                                            ? 'bg-green-800 text-white-800'
+                                                            : 'bg-yellow-100 text-black font-bold'
+                                                    }`}
+                                                >
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className = "flex justify-center">
+                                    <Button 
+                                        className="justify-center" 
+                                        onClick={() => {
+                                            setCurrentCandidateDetails(candidate.candidateDetails);
+                                            setShowCurrentCandidateDetailsModal(true);
+                                        }}
+                                    >
+                                        View Profile
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="px-4 pb-4">
-                            <span
-                                className={`inline-block px-3 py-1 rounded-lg font-bold ${candidate.totalScore >= 1.5
-                                    ? "bg-green-500 text-white"
-                                    : candidate.totalScore >= 1
-                                        ? "bg-yellow-500 text-black"
-                                        : "bg-red-500 text-white"
-                                    }`}
-                            >
-                                Match Score: {candidate.totalScore.toFixed(2)}
-                            </span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             {showCurrentCandidateDetailsModal && (
                 <Dialog
                     open={showCurrentCandidateDetailsModal}
-                    onOpenChange={() => {
-                        setCurrentCandidateDetails(null);
-                        setShowCurrentCandidateDetailsModal(false);
-                    }}
+                    onOpenChange={() => setShowCurrentCandidateDetailsModal(false)}
+                    className="max-w-[90%] w-[1200px]"
                 >
-                    <DialogContent>
-                        <div>
-                            <DialogTitle>{currentCandidateDetails?.name}</DialogTitle>
-                            <h1>{currentCandidateDetails?.email}</h1>
-                            <p>{currentCandidateDetails?.currentCompany}</p>
-                            <p>{currentCandidateDetails?.currentJobLocation}</p>
-                            <p>Salary: ${currentCandidateDetails?.currentSalary}</p>
-                            <div className="flex items-center gap-2">
-                                <p>Experience: {currentCandidateDetails?.totalExperience} year(s)</p>
-                                {currentCandidateDetails?.totalExperience >= (candidatesWithDetails.find(
-                                    c => c.candidateUserID === currentCandidateDetails?.userId
-                                )?.jobDetails?.experience?.match(/[\d.]+/)?.[0] || 0) ? (
-                                    <svg 
-                                        className="w-5 h-5 text-green-500" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth="2" 
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    </svg>
-                                ) : (
-                                    <svg 
-                                        className="w-5 h-5 text-yellow-500" 
-                                        fill="currentColor" 
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path 
-                                            d="M12 2L2 21h20L12 2zm0 3.45l6.04 11.55H5.96L12 5.45zm-1 5v4h2v-4h-2zm0 6v2h2v-2h-2z"
-                                        />
-                                    </svg>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">
+                                {currentCandidateDetails?.name}
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-2 gap-6 py-4">
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+                                    <p><span className="font-medium">College:</span> {currentCandidateDetails?.college}</p>
+                                    <p><span className="font-medium">Location:</span> {currentCandidateDetails?.collegeLocation}</p>
+                                    {console.log(currentCandidateDetails)}
+                                    <p><span className="font-medium">Experience Level:</span> {currentCandidateDetails?.totalExperience === "" ? "Fresher" : currentCandidateDetails?.experienceLevel}</p>
+                                </div>
+
+                                {currentCandidateDetails?.experienceLevel === 'Experienced' && (
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-2">Professional Details</h3>
+                                        <p><span className="font-medium">Current Company:</span> {currentCandidateDetails?.currentCompany}</p>
+                                        <p><span className="font-medium">Current Location:</span> {currentCandidateDetails?.currentJobLocation}</p>
+                                        <p><span className="font-medium">Total Experience:</span> {currentCandidateDetails?.totalExperience}</p>
+                                        <p><span className="font-medium">Notice Period:</span> {currentCandidateDetails?.noticePeriod}</p>
+                                        <p><span className="font-medium">Current Salary:</span> ${currentCandidateDetails?.currentSalary}/year</p>
+                                    </div>
                                 )}
                             </div>
-                            <p>Notice Period: {currentCandidateDetails?.noticePeriod}</p>
-                            <div className="flex flex-wrap gap-2 font-bold">
-                                Skills: {currentCandidateDetails?.skills}
-                            </div>
-                            <div className="flex flex-wrap gap-2 font-bold">
-                                Links:{' '}
-                                {currentCandidateDetails?.profileLinks?.split(',').map((link, index) => {
-                                    const trimmedLink = link.trim();
-                                    const fullLink = trimmedLink.startsWith('http') ? trimmedLink : `https://${trimmedLink}`;
-                                    
-                                    return (
-                                        <span key={index}>
-                                            <a 
-                                                href={fullLink} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800 hover:underline"
+
+                            <div className="space-y-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2">Skills & Preferences</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {currentCandidateDetails?.skills?.split(',').map((skill, index) => (
+                                            <span 
+                                                key={index}
+                                                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                                             >
-                                                {trimmedLink}
-                                            </a>
-                                            {index < currentCandidateDetails.profileLinks.split(',').length - 1 && ', '}
-                                        </span>
-                                    );
-                                })}
+                                                {skill.trim()}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <p className="mt-4"><span className="font-medium">Preferred Location:</span> {currentCandidateDetails?.preferedJobLocation}</p>
+                                </div>
+
+                                {currentCandidateDetails?.profileLinks && (
+                                    <div>
+                                        <h3 className="text-lg font-semibold mb-2">Profile Links</h3>
+                                        <p>{currentCandidateDetails?.profileLinks}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <DialogFooter>
+
+                        <DialogFooter className="mt-6">
                             <div className="flex justify-evenly items-center w-full">
                                 {/* Reject Button - Left */}
                                 <Button
@@ -594,8 +703,7 @@ function CandidateList({ jobApplications }) {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            )
-            }
+            )}
         </div >
     );
 }
