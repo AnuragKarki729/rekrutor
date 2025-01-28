@@ -22,7 +22,7 @@ function RecruiterJobCard({jobItem, jobApplications}){
            footerContent={
             <div className="flex justify-between w-full">
                 <Button onClick={()=> setShowApplicantsDrawer(true)}
-                    className="disabled:opacity-55 flex h-11 items-center justify-center px-5" 
+                    className="disabled:opacity-55 flex h-11 items-center justify-center px-3" 
                     disabled = {jobApplications.filter (item => item.jobID === jobItem?._id).length ===0}>
                     {jobApplications.filter (item => item.jobID === jobItem?._id).length} Applicant(s)
                 </Button>

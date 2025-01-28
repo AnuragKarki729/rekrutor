@@ -174,6 +174,10 @@ function OnBoard(){
                 email: user?.primaryEmailAddress?.emailAddress
             }
 
+            if (currentTab === 'recruiter') {
+                delete data.candidateInfo;
+            }
+
             const response = await fetch('/api/profiles', {
                 method: 'POST',
                 headers: {
@@ -182,15 +186,16 @@ function OnBoard(){
                 body: JSON.stringify(data)
             })
 
+            const responseData = await response.json();
+            
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.message || 'Failed to create profile')
+                throw new Error(responseData.error || 'Failed to create profile')
             }
 
             window.location.replace('/jobs')
 
         } catch (error) {
-            console.error('Error creating profile:', error)
+            console.error('Error creating profile:', error.message)
             setLoading(false)
         }
     }

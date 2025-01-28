@@ -56,24 +56,29 @@ function PostNewJob({profileInfo, user, jobToEdit = null, mode = "create"}){
     }
 
     return(
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
             <Button
                 onClick={() => setShowJobDialog(true)}
-                className={`disabled:opacity-60 flex h-11 items-center justify-center px-5 
-                    ${isEditMode ? 'absolute bottom-0.5 right-4 bg-blue-500 text-white' : ''}`}
+                className={`w-full sm:w-auto disabled:opacity-60 flex h-10 sm:h-11 items-center justify-center 
+                    px-4 sm:px-5 text-sm sm:text-base transition-all duration-200 
+                    ${isEditMode 
+                        ? 'absolute bottom-0 right-0 sm:right-4 bg-blue-500 text-white hover:bg-gradient-to-r from-red-500 to-blue-800' 
+                        : 'hover:bg-gradient-to-r from-red-500 to-blue-800'}`}
             >
-                {isEditMode ? 'Edit Vacancy' : 'Post New Job'}
+                {isEditMode ? 'Edit Job' : 'Post New Job'}
             </Button>
             <Dialog 
                 open={showJobDialog} 
                 onOpenChange={setShowJobDialog}
+                className="fixed z-50 w-full sm:w-auto"
             >
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto 
+                    w-[95vw] sm:w-full mx-auto rounded-lg">
+                    <DialogHeader className="space-y-4 sm:space-y-6">
+                        <DialogTitle className="text-xl sm:text-2xl font-semibold text-center sm:text-left">
                             {isEditMode ? 'Edit Job Vacancy' : 'Post New Job'}
                         </DialogTitle>
-                        <div className="grid gap-4 py-4">
+                        <div className="grid gap-4 sm:gap-6 py-2 sm:py-4">
                             <CommonForm
                                 buttonText={isEditMode ? 'Update Vacancy' : 'Post Vacancy'}
                                 formData={jobFormData}
@@ -82,6 +87,7 @@ function PostNewJob({profileInfo, user, jobToEdit = null, mode = "create"}){
                                 isBtnDisabled={!handlePostNewBtnValid()}
                                 action={handleJobSubmit}
                                 loading={loading}
+                                className="space-y-4 sm:space-y-6"
                             />
                         </div>
                     </DialogHeader>

@@ -280,9 +280,9 @@ export const postNewJobFormControls = [
         showWhen: (formData) => formData.experience === 'Experienced'
     },
     {
-        label: 'Industry Experience',
+        label: 'Job Industry',
         name: 'industry',
-        placeholder: 'Select required industry experience',
+        placeholder: 'Select Job Industry',
         componentType: 'selectJob',
         options: [
             'Technology',
@@ -293,8 +293,7 @@ export const postNewJobFormControls = [
             'Retail',
             'Other'
         ],
-        showWhen: (formData) => formData.experience === 'Experienced'
-    },
+            },
     {
         label: 'Salary Offered (USD/year)',
         name: 'salary',

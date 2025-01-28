@@ -106,39 +106,71 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
             }
         )
     );
-    console.log("Applied Jobs:", appliedJobs);
+    console.log("Job List:", jobList);
+    console.log()
 
     const filteredJobList = {
         "All Jobs": jobList,
-        "High Match Potential": jobList.filter(jobItem => {
-            const jobExperience = parseFloat(jobItem?.experience?.match(/[\d.]+/)?.[0]) || 0
-            const candidateExperience = profileInfo?.candidateInfo?.totalExperience || 0
+        "Perfect Match": jobList.filter(jobItem => {
             const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
             const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
 
-            const ExperienceGap = jobExperience - candidateExperience
+            const HighSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
+            const candidateIndustry = profileInfo?.candidateInfo?.industry
+            const jobIndustry = jobItem?.industry
 
+            const CandidateIndustryMatch = candidateIndustry === jobIndustry
 
-            const HighexperienceMatch = ExperienceGap <= 0;
-            const HighSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
+            const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
+            const jobExpYears = parseFloat(jobItem?.yearsOfExperience.split("-")[0]) + 0.5
 
+            const ExpMatch = candidateExpYears >= jobExpYears
 
-            return HighexperienceMatch && HighSkillsMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+            const HighexperienceMatch = CandidateIndustryMatch && ExpMatch && HighSkillsMatch
+
+            if (CandidateIndustryMatch && (profileInfo?.candidateInfo?.experienceLevel ==="Fresher") && (jobItem?.experience === "Fresher")) {
+                return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+            }
+
+            return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
         }),
-        "Low Match Potential": jobList.filter(jobItem => {
-            const jobExperience = parseFloat(jobItem?.experience?.match(/[\d.]+/)?.[0]) || 0;
-            const candidateExperience = profileInfo?.candidateInfo?.totalExperience || 0;
-            const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || [];
-            const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || [];
+        "Medium Match": jobList.filter(jobItem => {
+            const candidateIndustry = profileInfo?.candidateInfo?.industry
+            const jobIndustry = jobItem?.industry
 
-            const ExperienceGap = jobExperience - candidateExperience;
-            const LowExperienceMatch = ExperienceGap > 0;
-            const NoSkillsMatch = !candidateSkills.some(skill => jobSkills.includes(skill));
-            const LowSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
-            const SignificantExperienceGap = jobExperience > (candidateExperience + 2);
+            const CandidateIndustryMatch = candidateIndustry === jobIndustry
 
-            // Return true if either low match or no match conditions are met
-            return (LowExperienceMatch && LowSkillsMatch) || NoSkillsMatch || SignificantExperienceGap;
+            const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+            const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+
+            const MedSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
+
+            const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
+            const jobExpYears = parseFloat(jobItem?.yearsOfExperience.split("-")[0]) + 0.5
+
+            const MedExpMatch = candidateExpYears < jobExpYears
+
+            const MedexperienceMatch = CandidateIndustryMatch && MedExpMatch
+            const MedexperienceSkillsMatch = CandidateIndustryMatch && MedSkillsMatch
+
+            return MedexperienceMatch && MedexperienceSkillsMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+        }),
+        "Industry Match": jobList.filter(jobItem => {
+            const candidateIndustry = profileInfo?.candidateInfo?.industry
+            const jobIndustry = jobItem?.industry
+
+            const CandidateIndustryMatch = candidateIndustry === jobIndustry
+
+            return CandidateIndustryMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ;
+             // Only consider high match potential
+        }),
+        "Fresh Graduates": jobList.filter(jobItem => {
+            const candidateExpLevel = profileInfo?.candidateInfo?.experienceLevel
+            const jobExpLevel = jobItem?.experience
+
+            const FreshGradMatch = candidateExpLevel === jobExpLevel
+
+            return FreshGradMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ;
         }),
         "Applied Jobs": appliedJobs, 
         
@@ -147,42 +179,28 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                {/* Header Section */}
-                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between border-b border-gray-200 pb-4 sm:pb-6 pt-16 sm:pt-24 space-y-4 sm:space-y-0">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                {/* Header Section - More responsive spacing */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between 
+                    border-b border-gray-200 pb-4 sm:pb-6 pt-8 sm:pt-12 lg:pt-16 space-y-4 sm:space-y-0">
                     <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">
                         {profileInfo?.role === 'candidate' ? "Explore All Jobs" : "Jobs Dashboard"}
                     </h1>
 
-                    {/* Filter/Post Job Section */}
-                    <div className="flex items-center">
+                    {/* Filter/Post Job Section - Better mobile layout */}
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                         {profileInfo?.role === "candidate" ? (
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                                {/* Filter Menu */}
+                                {/* Filter Menu - Improved mobile experience */}
                                 <Menubar className="border rounded-lg shadow-sm bg-white w-full sm:w-auto">
-                                    {loading && (
-                                        <span className="px-3 py-2 text-sm text-gray-500 animate-pulse">
-                                            Updating filters...
-                                        </span>
-                                    )}
-                                    <div className="flex flex-wrap">
+                                    <div className="flex flex-wrap gap-2">
                                         {filterMenu.map((menu, index) => (
                                             <MenubarMenu key={menu.id || index}>
-                                                <MenubarTrigger className="px-2 sm:px-4 py-2 text-sm sm:text-base hover:bg-gray-50">
+                                                <MenubarTrigger className="px-3 py-2 text-sm lg:text-base hover:bg-gray-50 transition-colors">
                                                     <div className="flex items-center gap-2">
                                                         {menu.name}
-                                                        <svg 
-                                                            className="w-4 h-4 text-gray-500" 
-                                                            fill="none" 
-                                                            viewBox="0 0 24 24" 
-                                                            stroke="currentColor"
-                                                        >
-                                                            <path 
-                                                                strokeLinecap="round" 
-                                                                strokeLinejoin="round" 
-                                                                strokeWidth={2} 
-                                                                d="M19 9l-7 7-7-7" 
-                                                            />
+                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                         </svg>
                                                     </div>
                                                 </MenubarTrigger>
@@ -235,13 +253,14 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                     </div>
                                 </Menubar>
 
-                                {/* Clear Filters Button */}
+                                {/* Clear Filters Button - Better spacing */}
                                 {Object.keys(filterParams || {}).length > 0 && (
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handleClearFilters()}
-                                        className="text-sm text-gray-600 hover:text-gray-900 w-full sm:w-auto"
+                                        className="text-sm text-gray-600 hover:text-gray-900 w-full sm:w-auto 
+                                            transition-colors duration-200 flex items-center justify-center"
                                     >
                                         Clear Filters
                                         <X className="w-4 h-4 ml-2" />
@@ -254,8 +273,8 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                     </div>
                 </div>
 
-                {/* Tabs Section */}
-                <div className="pt-4 sm:pt-6 pb-16 sm:pb-24">
+                {/* Tabs Section - Improved spacing and mobile layout */}
+                <div className="py-6 sm:py-8 lg:py-12">
                     {profileInfo?.role === "candidate" ? (
                         <Tabs
                             defaultValue="All Jobs"
@@ -263,49 +282,80 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                             onValueChange={(value) => setActiveTab(value)}
                             className="w-full"
                         >
-                            <TabsList className="mb-4 sm:mb-6 flex flex-wrap gap-2 justify-start">
-                              
-                                <TabsTrigger value="All Jobs" className="text-sm sm:text-base px-2 sm:px-4">
+                            <TabsList className="mb-6 flex flex-wrap gap-2 justify-start">
+                                {/* Tab triggers with consistent spacing */}
+                               
+                                <TabsTrigger value="Perfect Match" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
+                                    Perfect Match
+                                    {filteredJobList["Perfect Match"].length > 0 && (    
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
+                                            {filteredJobList["Perfect Match"].length}
+                                        </span>
+                                    )}
+                                </TabsTrigger>
+                                <TabsTrigger value="Medium Match" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
+                                    Medium Match
+                                        {filteredJobList["Medium Match"].length > 0 && (
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
+                                            {filteredJobList["Medium Match"].length}
+                                        </span>
+                                    )}
+                                </TabsTrigger>
+                                <TabsTrigger value="Industry Match" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
+                                    Industry Match
+                                    {filteredJobList["Industry Match"].length > 0 && (
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
+                                            {filteredJobList["Industry Match"].length}
+                                        </span>
+                                    )}
+                                </TabsTrigger>
+                                <TabsTrigger value="Fresh Graduates" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
+                                    Fresh Graduates
+                                    {filteredJobList["Fresh Graduates"].length > 0 && (
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
+                                            {filteredJobList["Fresh Graduates"].length}
+                                        </span>
+                                    )}
+                                </TabsTrigger>
+                                <TabsTrigger value="All Jobs" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     All Jobs
                                     {filteredJobList["All Jobs"].length > 0 && (
-                                        <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
                                             {filteredJobList["All Jobs"].length}
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="High Match Potential" className="text-sm sm:text-base px-2 sm:px-4">
-                                    New Jobs In Your Caliber
-                                    {filteredJobList["High Match Potential"].length > 0 && (    
-                                        <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
-                                            {filteredJobList["High Match Potential"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Low Match Potential" className="text-sm sm:text-base px-2 sm:px-4">
-                                    New Jobs Outside Your Caliber
-                                    {filteredJobList["Low Match Potential"].length > 0 && (
-                                        <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
-                                            {filteredJobList["Low Match Potential"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Applied Jobs" className="text-sm sm:text-base px-2 sm:px-4">
+                                <TabsTrigger value="Applied Jobs" 
+                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Applied Jobs
                                     {filteredJobList["Applied Jobs"].length > 0 && (
-                                        <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
+                                            rounded-full transition-colors duration-200">
                                             {filteredJobList["Applied Jobs"].length}
                                         </span>
                                     )}
                                 </TabsTrigger>
                             </TabsList>
+
+                            {/* Content grid with responsive columns */}
                             <TabsContent value={activeTab}>
-                                <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8">
+                                <div className="grid grid-cols-1 gap-6">
                                     {loading ? (
                                         <div className="flex justify-center items-center min-h-[200px]">
-                                            <div className="text-gray-500">Loading jobs...</div>
+                                            <div className="text-gray-500 animate-pulse">Loading jobs...</div>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                                             {filteredJobList[activeTab]?.length > 0 ? (
                                                 filteredJobList[activeTab].map((jobItem, index) => (
                                                     <CandidateJobCard
@@ -316,20 +366,20 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                                     />
                                                 ))
                                             ) : (
-                                                <p className="text-gray-600 col-span-full text-center py-8">
+                                                <p className="text-gray-600 col-span-full text-center py-8 text-sm sm:text-base">
                                                     {activeTab === "Applied Jobs" 
                                                         ? "You haven't applied to any jobs yet."
                                                         : `No jobs found for ${activeTab}.`
                                                     }
                                                 </p>
                                             )}
-                                        </div>
+                                            </div>
                                     )}
                                 </div>
                             </TabsContent>
                         </Tabs>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                             {jobList && jobList.length > 0
                                 ? jobList.map((jobItem, index) => (
                                     <RecruiterJobCard
@@ -339,7 +389,9 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         jobApplications={jobApplications}
                                     />
                                 ))
-                                : <p className="text-gray-600">No jobs available.</p>}
+                                : <p className="text-gray-600 text-center py-8 col-span-full text-sm sm:text-base">
+                                    No jobs available.
+                                  </p>}
                         </div>
                     )}
                 </div>

@@ -30,18 +30,79 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
 
     const ExperienceGap = jobExperience - candidateExperience
 
-    const HighexperienceMatch = ExperienceGap <= 0
-    const LowExperienceMatch = ExperienceGap > 0
+    
+    // Calculate match potential
+    const calculateMatchPotential = () => {
+        // Get candidate and job details
+        const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+        const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
+        const candidateIndustry = profileInfo?.candidateInfo?.industry
+        const jobIndustry = jobItem?.industry
+        const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
+        const jobExpYears = parseFloat(jobItem?.yearsOfExperience?.split("-")[0]) + 0.5
+        const candidateExpLevel = profileInfo?.candidateInfo?.experienceLevel
+        const jobExpLevel = jobItem?.experience
 
+        // Check for industry match
+        const industryMatch = candidateIndustry === jobIndustry
 
+        // Check for skills match
+        const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
+        const mediumSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
+        const lowSkillsMatch = candidateSkills.every(skill => !jobSkills.includes(skill))
+        // Check for experience match
+        const expMatch = candidateExpYears >= jobExpYears
+        const medExpMatch = candidateExpYears - jobExpYears <= 1.5 && candidateExpYears - jobExpYears >= -1.5
+        const lowExpMatch = candidateExpYears < jobExpYears
+        const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresher"
 
-    const HighSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
-    const LowSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
+        if (perfectSkillsMatch && expMatch && industryMatch) {
+            return "Perfect Match!"
+        } else if (expMatch && industryMatch) {
+            return "High Match"
+        }else if (freshGradMatch && industryMatch) {
+            return "Perfect Match"
+        } else if (freshGradMatch && !industryMatch) {
+            return "Worth a Shot"
+        } else if (lowSkillsMatch && lowExpMatch && !industryMatch) {
+            return "Low Match !"
+        } else if (medExpMatch && mediumSkillsMatch && industryMatch) {
+            return "Great Match"
+        } else if (medExpMatch && mediumSkillsMatch && !industryMatch) {
+            return "Worth a Shot"
+        } else if (perfectSkillsMatch) {
+            if (medExpMatch && industryMatch) {
+                return "Great Match"
+            } else if (medExpMatch && !industryMatch) {
+                return "Worth a Shot"
+            } else if (lowExpMatch && industryMatch) {
+                return "Low Match"
+            } else if (lowExpMatch && !industryMatch) {
+                return "Low Match !"
+            }
+        }
 
-    const matchPotential = HighexperienceMatch && HighSkillsMatch ? "High Match Potential" :
-        LowExperienceMatch && HighSkillsMatch ? "Not Enough Experience" :
-            HighexperienceMatch && LowSkillsMatch ? "Low Skill Match" :
-                LowExperienceMatch && LowSkillsMatch ? "Low Match Potential" : "No Match"
+    }
+
+    const matchPotential = calculateMatchPotential()
+
+    // Get match color based on potential
+    const getMatchColor = () => {
+        switch (matchPotential) {
+            case "Perfect Match":
+                return "text-white bg-gradient-to-r from-green-600 to-purple-800"
+            case "High Match":
+                return "text-white bg-gradient-to-r from-orange-600 to-yellow-800"
+            case "Great Match":
+                return "text-white bg-gradient-to-r from-blue-600 to-purple-800"
+            case "Worth a Shot":
+                return "text-white bg-gradient-to-r from-blue-600 to-green-800"
+            case "Low Match !":
+                return "text-white bg-gradient-to-r from-red-600 to-purple-600"
+            default:
+                return "text-gray-600 bg-gray-50"
+        }
+    }
 
     console.log(jobApplications, 'jobApplications')
     console.log(profileInfo, "profileInfo")
@@ -92,16 +153,13 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                         <div className="flex space-x-2">
                             <Button
                                 onClick={() => setShowJobDetailsDrawer(true)}
-                                className="flex h-11 items-center justify-center px-5"
+                                className="flex h-11 items-center justify-center px-5 hover:bg-gradient-to-r from-green-600 to-purple-800"
                             >
                                 View Details
                             </Button>
                             <Button
                                 onClick={() => setShowMatchDetails(true)}
-                                className={`flex h-11 items-center justify-center px-5 ${matchPotential === "High Match Potential"
-                                    ? "bg-green-500 text-white"
-                                    : "bg-red-500 text-white"
-                                    }`}
+                                className={getMatchColor()}
                             >
                                 {matchPotential}
                             </Button>
@@ -113,11 +171,8 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                         {/* Flex container for title and badge */}
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                             <DrawerTitle className="text-4xl font-extrabold text-gray-800 flex items-center gap-2">
-                                {jobItem?.title}
-                                {/* Full Time Badge */}
-                                <span className="hidden sm:inline-flex w-auto h-[30px] bg-black text-white rounded-[4px] justify-center items-center px-3 text-sm font-medium">
-                                    {jobItem?.type} Time
-                                </span>
+                            {jobItem?.type} {jobItem?.title}
+                              
                             </DrawerTitle>
                             {/* Buttons (right aligned) */}
                             <div className="flex gap-2">
@@ -148,21 +203,18 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                     </DrawerHeader>
                     <DrawerDescription className="text-xl text-gray-900">
                         {jobItem?.description}
-                        <span className="text-sm font-normal ml-4 text-gray-500">
-                            {jobItem?.location}
+                        <span className="text-lg font-normal ml-4 text-gray-500">
+                            {jobItem?.location} | {jobItem?.salary ? `USD ${jobItem?.salary}` : "Salary Negotiable"}
                         </span>
                     </DrawerDescription>
                     {/* Full Time Badge (centered at bottom on smaller screens) */}
                     <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 sm:hidden">
                         <div className="w-auto flex justify-center items-center h-[30px] bg-black rounded-[4px] px-3">
-                            <h2 className="text-sm font-medium text-white">
-                                {jobItem?.type} Time
-                            </h2>
                         </div>
                     </div>
                     {/* Experience Section */}
                     <h3 className="text-lg font-medium text-black mt-3">
-                        Experience: {jobItem?.experience} year(s)
+                        Experience Required: {jobItem?.yearsOfExperience ? jobItem?.yearsOfExperience : jobItem?.experience === "Fresher" ? "Fresh Graduates Welcome" : "Experienced Required"}
                     </h3>
                     {/* Skills Section */}
                     <div className="mt-6">
@@ -183,22 +235,24 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
             <Drawer open={showMatchDetails} onOpenChange={setShowMatchDetails}>
                 <DrawerContent className="p-6">
                     <DrawerHeader>
-                        <DrawerTitle className="text-2xl font-bold">
-                            Match Details
+                        <DrawerTitle className="text-2xl font-bold ml-0">
+                            Why {matchPotential}?
                         </DrawerTitle>
                     </DrawerHeader>
                     <DrawerDescription>
+                        
                         <div className="mb-4">
-                            <h3 className="text-lg font-semibold">Experience</h3>
+                            <h3 className="text-lg font-semibold">Job Qualifications</h3>
                             <p>
-                                <span className="font-bold">Job Required:</span> {jobItem?.experience} years
+                                <span className="font-bold text-lg">{jobItem?.experience}  in {jobItem?.industry} Industry for {jobItem?.yearsOfExperience ? `(${jobItem?.yearsOfExperience})` : ""} </span>
                             </p>
+
                             <p>
-                                <span className="font-bold">Candidate Experience:</span> {candidateExperience} years
+                                <span className="font-bold text-black">Your Experience: {profileInfo?.candidateInfo?.totalExperience ? `${profileInfo?.candidateInfo?.totalExperience} years` : "Fresher"}</span>
                             </p>
                         </div>
                         <div className="mb-4">
-                            <h3 className="text-lg font-semibold">Skills</h3>
+                            <h3 className="text-lg font-semibold">Skills Needed</h3>
                             <div className="flex flex-wrap gap-2">
                                 {jobSkills.map((skill, index) => (
                                     <div
@@ -211,12 +265,29 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                                 ))}
                             </div>
                         </div>
+                        <div className="flex justify-center items-center gap-[50px]">
                         <Button
                             onClick={() => setShowMatchDetails(false)}
-                            className="mt-4 bg-gray-500 text-white"
+                            className="flex h-11 px-5 bg-gray-500 text-white"
                         >
                             Close
                         </Button>
+                        <Button 
+                                    onClick={handleJobApply}
+                                    disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 || applying}
+                                    className={`flex h-11 px-5 ${jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
+                                            ? 'bg-green-500 text-white cursor-not-allowed'
+                                            : ''
+                                        }`}
+                                >
+                                    {applying ? 'Applying...' :
+                                        jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
+                                            ? 'Applied'
+                                            : 'Apply'
+                                    }
+                                </Button>
+                        
+                        </div>
                     </DrawerDescription>
                 </DrawerContent>
             </Drawer>

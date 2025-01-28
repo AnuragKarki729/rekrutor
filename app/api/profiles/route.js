@@ -20,7 +20,7 @@ export async function POST(request) {
         const data = await request.json()
         
         await connectToDB()
-        console.log(data)
+        console.log("api data", data)
         const profile = await Profile.create(data)
         
         return NextResponse.json(profile, { status: 201 })

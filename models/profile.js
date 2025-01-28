@@ -39,7 +39,9 @@ const ProfileSchema = new mongoose.Schema(
             totalExperience: { 
                 type: String, 
                 default: function() {
+                    if (this.role === 'recruiter') return '0 years';
                     if (this.experienceLevel === 'Fresher') return '0 years';
+                    
                     
                     return this.previousCompanies.reduce((total, company) => {
                         if (!company.startDate || !company.endDate) return total;
