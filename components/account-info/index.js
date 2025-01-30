@@ -26,6 +26,30 @@ function AccountInfo({ profileInfo }) {
         }
     }, [profileInfo]);
 
+    async function extractText(file) {
+        if (!file) return;
+    
+        const formData = new FormData();
+        formData.append('file', file);
+    
+        try {
+            const response = await fetch('/api/extract-resume-text', {
+                method: 'POST',
+                body: formData
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to extract text from resume');
+            }
+    
+            const { extractedText } = await response.json();
+            console.log('Extracted text:', extractedText);  // This will show the extracted text in console
+        } catch (error) {
+            console.error('Error extracting text:', error);
+        }
+    }
+    
+
     async function handleUpdateAccount() {
         let updatedResume = candidateFormData.resume;
 
@@ -116,7 +140,7 @@ function AccountInfo({ profileInfo }) {
                                 id="resume-upload"
                                 type="file"
                                 accept=".pdf,.doc,.docx"
-                                onChange={(e) => setNewResume(e.target.files[0])}
+                                onChange={(e) => {setNewResume(e.target.files[0]); extractText(e.target.files[0])}}
                                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
                             />
                             {candidateFormData?.resume && (

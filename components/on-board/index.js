@@ -99,8 +99,28 @@ function OnBoard(){
                 { type: selectedFile.type }
             );
 
-            setFile(renamedFile);
-            console.log("Selected file renamed to:", newFileName, " ", user?.id);
+            // Create FormData to send the file
+            const formData = new FormData();
+            formData.append('file', renamedFile);
+
+            try {
+                // Send file for text extraction
+                const response = await fetch('/api/extract-resume-text', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to extract text from resume');
+                }
+
+                const { extractedText } = await response.json();
+                console.log('Extracted text:', extractedText);  // This will show the extracted text in console
+
+                setFile(renamedFile);
+            } catch (error) {
+                console.error('Error extracting text:', error);
+            }
         }
     }
 
