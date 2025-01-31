@@ -7,7 +7,7 @@ export default function TestDocker() {
     const [error, setError] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
 
-    const API_URL = 'https://resume-parser-903918110499.us-east1.run.app/parse-resume';
+    const API_URL = 'https://resume-parser-903918110499.us-east1.run.app';
 
     const handleFileSelect = (event) => {
         setSelectedFile(event.target.files[0]);
@@ -37,6 +37,7 @@ export default function TestDocker() {
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json'
+                            
                         },
                         body: JSON.stringify({
                             body: base64Content
