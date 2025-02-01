@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import React, { useState } from "react";
 
 const generateYearOptions = () => {
   const currentYear = new Date().getFullYear();
@@ -19,6 +20,8 @@ const generateYearOptions = () => {
 };
 
 function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, formData, setFormData, handleFileChange }) {
+  const [skillInputValue, setSkillInputValue] = useState('');
+
   const handleSubmit = (e) => {
     e.preventDefault();
     action();
@@ -56,7 +59,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
         if (getCurrentControl.showWhen && !getCurrentControl.showWhen(formData)) {
           return null;
         }
-        
+
         return (
           <Box className="mt-6 mb-6">
             <TextField
@@ -72,8 +75,8 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                 setFormData({
                   ...formData,
                   [event.target.name]: newValue,
-                  ...(event.target.name === 'experience' && newValue === 'Fresher' 
-                    ? { yearsOfExperience: '', industry: '', previousCompanies: [] } 
+                  ...(event.target.name === 'experience' && newValue === 'Fresher'
+                    ? { yearsOfExperience: '', industry: '', previousCompanies: [] }
                     : {})
                 });
               }}
@@ -87,10 +90,10 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           </Box>
         );
 
-        case 'selectJob':
-          if (getCurrentControl.showWhen && !getCurrentControl.showWhen(formData)) {
-            return null;
-          }
+      case 'selectJob':
+        if (getCurrentControl.showWhen && !getCurrentControl.showWhen(formData)) {
+          return null;
+        }
         return (
           <Box className="mt-6 mb-6 flex justify-center">
             <Select
@@ -103,8 +106,8 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
               </SelectTrigger>
               <SelectContent>
                 {getCurrentControl.options.map((option) => (
-                  <SelectItem 
-                    key={option} 
+                  <SelectItem
+                    key={option}
                     value={option}
                     className="text-base"
                   >
@@ -145,17 +148,17 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
       case "totalExperience":
         const calculateTotalExperience = () => {
           if (!formData.previousCompanies?.length) return "0 years";
-          
+
           const totalYears = formData.previousCompanies.reduce((total, company) => {
             if (!company.startDate || !company.endDate) return total;
-            
+
             const start = new Date(company.startDate);
             const end = new Date(company.endDate);
             const years = (end - start) / (1000 * 60 * 60 * 24 * 365.25);
-            
+
             return total + Math.max(0, years);
           }, 0);
-          
+
           return `${totalYears.toFixed(1)} years`;
         };
 
@@ -163,6 +166,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           <Box className="mt-6 mb-6">
             <TextField
               fullWidth
+              type="text"
               label="Total Experience"
               variant="outlined"
               disabled={true}
@@ -171,6 +175,79 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
               value={calculateTotalExperience()}
             />
           </Box>
+        );
+
+      case "skills":
+        if (getCurrentControl.showWhen && !getCurrentControl.showWhen(formData)) {
+          return null;
+        }
+        return (
+          <div className="mt-6 mb-6">
+            <Box className="mt-6 mb-6">
+              <TextField
+                fullWidth
+                type="text"
+                label={getCurrentControl.label}
+                variant="outlined"
+                placeholder={getCurrentControl.placeholder}
+                value={skillInputValue}
+                onChange={(event) => {
+                  const input = event.target.value;
+                  if (input.endsWith(',')) {
+                    const newSkill = input.slice(0, -1).trim();
+                    if (newSkill) {
+                      // Get existing skills by splitting the string
+                      const existingSkills = formData[getCurrentControl.name]
+                        ? formData[getCurrentControl.name].split(', ')
+                        : [];
+                      
+                      // Add new skill to existing skills
+                      const updatedSkills = [...existingSkills, newSkill];
+                      
+                      // Convert back to string
+                      setFormData({
+                        ...formData,
+                        [getCurrentControl.name]: updatedSkills.join(', ')
+                      });
+                      setSkillInputValue('');
+                    }
+                  } else {
+                    setSkillInputValue(input);
+                  }
+                }}
+              />
+              <div className="text-sm text-gray-500 mb-2 text-center mt-2 mb-4">
+                Press <span className="inline-flex items-center bg-gray-100 px-2 py-1 rounded-md font-mono">⌘ / Ctrl ,</span> to add new skill
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(formData[getCurrentControl.name]
+                  ? formData[getCurrentControl.name].split(', ')
+                  : []
+                ).map((skill, index) => (
+                  <div
+                    key={index}
+                    className="flex bg-green-100 rounded-md px-3 py-1 justify-center"
+                  >
+                    {skill}
+                    <button
+                      type="button"
+                      className="ml-2 text-gray-500 hover:text-gray-700"
+                      onClick={() => {
+                        const currentSkills = formData[getCurrentControl.name].split(', ');
+                        const newSkills = currentSkills.filter((_, i) => i !== index);
+                        setFormData({
+                          ...formData,
+                          [getCurrentControl.name]: newSkills.join(', ')
+                        });
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Box>
+          </div>
         );
 
       case "year":
@@ -261,7 +338,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                   }}
                   sx={{ flex: 2 }}
                 />
-                
+
                 <TextField
                   label="Position"
                   variant="outlined"
@@ -276,7 +353,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                   }}
                   sx={{ flex: 2 }}
                 />
-                
+
                 <div className="flex items-center gap-2" style={{ flex: 2 }}>
                   <TextField
                     type="date"
@@ -285,8 +362,8 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                     value={company.startDate || ""}
                     onChange={(event) => {
                       const newCompanies = [...(formData.previousCompanies || [])];
-                      newCompanies[index] = { 
-                        ...newCompanies[index], 
+                      newCompanies[index] = {
+                        ...newCompanies[index],
                         startDate: event.target.value
                       };
                       setFormData({
@@ -303,8 +380,8 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                     value={company.endDate || ""}
                     onChange={(event) => {
                       const newCompanies = [...(formData.previousCompanies || [])];
-                      newCompanies[index] = { 
-                        ...newCompanies[index], 
+                      newCompanies[index] = {
+                        ...newCompanies[index],
                         endDate: event.target.value
                       };
                       setFormData({
@@ -332,7 +409,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                 </Button>
               </Box>
             ))}
-            
+
             <Button
               type="button"
               onClick={() => {
@@ -373,7 +450,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                   [event.target.name]: event.target.value,
                 })
               }
-              
+
             />
           </Box>
         );

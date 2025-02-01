@@ -43,23 +43,39 @@ export async function fetchJobDetailsByIDAction(id){
 export async function fetchJobsForCandidateAction(filterParams = {}) {
     await connectToDB();
 
-    let updatedParams = {};
+    let query = {};
     
     // Convert searchParams to regular object and handle async
-    const params = filterParams ? Object.fromEntries(
+    const params = await(filterParams ? Object.fromEntries(
         Object.entries(filterParams).map(([key, value]) => [key, value?.toString()])
-    ) : {};
+    ) : {});
 
-    // Now process the params
+    // Handle search parameter separately
+    if (params.search) {
+        // Create text search query
+        query.$or = [
+            { title: { $regex: params.search, $options: 'i' } },
+            { description: { $regex: params.search, $options: 'i' } },
+            { companyName: { $regex: params.search, $options: 'i' } },
+            { industry: { $regex: params.search, $options: 'i' } },
+            { location: { $regex: params.search, $options: 'i' } },
+            { skills: { $regex: params.search, $options: 'i' } },
+            { type: { $regex: params.search, $options: 'i' } }
+        ];
+        delete params.search; // Remove search from regular filters
+    }
+
+    // Handle other filters
     Object.keys(params).forEach((filterKey) => {
         if (params[filterKey]) {
-            updatedParams[filterKey] = { 
+            query[filterKey] = { 
                 $in: params[filterKey].toString().split(",") 
             };
         }
     });
     
-    const result = await Job.find(Object.keys(updatedParams).length > 0 ? updatedParams : {});
+    console.log('MongoDB Query:', query); // Debug log
+    const result = await Job.find(query);
     return JSON.parse(JSON.stringify(result));
 }
 

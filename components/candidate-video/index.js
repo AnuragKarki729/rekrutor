@@ -144,7 +144,8 @@ function CandidateVideo() {
     try {
       // Delete previous video if exists
       if (previousVideo) {
-        const oldFileName = previousVideo.split('/').pop(); // Get filename from URL
+        const oldFileName = previousVideo.split('/').pop();
+        console.log("Old file name:", oldFileName);
         await supabaseClient.storage
           .from("rekrutor-public")
           .remove([`videos/${oldFileName}`]);
@@ -160,6 +161,8 @@ function CandidateVideo() {
           cacheControl: "3600",
           upsert: false,
         });
+
+        console.log("Upload data:", uploadData);
 
       if (error) throw error;
 
@@ -185,11 +188,16 @@ function CandidateVideo() {
         throw new Error(error.error || 'Failed to update video CV');
       }
 
-      const { data: updateData } = await response.json();
+      const updateData = await response.json();
       console.log("Video CV updated successfully:", updateData);
 
       // Update the UI to show new video
-      setPreviousVideo(publicUrl);
+      setPreviousVideo("https://www.youtube.com/watch?v=1O0yazhqaxs&t=1s");
+
+      const videoElement = document.querySelector('video[src*="rekrutor-public"]');
+      if (videoElement) {
+        videoElement.load();
+      }
       alert("Video CV updated successfully!");
       setRecordedChunks([]);
 
@@ -338,7 +346,9 @@ function CandidateVideo() {
           <div className="sticky top-24 rounded-lg overflow-hidden bg-white shadow-md">
             <div className="aspect-video w-full bg-black">
               <video 
+                
                 src={previousVideo} 
+                
                 controls 
                 className="w-full h-full object-cover"
               />
@@ -346,8 +356,12 @@ function CandidateVideo() {
             <div className="p-4">
               <h3 className="font-medium text-gray-900">Previous Video CV</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Your currently active Video CV
-              </p>
+                Your currently active Video CV {previousVideo.split('/').pop()}
+                </p>
+                <p>
+                {user.id} Date: {Date.now()}
+             
+                </p>
             </div>
           </div>
         </div>

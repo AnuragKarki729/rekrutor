@@ -4,50 +4,70 @@ const ResumeUploadButton = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  const handleFileUpload = async (file) => {
-    try {
-      setLoading(true);
-      // Convert file to base64
-      const base64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          // Get the base64 string without the data URL prefix
-          const base64String = reader.result?.toString().split(',')[1];
-          resolve(base64String || '');
-        };
-        reader.readAsDataURL(file);
-      });
+  
+  const handleFileChange = async (event) => {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      try {
+        // Get file extension
+        const fileExt = selectedFile.name.split('.').pop();
+        
+        // Get user's first and last name from form data
+        const firstName = candidateFormData.name?.split(' ')[0] || '';
+        const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
+        
+        // Create new filename
+        const newFileName = `${firstName}_${lastName}_Resume.${fileExt}`;
 
-      // Send to Lambda
-      const response = await fetch('http://localhost:8080/2015-03-31/functions/function/invocations', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          body: base64
-        })
-      });
+        // Create new file with custom name
+        const renamedFile = new File(
+          [selectedFile],
+          newFileName,
+          { type: selectedFile.type }
+        );
 
-      const data = await response.json();
-      console.log(data);
-      setResult(JSON.parse(data.body));
-      console.log('Parsed Resume:', JSON.parse(data.body));
+        // Create FormData for both APIs
+        const formData = new FormData();
+        formData.append('file', renamedFile);
 
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        // First, send to text extraction API
+        const textResponse = await fetch('/api/extract-resume-text', {
+          method: 'POST',
+          body: formData
+        });
 
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      handleFileUpload(file);
-    } else {
-      alert('Please select a PDF file');
+        if (!textResponse.ok) {
+          throw new Error('Failed to extract text from resume');
+        }
+
+        const { extractedText } = await textResponse.json();
+        console.log('Extracted text:', extractedText);
+
+        // Then, send to resume parser API
+        const parseResponse = await fetch('/api/parse-resume', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!parseResponse.ok) {
+          throw new Error('Failed to parse resume');
+        }
+
+        const parsedData = await parseResponse.json();
+        console.log('Parsed resume data:', parsedData);
+
+        // Update form data with parsed skills
+        if (parsedData.skills && parsedData.skills.length > 0) {
+          setCandidateFormData(prev => ({
+            ...prev,
+            skills: parsedData.skills.join(', ') // Assuming skills should be comma-separated
+          }));
+        }
+
+        setFile(renamedFile);
+      } catch (error) {
+        console.error('Error processing file:', error);
+      }
     }
   };
 

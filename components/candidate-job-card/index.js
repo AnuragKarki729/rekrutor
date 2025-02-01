@@ -16,7 +16,7 @@ import {
 import JobIcon from "../job-icon"
 import { Button } from "../ui/button"
 
-function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
+function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplicationSubmit }) {
     const [showJobDetailsDrawer, setShowJobDetailsDrawer] = useState(false)
     const [showMatchDetails, setShowMatchDetails] = useState(false)
     const [applying, setApplying] = useState(false)
@@ -28,9 +28,14 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
     const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
     const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
 
-    const ExperienceGap = jobExperience - candidateExperience
-
     
+    const ExperienceGap = jobExperience - candidateExperience
+    console.log(jobItem, 'JobItem')
+    
+    const isJobApplied = jobApplications.some(
+        application => application.jobID === jobItem._id && application.status[0] === "Applied"
+    );
+    console.log(isJobApplied, 'isJobApplied', jobItem._id)
     // Calculate match potential
     const calculateMatchPotential = () => {
         // Get candidate and job details
@@ -105,16 +110,16 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
     }
 
     console.log(jobApplications, 'jobApplications')
-    console.log(profileInfo, "profileInfo")
+    
 
     async function handleJobApply() {
         try {
-            setApplying(true) // Show loading state
+            setApplying(true)
             const response = await fetch('/api/applications', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-revalidate-path': '/jobs' // For revalidation
+                    'x-revalidate-path': '/jobs'
                 },
                 body: JSON.stringify({
                     recruiterUserID: jobItem?.recruiterId,
@@ -131,13 +136,18 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                 throw new Error('Failed to apply for job')
             }
 
-            // Close drawer after successful application
+            if (onApplicationSubmit) {
+                onApplicationSubmit({
+                    jobID: jobItem?._id,
+                    status: ['Applied'],
+                })
+            }
+
             setShowJobDetailsDrawer(false)
         } catch (error) {
             console.error('Error applying to job:', error)
-            // You might want to show an error message to the user
         } finally {
-            setApplying(false) // Hide loading state
+            setApplying(false)
         }
     }
 
@@ -146,8 +156,19 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
         <Fragment>
             <Drawer open={showJobDetailsDrawer} onOpenChange={setShowJobDetailsDrawer}>
                 <CommonCard
-                    icon={<JobIcon industry={jobItem?.industry} className="h-25 w-25" />}
-                    title={jobItem?.title}
+                
+                    icon={<div>
+                        <JobIcon 
+                        industry={jobItem?.industry} className="h-25 w-25" />
+                        {isJobApplied && (
+                            <div className="relative -top-2 right-2 bg-green-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                            Applied
+                        </div>
+                    )}
+                    </div>}
+                    title={<div className="flex justify-between items-center">
+                    {jobItem?.title}
+                    </div>} 
                     description={jobItem?.companyName}
                     footerContent={
                         <div className="flex space-x-2">
@@ -163,9 +184,10 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications }) {
                             >
                                 {matchPotential}
                             </Button>
+                            
                         </div>
-                    }
-                />
+                        
+                    }/>
                 <DrawerContent className="p-6">
                     <DrawerHeader className="px-0">
                         {/* Flex container for title and badge */}

@@ -10,72 +10,117 @@ import { Label } from "../ui/label"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "../ui/button"
 import { X } from "lucide-react"
-import {Alert, AlertDescription} from "../ui/alert"
+import { Alert, AlertDescription } from "../ui/alert"
 
 
 
 
-function JobListing({ user, profileInfo, jobList, jobApplications, filterCategories }) {
+function JobListing({ user, profileInfo, initialJobList, jobList, jobApplications, filterCategories, initialSearchTerm }) {
     console.log("All Jobs:", jobList);
     console.log("Job Applications:", jobApplications);
     console.log("Profile Info:", profileInfo);
 
     const searchParams = useSearchParams()
     const router = useRouter()
-    const hasVideoCV= profileInfo?.candidateInfo?.hasVideoCV
+    const hasVideoCV = profileInfo?.candidateInfo?.hasVideoCV
 
 
-    const filterMenu = filterMenuDataArray.map(item => ({
-        id: item.id,
-        name: item.label,
-        options: [
-            ...new Set(filterCategories.map(listItem => listItem[item.id]))
-        ]
-    }))
+    const filterMenu = filterMenuDataArray.map(item => {
+        if (item.id === 'Search Jobs using keywords') {
+            return {
+                id: item.id,
+                name: item.label,
+                componentType: 'input',
+                placeholder: item.placeholder
+            }
+        }
+        return {
+            id: item.id,
+            name: item.label,
+            options: [
+                ...new Set(filterCategories.map(listItem => listItem[item.id]))
+            ]
+        }
+    })
 
     const [filterParams, setFilterParams] = useState({})
     const [activeTab, setActiveTab] = useState('High Match Potential')
     const [loading, setLoading] = useState(false)
+    const [localJobApplications, setLocalJobApplications] = useState(jobApplications)
+    const [searchedJobs, setSearchedJobs] = useState(jobList);
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
 
+    console.log(initialJobList, 'initialJobList')
+
+    useEffect(() => {
+        if (initialSearchTerm) {
+            handleFilter('Search Jobs using keywords', initialSearchTerm);
+        }
+    }, [initialSearchTerm]);
 
     async function handleFilter(getSectionID, getCurrentOption) {
         try {
-            setLoading(true)
-            let copyFilter = { ...filterParams }
+            setLoading(true);
+            let copyFilter = { ...filterParams };
 
-            // Update filter params logic (keep existing)
-            if (Object.keys(copyFilter).indexOf(getSectionID) === -1) {
-                copyFilter = {
-                    ...copyFilter,
-                    [getSectionID]: [getCurrentOption]
-                };
-            } else {
-                const indexOfCurrentOption = copyFilter[getSectionID].indexOf(getCurrentOption)
-                if (indexOfCurrentOption === -1) {
-                    copyFilter[getSectionID].push(getCurrentOption)
+            // Special handling for search
+            if (getSectionID === 'Search Jobs using keywords') {
+                const term = getCurrentOption?.trim();
+                setSearchTerm(term);
+                
+                if (term) {
+                    const filtered = jobList.filter(job => (
+                        job.title?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.description?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.companyName?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.industry?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.location?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.skills?.toLowerCase().includes(term.toLowerCase()) ||
+                        job.type?.toLowerCase().includes(term.toLowerCase())
+                    ));
+                    console.log('Filtered jobs:', filtered);
+                    setSearchedJobs(filtered);
+                    
+                    copyFilter.search = term;
                 } else {
-                    copyFilter[getSectionID].splice(indexOfCurrentOption, 1)
+                    setSearchedJobs(jobList);
+                    delete copyFilter.search;
+                }
+            } else {
+                // Existing filter logic for other filters
+                if (Object.keys(copyFilter).indexOf(getSectionID) === -1) {
+                    copyFilter = {
+                        ...copyFilter,
+                        [getSectionID]: [getCurrentOption]
+                    };
+                } else {
+                    const indexOfCurrentOption = copyFilter[getSectionID].indexOf(getCurrentOption);
+                    if (indexOfCurrentOption === -1) {
+                        copyFilter[getSectionID].push(getCurrentOption);
+                    } else {
+                        copyFilter[getSectionID].splice(indexOfCurrentOption, 1);
+                    }
                 }
             }
 
-            setFilterParams(copyFilter)
-            sessionStorage.setItem('filterParams', JSON.stringify(copyFilter))
+            setFilterParams(copyFilter);
+            sessionStorage.setItem('filterParams', JSON.stringify(copyFilter));
 
-            // Call the REST API with filters
-            const queryString = new URLSearchParams()
+            // Update URL
+            const queryString = new URLSearchParams();
             Object.entries(copyFilter).forEach(([key, values]) => {
-                if (values.length > 0) {
-                    queryString.append(key, values.join(','))
+                if (key === 'search') {
+                    queryString.append(key, values);
+                } else if (values.length > 0) {
+                    queryString.append(key, values.join(','));
                 }
-            })
+            });
 
-            // Update URL with new filters
-            router.push(`/jobs?${queryString.toString()}`, { scroll: false })
-
+            router.push(`/jobs?${queryString.toString()}`, { scroll: false });
         } catch (error) {
-            console.error('Error applying filters:', error)
+            console.error('Error applying filters:', error);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -98,20 +143,29 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
         }
     }, [filterParams, searchParams]);
 
-    const appliedJobs = jobList.filter(jobItem => 
-        jobApplications.some(
+    const handleApplicationSubmit = (newApplication) => {
+        setLocalJobApplications(prev => [...prev, newApplication])
+    }
+
+    const appliedJobs = jobList.filter(job =>
+        localJobApplications.some(
             application => {
-                return application.jobID === jobItem._id && 
-                       application.status[0] === "Applied";
+                return application.jobID === job._id &&
+                    application.status[0] === "Applied";
             }
         )
     );
     console.log("Job List:", jobList);
     console.log()
 
+    
+    useEffect(() => {
+        setSearchedJobs(jobList);
+    }, [jobList]);
+
     const filteredJobList = {
-        "All Jobs": jobList,
-        "Perfect Match": jobList.filter(jobItem => {
+        "All Jobs": searchedJobs,
+        "Perfect Match": searchedJobs.filter(jobItem => {
             const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
             const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
 
@@ -128,13 +182,13 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
 
             const HighexperienceMatch = CandidateIndustryMatch && ExpMatch && HighSkillsMatch
 
-            if (CandidateIndustryMatch && (profileInfo?.candidateInfo?.experienceLevel ==="Fresher") && (jobItem?.experience === "Fresher")) {
-                return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+            if (CandidateIndustryMatch && (profileInfo?.candidateInfo?.experienceLevel === "Fresher") && (jobItem?.experience === "Fresher")) {
+                return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
             }
 
-            return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+            return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
         }),
-        "Medium Match": jobList.filter(jobItem => {
+        "Medium Match": searchedJobs.filter(jobItem => {
             const candidateIndustry = profileInfo?.candidateInfo?.industry
             const jobIndustry = jobItem?.industry
 
@@ -153,29 +207,43 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
             const MedexperienceMatch = CandidateIndustryMatch && MedExpMatch
             const MedexperienceSkillsMatch = CandidateIndustryMatch && MedSkillsMatch
 
-            return MedexperienceMatch && MedexperienceSkillsMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ; // Only consider high match potential
+            return MedexperienceMatch && MedexperienceSkillsMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
         }),
-        "Industry Match": jobList.filter(jobItem => {
+        "Industry Match": searchedJobs.filter(jobItem => {
             const candidateIndustry = profileInfo?.candidateInfo?.industry
             const jobIndustry = jobItem?.industry
 
             const CandidateIndustryMatch = candidateIndustry === jobIndustry
 
-            return CandidateIndustryMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ;
-             // Only consider high match potential
+            return CandidateIndustryMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id);
+            // Only consider high match potential
         }),
-        "Fresh Graduates": jobList.filter(jobItem => {
+        "Fresh Graduates": searchedJobs.filter(jobItem => {
             const candidateExpLevel = profileInfo?.candidateInfo?.experienceLevel
             const jobExpLevel = jobItem?.experience
 
             const FreshGradMatch = candidateExpLevel === jobExpLevel
 
-            return FreshGradMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id)  ;
+            return FreshGradMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id);
         }),
-        "Applied Jobs": appliedJobs, 
-        
+        "Applied Jobs": appliedJobs,
     };
-    
+
+    const handleClearFilters = () => {
+        try {
+            setLoading(true);
+            // Clear filter params
+            setFilterParams({});
+            // Clear session storage
+            sessionStorage.removeItem('filterParams');
+            // Clear URL params
+            router.push('/jobs', { scroll: false });
+        } catch (error) {
+            console.error('Error clearing filters:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -197,57 +265,87 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         {filterMenu.map((menu, index) => (
                                             <MenubarMenu key={menu.id || index}>
                                                 <MenubarTrigger className="px-3 py-2 text-sm lg:text-base hover:bg-gray-50 transition-colors">
-                                                    <div className="flex items-center gap-2">
-                                                        {menu.name}
-                                                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    </div>
+                                                    {menu.componentType === 'input' ? (
+                                                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                            <input 
+                                                                type="text"
+                                                                placeholder={menu.placeholder}
+                                                                className="px-2 py-1 border rounded"
+                                                                value={searchTerm}
+                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (e.key === 'Enter') {
+                                                                        handleFilter(menu.id, searchTerm);
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleFilter(menu.id, searchTerm);
+                                                                }}
+                                                                className="ml-2 bg-blue-500 hover:bg-blue-600 text-white"
+                                                                size="sm"
+                                                            >
+                                                                Search
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2">
+                                                            {menu.name}
+                                                            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
                                                 </MenubarTrigger>
-                                                <MenubarContent 
-                                                    className="min-w-[200px] p-2 bg-white rounded-lg shadow-lg border"
-                                                    align="start"
-                                                >
-                                                    {menu.options.map((option, optionIndex) => (
-                                                        <MenubarItem
-                                                            key={optionIndex}
-                                                            className="flex items-center px-3 py-2 hover:bg-gray-50 rounded-md cursor-pointer"
-                                                            onClick={() => handleFilter(menu.id, option)}
-                                                        >
-                                                            <div className="flex items-center gap-3 w-full">
-                                                                <div
-                                                                    className={`
+                                                {menu.componentType !== 'input' && (
+                                                    <MenubarContent
+                                                        className="min-w-[200px] p-2 bg-white rounded-lg shadow-lg border"
+                                                        align="start"
+                                                    >
+                                                        {menu.options.map((option, optionIndex) => (
+                                                            <MenubarItem
+                                                                key={optionIndex}
+                                                                className="flex items-center px-3 py-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                                                                onClick={() => handleFilter(menu.id, option)}
+                                                            >
+                                                                <div className="flex items-center gap-3 w-full">
+                                                                    <div
+                                                                        className={`
                                                                         h-4 w-4 rounded border border-gray-300 flex items-center justify-center
                                                                         transition-colors duration-200
                                                                         ${filterParams?.[menu.id]?.includes(option)
-                                                                            ? "bg-blue-500 border-blue-500"
-                                                                            : "bg-white hover:border-blue-500"
-                                                                        }
+                                                                                ? "bg-blue-500 border-blue-500"
+                                                                                : "bg-white hover:border-blue-500"
+                                                                            }
                                                                     `}
-                                                                >
-                                                                    {filterParams?.[menu.id]?.includes(option) && (
-                                                                        <svg 
-                                                                            className="w-3 h-3 text-white" 
-                                                                            fill="none" 
-                                                                            viewBox="0 0 24 24" 
-                                                                            stroke="currentColor"
-                                                                        >
-                                                                            <path 
-                                                                                strokeLinecap="round" 
-                                                                                strokeLinejoin="round" 
-                                                                                strokeWidth={2} 
-                                                                                d="M5 13l4 4L19 7" 
-                                                                            />
-                                                                        </svg>
-                                                                    )}
+                                                                    >
+                                                                        {filterParams?.[menu.id]?.includes(option) && (
+                                                                            <svg
+                                                                                className="w-3 h-3 text-white"
+                                                                                fill="none"
+                                                                                viewBox="0 0 24 24"
+                                                                                stroke="currentColor"
+                                                                            >
+                                                                                <path
+                                                                                    strokeLinecap="round"
+                                                                                    strokeLinejoin="round"
+                                                                                    strokeWidth={2}
+                                                                                    d="M5 13l4 4L19 7"
+                                                                                />
+                                                                            </svg>
+                                                                        )}
+                                                                    </div>
+                                                                    <Label className="text-sm text-gray-700 hover:text-gray-900">
+                                                                        {option}
+                                                                    </Label>
                                                                 </div>
-                                                                <Label className="text-sm text-gray-700 hover:text-gray-900">
-                                                                    {option}
-                                                                </Label>
-                                                            </div>
-                                                        </MenubarItem>
-                                                    ))}
-                                                </MenubarContent>
+                                                            </MenubarItem>
+                                                        ))}
+                                                    </MenubarContent>
+                                                )}  
                                             </MenubarMenu>
                                         ))}
                                     </div>
@@ -284,28 +382,28 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                         >
                             <TabsList className="mb-6 flex flex-wrap gap-2 justify-start">
                                 {/* Tab triggers with consistent spacing */}
-                               
-                                <TabsTrigger value="Perfect Match" 
+
+                                <TabsTrigger value="Perfect Match"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Perfect Match
-                                    {filteredJobList["Perfect Match"].length > 0 && (    
+                                    {filteredJobList["Perfect Match"].length > 0 && (
                                         <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
                                             rounded-full transition-colors duration-200">
                                             {filteredJobList["Perfect Match"].length}
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="Medium Match" 
+                                <TabsTrigger value="Medium Match"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Medium Match
-                                        {filteredJobList["Medium Match"].length > 0 && (
+                                    {filteredJobList["Medium Match"].length > 0 && (
                                         <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
                                             rounded-full transition-colors duration-200">
                                             {filteredJobList["Medium Match"].length}
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="Industry Match" 
+                                <TabsTrigger value="Industry Match"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Industry Match
                                     {filteredJobList["Industry Match"].length > 0 && (
@@ -315,7 +413,7 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="Fresh Graduates" 
+                                <TabsTrigger value="Fresh Graduates"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Fresh Graduates
                                     {filteredJobList["Fresh Graduates"].length > 0 && (
@@ -325,7 +423,7 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="All Jobs" 
+                                <TabsTrigger value="All Jobs"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     All Jobs
                                     {filteredJobList["All Jobs"].length > 0 && (
@@ -335,7 +433,7 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         </span>
                                     )}
                                 </TabsTrigger>
-                                <TabsTrigger value="Applied Jobs" 
+                                <TabsTrigger value="Applied Jobs"
                                     className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
                                     Applied Jobs
                                     {filteredJobList["Applied Jobs"].length > 0 && (
@@ -357,23 +455,29 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                                             {filteredJobList[activeTab]?.length > 0 ? (
-                                                filteredJobList[activeTab].map((jobItem, index) => (
-                                                    <CandidateJobCard
-                                                        profileInfo={profileInfo}
-                                                        key={jobItem.id || index}
-                                                        jobItem={jobItem}
-                                                        jobApplications={jobApplications}
-                                                    />
-                                                ))
+                                                [...filteredJobList[activeTab]]
+                                                    .sort((a, b) => {
+                                                        const aApplied = localJobApplications.some(app => app.jobID === a._id && app.status[0] === "Applied");
+                                                        const bApplied = localJobApplications.some(app => app.jobID === b._id && app.status[0] === "Applied");
+                                                        return aApplied - bApplied; // Applied jobs go to the bottom
+                                                    }).map((jobItem, index) => (
+                                                        <CandidateJobCard
+                                                            profileInfo={profileInfo}
+                                                            key={jobItem.id || index}
+                                                            jobItem={jobItem}
+                                                            jobApplications={localJobApplications}
+                                                            onApplicationSubmit={handleApplicationSubmit}
+                                                        />
+                                                    ))
                                             ) : (
                                                 <p className="text-gray-600 col-span-full text-center py-8 text-sm sm:text-base">
-                                                    {activeTab === "Applied Jobs" 
+                                                    {activeTab === "Applied Jobs"
                                                         ? "You haven't applied to any jobs yet."
                                                         : `No jobs found for ${activeTab}.`
                                                     }
                                                 </p>
                                             )}
-                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </TabsContent>
@@ -386,12 +490,12 @@ function JobListing({ user, profileInfo, jobList, jobApplications, filterCategor
                                         profileInfo={profileInfo}
                                         key={jobItem.id || index}
                                         jobItem={jobItem}
-                                        jobApplications={jobApplications}
+                                        jobApplications={localJobApplications}
                                     />
                                 ))
                                 : <p className="text-gray-600 text-center py-8 col-span-full text-sm sm:text-base">
                                     No jobs available.
-                                  </p>}
+                                </p>}
                         </div>
                     )}
                 </div>

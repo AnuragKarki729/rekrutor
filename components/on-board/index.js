@@ -82,44 +82,63 @@ function OnBoard(){
     async function handleFileChange(event) {
         const selectedFile = event.target.files[0];
         if (selectedFile) {
-            // Get file extension
-            const fileExt = selectedFile.name.split('.').pop();
-            
-            // Get user's first and last name from form data
-            const firstName = candidateFormData.name?.split(' ')[0] || '';
-            const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
-            
-            // Create new filename
-            const newFileName = `${firstName}_${lastName}_Resume.${fileExt}`;
-
-            // Create new file with custom name
-            const renamedFile = new File(
-                [selectedFile],
-                newFileName,
-                { type: selectedFile.type }
-            );
-
-            // Create FormData to send the file
-            const formData = new FormData();
-            formData.append('file', renamedFile);
-
             try {
-                // Send file for text extraction
-                const response = await fetch('/api/extract-resume-text', {
+                // Get file extension
+                const fileExt = selectedFile.name.split('.').pop();
+                
+                // Get user's first and last name from form data
+                const firstName = candidateFormData.name?.split(' ')[0] || '';
+                const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
+
+                const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
+                `${firstName}_${lastName}_Resume.${fileExt}`;
+    
+                // Create new file with custom name
+                const renamedFile = new File(
+                    [selectedFile],
+                    newFileName,
+                    { type: selectedFile.type }
+                );
+    
+                // Create FormData
+                const formData = new FormData();
+                formData.append('file', renamedFile);
+    
+                console.log('Sending file to parser...');
+    
+                // Parse resume first to get skills
+                const parseResponse = await fetch('/api/parse-resume', {
                     method: 'POST',
                     body: formData
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to extract text from resume');
+    
+                if (!parseResponse.ok) {
+                    const errorText = await parseResponse.text();
+                    console.error('Parse response error:', errorText);
+                    throw new Error('Failed to parse resume');
                 }
-
-                const { extractedText } = await response.json();
-                console.log('Extracted text:', extractedText);  // This will show the extracted text in console
-
+    
+                const parsedData = await parseResponse.json();
+                console.log('Parsed resume data:', parsedData);
+    
+                // Update form data with parsed skills
+                if (parsedData.name && parsedData.name.length > 0) {
+                    setCandidateFormData(prev => ({
+                        ...prev,
+                        name: parsedData.name
+                    }));
+                }
+                if (parsedData.skills && parsedData.skills.length > 0) {
+                    setCandidateFormData(prev => ({
+                        ...prev,
+                        skills: parsedData.skills.join(', ') // Convert array to comma-separated string
+                    }));
+                }
+    
+                // Continue with text extraction and file upload
                 setFile(renamedFile);
             } catch (error) {
-                console.error('Error extracting text:', error);
+                console.error('Error processing file:', error);
             }
         }
     }

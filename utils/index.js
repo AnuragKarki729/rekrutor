@@ -155,7 +155,7 @@ export const candidateOnBoardFormControls = [
         label: 'Skills',
         name: 'skills',
         placeholder: 'Separate skills with commas (e.g., React, Node.js, Python)',
-        componentType: 'text',
+        componentType: 'skills',
         required: true
     },
     {
@@ -341,13 +341,10 @@ export const initialPostNewJobFormData = {
 }
 
 export const filterMenuDataArray = [
-    {
-        id: 'companyName',
-        label: 'Company Title'
-    },
-    {
-        id: 'title',
-        label: 'Title'
+    {id: 'Search Jobs using keywords',
+        label: 'Search Jobs using keywords',
+        placeholder: 'Search Jobs using keywords',
+        componentType: 'input'
     },
     {
         id: 'type',
@@ -359,28 +356,44 @@ export const filterMenuDataArray = [
     },
 ]
 
+// export function formUrlQuery({ params, dataToAdd }) {
+//     let currentURL = qs.parse(params || ""); // Parse current query string
+
+//     if (dataToAdd && Object.keys(dataToAdd).length > 0) {
+//         Object.keys(dataToAdd).forEach(key => {
+//             if (!dataToAdd[key] || dataToAdd[key].length === 0) {
+//                 // If the value is empty, remove the key from the URL
+//                 delete currentURL[key];
+//             } else {
+//                 // Join array values into a comma-separated string
+//                 currentURL[key] = dataToAdd[key].join(",");
+//             }
+//         });
+//     }
+
+//     return qs.stringifyUrl(
+//         {
+//             url: window.location.pathname, // Base URL
+//             query: currentURL // Updated query parameters
+//         },
+//         { skipNull: true } // Skip keys with null values
+//     );
+// }
+
 export function formUrlQuery({ params, dataToAdd }) {
-    let currentURL = qs.parse(params || ""); // Parse current query string
+    const urlParams = new URLSearchParams(params);
 
-    if (dataToAdd && Object.keys(dataToAdd).length > 0) {
-        Object.keys(dataToAdd).forEach(key => {
-            if (!dataToAdd[key] || dataToAdd[key].length === 0) {
-                // If the value is empty, remove the key from the URL
-                delete currentURL[key];
-            } else {
-                // Join array values into a comma-separated string
-                currentURL[key] = dataToAdd[key].join(",");
-            }
-        });
-    }
+    Object.entries(dataToAdd).forEach(([key, value]) => {
+        if (key === 'search') {
+            // Handle search term as a string
+            urlParams.set(key, value);
+        } else if (Array.isArray(value) && value.length > 0) {
+            // Handle array values for other filters
+            urlParams.set(key, value.join(','));
+        }
+    });
 
-    return qs.stringifyUrl(
-        {
-            url: window.location.pathname, // Base URL
-            query: currentURL // Updated query parameters
-        },
-        { skipNull: true } // Skip keys with null values
-    );
+    return `${window.location.pathname}?${urlParams.toString()}`;
 }
 
 export const initialJobFormData = {
