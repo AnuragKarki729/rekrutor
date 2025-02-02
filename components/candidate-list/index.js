@@ -152,6 +152,10 @@ function CandidateList({ jobApplications }) {
 
     // Handle showing candidate details in the modal
     async function handleUpdateJobStatus(candidateUserID, getCurrentStatus, rejectionReason) {
+        console.log(candidatesWithDetails, "candidatesWithDetails");
+        console.log(getCurrentStatus, "getCurrentStatus");
+        console.log(rejectionReason, "rejectionReason");
+        console.log(candidateUserID, "candidateUserID");
         const candidate = candidatesWithDetails.find((item) => item.candidateUserID === candidateUserID);
         if (!candidate) return console.log("No candidate", candidateUserID);
 
@@ -365,11 +369,14 @@ function CandidateList({ jobApplications }) {
                                     <Button
                                         className="justify-center"
                                         onClick={() => {
-                                            setCurrentCandidateDetails(candidate.candidateDetails);
+                                            const candidateDetailswithId = {...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status}
+                                            console.log(candidateDetailswithId, "candidateDetailswithId")
+                                            setCurrentCandidateDetails(candidateDetailswithId);
                                             setShowCurrentCandidateDetailsModal(true);
                                         }}
                                     >
                                         View Profile
+                                        {console.log(candidate, "candidate.candidateDetails")}
                                     </Button>
                                 </div>
                             </div>
@@ -386,7 +393,15 @@ function CandidateList({ jobApplications }) {
                     <DialogContent className="max-h-[150vh] max-w-[100vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl font-bold">
+                                <div className="flex justify-evenly gap-20">
                                 {currentCandidateDetails?.name}
+                                <div className="text-lg text-white mt-1">
+                                {currentCandidateDetails.status.slice(-1)[0] === "Rejected" ? <div className="bg-red-500 rounded-full px-2 py-1">Rejected Candidate</div>:
+                                currentCandidateDetails.status.slice(-1)[0] === "Selected" ? <div className="bg-green-500 rounded-full px-2 py-1">Selected Candidate</div>:
+                                currentCandidateDetails.status.slice(-1)[0] === "Shortlisted" ? <div className="bg-grey-500 rounded-full px-2 py-1">Select OR Reject ?</div>: ""
+                                }
+                                </div>
+                                </div>
                             </DialogTitle>
                         </DialogHeader>
                         <div className="grid grid-cols-2 gap-6 py-4">
@@ -478,9 +493,11 @@ function CandidateList({ jobApplications }) {
                                     </Button>
                                 </div>
 
+                                {console.log(currentCandidateDetails, "currentCandidateDetails?.userId")}
                                 {/* Select Button - Right */}
                                 <Button
-                                    onClick={() => handleUpdateJobStatus(currentCandidateDetails?.userId, 'Selected')}
+                                    onClick={() => handleUpdateJobStatus(currentCandidateDetails?.userId,'Selected')}
+                                    
                                     disabled={
                                         candidatesWithDetails.find(
                                             (item) => item.candidateUserID === currentCandidateDetails?.userId

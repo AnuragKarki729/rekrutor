@@ -14,3 +14,31 @@ export async function GET(request, { params }) {
         )
     }
 } 
+
+export async function PUT(request, { params }) {
+    try {
+        await connectToDB();
+        const { status } = await request.json();
+        
+        const application = await Application.findOne({ candidateUserID: params.id });
+        if (!application) {
+            return NextResponse.json(
+                { error: "Application not found" },
+                { status: 404 }
+            );
+        }
+
+        application.status.push(status);
+        await application.save();
+
+        return NextResponse.json({ 
+            message: "Application status updated",
+            newStatus: application.status 
+        });
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to update application status" },
+            { status: 500 }
+        );
+    }
+}

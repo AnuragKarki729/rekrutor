@@ -30,13 +30,19 @@ function Header({ user, profileInfo }) {
         { 
             id: 'nudge',
             label: (
+                profileInfo?.role === 'candidate' ?
                 <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
                     Nudge Mail
                 </div>
+                :
+                <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
+                    Acknowledge Applicants
+                </div>
             ), 
             path: '/mailto', 
-            show: profileInfo?.role === 'candidate' 
+            show: profileInfo?.role === 'candidate' || profileInfo?.role === 'recruiter'
         },
+        
         { 
             id: 'video',
             label: (
