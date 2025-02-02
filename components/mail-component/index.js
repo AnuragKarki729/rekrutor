@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import CommonCard from '../common-card';
 import { Concert_One } from 'next/font/google';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
 
 
 export default function MailComponent({
@@ -55,6 +56,8 @@ export default function MailComponent({
 
     const [activeTab, setActiveTab] = useState('selected');
     const [disabledButtons, setDisabledButtons] = useState({});
+    const [isPDFOpen, setIsPDFOpen] = useState(false);
+    const [currentPDFUrl, setCurrentPDFUrl] = useState('');
 
 
     const handleEmailSend = async (email, title, companyName, jobId, status) => {
@@ -328,6 +331,7 @@ export default function MailComponent({
                     )}
                 </div>
             )}
+
         </div>
     );
 }

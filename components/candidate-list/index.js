@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js"
 import Image from "next/image"
 import '../ui/new_card.css'
 import Loading from "@/components/Loading"
+import PDFViewer from "@/components/PDFViewer"
 
 const supabaseClient = createClient(
     "https://hwbttezjdwqixmaftiyl.supabase.co",
@@ -28,6 +29,9 @@ function CandidateList({ jobApplications }) {
     const [reportReason, setReportReason] = useState("");
     const [reportedVideos, setReportedVideos] = useState([]);
     const [error, setError] = useState(null);
+    const [isPDFOpen, setIsPDFOpen] = useState(false);
+    const [currentPDFUrl, setCurrentPDFUrl] = useState('');
+
 
     // Add default avatar as a constant
     const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
@@ -77,13 +81,13 @@ function CandidateList({ jobApplications }) {
                             const requiredSkills = jobData?.skills?.split(",")
                                 .map(skill => skill.trim().toLowerCase()) || [];
 
-                            const matchingSkillsCount = requiredSkills.filter(skill => 
+                            const matchingSkillsCount = requiredSkills.filter(skill =>
                                 candidateSkills.includes(skill)
                             ).length;
 
                             const experienceScore = candidateExperience >= requiredExperience ? 1 : 0;
-                            const skillsMatchScore = requiredSkills.length > 0 
-                                ? matchingSkillsCount / requiredSkills.length 
+                            const skillsMatchScore = requiredSkills.length > 0
+                                ? matchingSkillsCount / requiredSkills.length
                                 : 0;
 
                             return {
@@ -105,7 +109,7 @@ function CandidateList({ jobApplications }) {
                     // Filter out null values from failed fetches
                     const validCandidates = detailedCandidates.filter(candidate => candidate !== null);
                     setCandidatesWithDetails(validCandidates);
-                    
+
                     if (validCandidates.length === 0) {
                         setError('No valid candidates found');
                     }
@@ -131,12 +135,12 @@ function CandidateList({ jobApplications }) {
             try {
                 const response = await fetch('/api/video-reports');
                 if (!response.ok) throw new Error('Failed to fetch reports');
-                
+
                 const data = await response.json();
                 const reportedUrls = data.reports
                     .filter(report => report.status === 'pending')
                     .map(report => report.videoUrl);
-                    
+
                 setReportedVideos(reportedUrls);
             } catch (error) {
                 console.error('Error fetching video reports:', error);
@@ -206,11 +210,14 @@ function CandidateList({ jobApplications }) {
             .getPublicUrl(`public/${candidate?.resume}`);
         console.log(data);
 
-        if (data?.publicUrl) {
-            setResumeUrl(data.publicUrl); // Set the resume URL for the iframe
-            setShowResumeModal(true);    // Open the modal
+        if (data?.publicUrl && data.publicUrl.endsWith('.pdf')) {
+            console.log(data.publicUrl, "data.publicUrl");
+            setCurrentPDFUrl(data.publicUrl);
+            setIsPDFOpen(true);
         } else {
-            alert("No resume available.");
+            console.log(data.publicUrl, "data.publicUrl");
+            setResumeUrl(data.publicUrl); // Set the resume URL for the iframe
+            setShowResumeModal(true);
         }
     }
 
@@ -231,14 +238,14 @@ function CandidateList({ jobApplications }) {
             console.error('No video URL provided');
             return;
         }
-        
+
         // Add more detailed logging
         const reportData = {
             videoUrl,
             reason,
         };
         console.log('Attempting to send report data:', reportData);
-        
+
         try {
             const response = await fetch('/api/video-reports', {
                 method: 'POST',
@@ -268,9 +275,9 @@ function CandidateList({ jobApplications }) {
     const getDisplaySkills = (candidate) => {
         const candidateSkills = candidate?.candidateDetails?.skills?.split(",").map(skill => skill.trim()) || [];
         const jobSkills = candidate?.jobDetails?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || [];
-        
+
         // Find matching skills
-        const matchingSkills = candidateSkills.filter(skill => 
+        const matchingSkills = candidateSkills.filter(skill =>
             jobSkills.includes(skill.toLowerCase())
         );
 
@@ -310,23 +317,11 @@ function CandidateList({ jobApplications }) {
             <div className="grid grid-cols-1 gap-6 p-10 md:grid-cols-2 lg:grid-cols-3 justify-center">
                 {candidatesWithDetails.map((candidate) => {
                     const displaySkills = getDisplaySkills(candidate);
-                    
+
                     return (
                         <div key={candidate?.candidateUserID} className="card shadow-lg" data-state="#about">
                             <div className="card-header">
-                                <div 
-                                    className="card-cover" 
-                                    style={{ 
-                                        backgroundImage: `url(https://images.unsplash.com/photo-1549068106-b024baf5062d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80)` 
-                                    }}
-                                ></div>
-                                <Image 
-                                    width={80}
-                                    height={80}
-                                    className="card-avatar" 
-                                    src={DEFAULT_AVATAR}
-                                    alt="avatar" 
-                                />
+                            
                                 <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
                                 <h2 className="card-jobtitle text-center">
                                     {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
@@ -334,33 +329,31 @@ function CandidateList({ jobApplications }) {
                             </div>
                             <div className="card-main">
                                 <div className="card-content">
-                                    <div className="card-subtitle text-center">Match Score</div>
-                                    <div className="flex justify-center">
-                                    <span
-                                        className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${
-                                            candidate.totalScore >= 1.5
+                                    <div className="card-subtitle text-center mt-[110px]">Match Score</div>
+                                    <div className="flex justify-center transform -translate-y-[80px]">
+                                        <span
+                                            className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
                                                 ? "bg-green-500 text-white"
                                                 : candidate.totalScore >= 1
                                                     ? "bg-yellow-500 text-black"
                                                     : "bg-red-500 text-white"
-                                        }`}
-                                    >
-                                        {candidate.totalScore.toFixed(2)}
-                                    </span>
+                                                }`}
+                                        >
+                                            {candidate.totalScore.toFixed(2)}
+                                        </span>
                                     </div>
-                                    <div className="card-desc mt-2">
+                                    <div className="card-desc mt-1 transform -translate-y-[80px]">
                                         <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
                                             {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
                                         </p>
                                         <div className="flex flex-wrap gap-1 justify-center">
                                             {displaySkills.skills.map((skill, index) => (
-                                                <span 
+                                                <span
                                                     key={index}
-                                                    className={`text-xs px-2 py-1 rounded text-center ${
-                                                        displaySkills.isMatching 
-                                                            ? 'bg-green-800 text-white-800'
-                                                            : 'bg-yellow-100 text-black font-bold'
-                                                    }`}
+                                                    className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
+                                                        ? 'bg-green-800 text-white-800'
+                                                        : 'bg-yellow-100 text-black font-bold'
+                                                        }`}
                                                 >
                                                     {skill}
                                                 </span>
@@ -368,9 +361,9 @@ function CandidateList({ jobApplications }) {
                                         </div>
                                     </div>
                                 </div>
-                                <div className = "flex justify-center">
-                                    <Button 
-                                        className="justify-center" 
+                                <div className="flex justify-center transform -translate-y-[70px]">
+                                    <Button
+                                        className="justify-center"
                                         onClick={() => {
                                             setCurrentCandidateDetails(candidate.candidateDetails);
                                             setShowCurrentCandidateDetailsModal(true);
@@ -388,9 +381,9 @@ function CandidateList({ jobApplications }) {
                 <Dialog
                     open={showCurrentCandidateDetailsModal}
                     onOpenChange={() => setShowCurrentCandidateDetailsModal(false)}
-                    className="max-w-[90%] w-[1200px]"
+                    className="max-w-[100vh] max-h-[100vh]"
                 >
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="max-h-[150vh] max-w-[100vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle className="text-2xl font-bold">
                                 {currentCandidateDetails?.name}
@@ -423,7 +416,7 @@ function CandidateList({ jobApplications }) {
                                     <h3 className="text-lg font-semibold mb-2">Skills & Preferences</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {currentCandidateDetails?.skills?.split(',').map((skill, index) => (
-                                            <span 
+                                            <span
                                                 key={index}
                                                 className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                                             >
@@ -453,24 +446,23 @@ function CandidateList({ jobApplications }) {
                                             (item) => item.candidateUserID === currentCandidateDetails?.userId
                                         )?.status.slice(-1)[0] === "Rejected"
                                     }
-                                    className={`rounded-full p-3 ${
-                                        candidatesWithDetails.find(
-                                            (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                        )?.status.slice(-1)[0] === "Rejected"
+                                    className={`rounded-full p-3 ${candidatesWithDetails.find(
+                                        (item) => item.candidateUserID === currentCandidateDetails?.userId
+                                    )?.status.slice(-1)[0] === "Rejected"
                                         ? "bg-gray-300"
                                         : "bg-red-500 hover:bg-red-600"
-                                    }`}
+                                        }`}
                                 >
-                                    <svg 
-                                        className="w-6 h-6 text-white" 
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                    <svg
+                                        className="w-6 h-6 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
                                         viewBox="0 0 24 24"
                                     >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth="2" 
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
                                             d="M6 18L18 6M6 6l12 12"
                                         />
                                     </svg>
@@ -494,34 +486,59 @@ function CandidateList({ jobApplications }) {
                                             (item) => item.candidateUserID === currentCandidateDetails?.userId
                                         )?.status.slice(-1)[0] === "Selected"
                                     }
-                                    className={`rounded-full p-3 ${
-                                        candidatesWithDetails.find(
-                                            (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                        )?.status.slice(-1)[0] === "Selected"
+                                    className={`rounded-full p-3 ${candidatesWithDetails.find(
+                                        (item) => item.candidateUserID === currentCandidateDetails?.userId
+                                    )?.status.slice(-1)[0] === "Selected"
                                         ? "bg-gray-300"
                                         : "bg-green-500 hover:bg-green-600"
-                                    }`}
+                                        }`}
                                 >
-                                    <svg 
-                                        className="w-6 h-6 text-white" 
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                    <svg
+                                        className="w-6 h-6 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
                                         viewBox="0 0 24 24"
                                     >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth="2" 
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
                                             d="M5 13l4 4L19 7"
                                         />
                                     </svg>
                                 </Button>
                             </div>
+
+                            {isPDFOpen && (
+    <div className="fixed inset-0 z-[9999] bg-white">
+        <button
+            onClick={() => setIsPDFOpen(false)}
+            className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <object
+            data={`${currentPDFUrl}#view=Fit`}
+            type="application/pdf"
+            className="w-full h-full"
+            style={{ 
+                height: 'calc(100vh)', 
+                width: '100%',
+                border: 'none'
+            }}
+        >
+            <p>Unable to display PDF file. <a href={currentPDFUrl} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+        </object>
+    </div>
+)}
+
                             {showResumeModal && (
                                 <Dialog open={showResumeModal} onOpenChange={() => setShowResumeModal(false)}>
                                     <DialogHeader>
-                                            <DialogTitle>Resume Preview</DialogTitle>
-                                        </DialogHeader>
+                                        <DialogTitle>Resume Preview</DialogTitle>
+                                    </DialogHeader>
                                     <DialogContent className="max-w-3xl w-[80vw] h-[70vh] p-0">
                                         <iframe
                                             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resumeUrl)}`}
@@ -537,8 +554,8 @@ function CandidateList({ jobApplications }) {
                                         {reportedVideos.includes(videoUrl) ? (
                                             <div className="flex flex-col items-center justify-center h-full space-y-4">
                                                 <p className="text-lg text-gray-600">This video has been reported by a recruiter.</p>
-                                                <Button 
-                                                    onClick={() => setReportedVideos(prev => 
+                                                <Button
+                                                    onClick={() => setReportedVideos(prev =>
                                                         prev.filter(url => url !== videoUrl)
                                                     )}
                                                     className="bg-blue-500 hover:bg-blue-600"
@@ -554,7 +571,7 @@ function CandidateList({ jobApplications }) {
                                                     className="w-full h-full"
                                                     title="Video CV Preview"
                                                 />
-                                                <Button 
+                                                <Button
                                                     className="absolute top-4 left-4 bg-red-500 hover:bg-red-600"
                                                     onClick={() => {
                                                         console.log('Current video URL when opening report dialog:', videoUrl);
@@ -621,7 +638,7 @@ function CandidateList({ jobApplications }) {
 
                                                     console.log(`Reason for rejection: ${finalReason}`);
                                                     console.log("Candidate", currentCandidateDetails)
-                                                    
+
 
                                                     // Call the update function with the rejection reason
                                                     await handleUpdateJobStatus(currentCandidateDetails?.userId, "Rejected", finalReason);
@@ -682,7 +699,7 @@ function CandidateList({ jobApplications }) {
                                                         return;
                                                     }
                                                     console.log("Current video URL:", videoUrl);
-                                                    
+
                                                     if (!videoUrl) {
                                                         alert("Error: Cannot identify video");
                                                         return;
