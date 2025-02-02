@@ -1,4 +1,26 @@
 export function getCandidateEmailTemplate({ candidateName, jobTitle, candidateEmail, status, companyName }) {
+    const getEmailContent = () => {
+        switch (status) {
+            case 'Rejected':
+                return `
+                    <p>I hope this email finds you well. I am writing regarding my recent application for the <strong>${jobTitle}</strong> position at ${companyName}.</p>
+                    <p>I understand that my application was not successful, but I would greatly appreciate the opportunity to discuss my qualifications further and address any concerns you may have had about my application.</p>
+                    <p>I remain very interested in contributing to ${companyName} and would welcome the chance to further discuss how my skills and experience could be valuable to your team.</p>`;
+            case 'Selected':
+                return `
+                    <p>I hope this email finds you well. I am writing to express my strong interest in the <strong>${jobTitle}</strong> position at ${companyName}.</p>
+                    <p>I am thrilled about being selected and would like to express my keen interest in moving forward with the process. I am excited about the opportunity to contribute to your team and would welcome the chance to discuss the next steps.</p>
+                    <p>I look forward to hearing from you regarding the next stages of the process.</p>`;
+            case 'Applied':
+                return `
+                    <p>I hope this email finds you well. I am writing to follow up on my application for the <strong>${jobTitle}</strong> position at ${companyName}.</p>
+                    <p>I submitted my application recently and wanted to reaffirm my strong interest in this opportunity. I believe my skills and experience align well with what you're looking for, and I would greatly appreciate any updates you could provide about the status of my application.</p>
+                    <p>I remain very enthusiastic about the possibility of joining ${companyName} and contributing to your team.</p>`;
+            default:
+                return '';
+        }
+    };
+
     return `
         <!DOCTYPE html>
         <html>
@@ -42,19 +64,21 @@ export function getCandidateEmailTemplate({ candidateName, jobTitle, candidateEm
         <body>
             <div class="email-container">
                 <div class="header">
-                    <h2>${status === 'Rejected' ? 'Job Rejection Appeal' : 'Job Application Interest'}</h2>
+                    <h2>${
+                        status === 'Rejected' ? 'Job Rejection Appeal' : 
+                        status === 'Selected' ? 'Job Application Interest' : 
+                        'Job Application Follow-up'
+                    }</h2>
                 </div>
                 <div class="content">
                     <p>To <strong>${companyName}</strong> HR,</p>
-                    ${status === 'Rejected' 
-                        ? `<p>I hope this email finds you well. I am writing regarding my recent application for the <strong>${jobTitle}</strong> position at ${companyName}.</p>
-                           <p>I understand that my application was not successful, but I would greatly appreciate the opportunity to discuss my qualifications further and address any concerns you may have had about my application.</p>`
-                        : `<p>I hope this email finds you well. I am writing to express my strong interest in the <strong>${jobTitle}</strong> position at ${companyName}.</p>
-                           <p>I am excited about the opportunity to contribute to your team and would welcome the chance to discuss how my skills and experience align with your needs.</p>`
-                    }
+                    ${getEmailContent()}
                     <p>Best regards,<br>${candidateName}</p>
                     
-                    <a href="mailto:${candidateEmail}?subject=Re: ${status === 'Rejected' ? 'Appeal for' : 'Interest in'} ${jobTitle} position" class="button">
+                    <a href="mailto:${candidateEmail}?subject=Re: ${
+                        status === 'Rejected' ? 'Appeal for' : 
+                        status === 'Selected' ? 'Interest in' : 
+                        'Follow-up on'} ${jobTitle} position" class="button">
                         Reply to Candidate
                     </a>
                 </div>

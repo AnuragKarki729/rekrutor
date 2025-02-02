@@ -55,17 +55,32 @@ function CandidateActivity({ jobList, jobApplicants }) {
                                                     jobApplication.jobID === finalFilteredItem._id &&
                                                     jobApplication.status.slice(-1)[0] === status
                                             );
-                                            
-                                            console.log ("relatedAPplication",relatedApplication)
+
+                                            console.log("relatedAPplication", relatedApplication)
                                             return (
                                                 <CommonCard
                                                     key={finalFilteredItem._id}
-                                                    icon={<JobIcon industry={jobItem.industry} className="h-25 w-25"/>}
+
+                                                    icon={
+                                                        <div className='mb-2 flex flex-col items-center justify-center gap-2'>
+                                                            <JobIcon industry={finalFilteredItem.industry} className="h-25 w-25" />
+                                                            <span className={`${status === "Applied"
+                                                                    ? "bg-blue-500"
+                                                                    : status === "Selected"
+                                                                        ? "bg-green-500"
+                                                                        : "bg-red-500"
+                                                                } text-white px-2 py-2 rounded-full text-sm text-center`}
+                                                            >
+                                                                {status}
+                                                            </span>
+                                                        </div>
+                                                    }
                                                     title={finalFilteredItem?.title}
+
                                                     description={
                                                         <>
                                                             {finalFilteredItem?.companyName}
-                                                            {console.log(status,relatedApplication.rejectionReason)}
+                                                            {console.log(status, relatedApplication.rejectionReason)}
                                                             {status === "Rejected" && relatedApplication?.rejectionReason && (
                                                                 <div className="text-red-600 font-semibold mt-2">
                                                                     Reason: {relatedApplication.rejectionReason}

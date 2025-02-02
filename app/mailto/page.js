@@ -26,10 +26,11 @@ export default async function MailPage() {
   
 
   if (role === 'candidate') {
+
     const jobList = await fetchJobsForCandidateAction();
     const jobApplicants = await fetchJobApplicationsForCandidate(userID);
 
-    console.log(jobApplicants, "jobApplicants")
+    console.log(jobList, "jobList")
 
     const selectedJobApplications = jobApplicants.filter(
       (application) => application.status.slice(-1)[0] === 'Selected'
@@ -37,6 +38,10 @@ export default async function MailPage() {
     const rejectedJobApplications = jobApplicants.filter(
       (application) => application.status.slice(-1)[0] === 'Rejected'
     );
+    const appliedJobApplications = jobApplicants.filter(
+      (application) => application.status.slice(-1)[0] === 'Applied'
+    );
+
 
     const selectedData = await Promise.all(
         selectedJobApplications.map(async (application) => {
@@ -50,7 +55,7 @@ export default async function MailPage() {
       
           const recruiterEmail = recruiter.email;
       
-          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName];
+          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
         })
       );
 
@@ -69,17 +74,36 @@ export default async function MailPage() {
       
           const recruiterEmail = recruiter.email;
       
-          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName];
+          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
         })
       );
 
     if (!selectedData || !rejectedData) return <Loading />
 
+    const appliedData = await Promise.all(
+      appliedJobApplications.map(async (application) => {
+        const jobDetails = jobList.find((job) => job._id === application.jobID);
+      
+        if (!jobDetails?.recruiterId) return null; // Handle missing recruiterId
+    
+        const recruiter = await Profile.findOne({ userId: jobDetails.recruiterId });
+    
+        if (!recruiter) return null; // Handle missing recruiter profile
+    
+        const recruiterEmail = recruiter.email;
+    
+        return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
+       })
+    );
+
+
     // console.log("HELLO", rejectedData)
+
     return (
       <MailComponent
         selectedData={selectedData.filter(Boolean)}
         rejectedData={rejectedData.filter(Boolean)}
+        appliedData={appliedData.filter(Boolean)}
         role={role}
         userEmail={userEmail}
         userName={userName}
@@ -87,32 +111,36 @@ export default async function MailPage() {
     );
   }
 
+
+
   if (role === 'recruiter') {
     const jobList = await fetchJobsForCandidateAction();
     const jobApplicants = await fetchJobApplicationsForRecruiter(userID);
 
     const selectedJobApplications = jobApplicants.filter(
-      (application) => application.status.slice(-1)[0] === 'Selected'
+        (application) => application.status.slice(-1)[0] === 'Selected'
     );
 
     const selectedData = selectedJobApplications.map((application) => {
-      const jobDetails = jobList.find((job) => job._id === application.jobID);
-      return [
-        application.email, // Candidate email
-        application.name, // Candidate name
-        jobDetails?.title, // Job title
-        jobDetails?.companyName, // Company name
-      ];
+        const jobDetails = jobList.find((job) => job._id === application.jobID);
+        
+        return [
+            application.email,      // Candidate email
+            application.name,       // Candidate name
+            jobDetails?.title,      // Job title
+            jobDetails?.companyName, // Company name
+            application.jobID       // Added jobID
+        ];
     });
-  
+
     if (!selectedData) return <Loading />
     return (
-      <MailComponent
-        selectedData={selectedData}
-        role={role}
-        userEmail={userEmail}
-        userName={userName}
-      />
+        <MailComponent
+            selectedData={selectedData.filter(Boolean)} // Added filter(Boolean) to remove any null entries
+            role={role}
+            userEmail={userEmail}
+            userName={userName}
+        />
     );
   }
 
