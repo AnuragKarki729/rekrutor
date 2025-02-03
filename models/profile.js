@@ -24,6 +24,8 @@ const ProfileSchema = new mongoose.Schema(
             noticePeriod: String,
             skills: String,
             currentCompany: String,
+            parsedResponse: {type: String, default: ""},
+            aiSummary: {type: String, default: ""},
             experienceLevel: { type: String, enum: ['Fresher', 'Experienced'] },
             industry: String,
             specifiedIndustry: { 

@@ -16,7 +16,7 @@ function AccountInfo({ profileInfo }) {
     const [candidateFormData, setCandidateFormData] = useState({});
     const [recruiterFormData, setRecruiterFormData] = useState({});
     const [newResume, setNewResume] = useState(null); // Store the new resume file
-    
+    const [file, setFile] = useState(null)
 
     useEffect(() => {
         if (profileInfo?.role === 'recruiter') {
@@ -26,29 +26,120 @@ function AccountInfo({ profileInfo }) {
         }
     }, [profileInfo]);
 
-    async function extractText(file) {
-        if (!file) return;
-    
-        const formData = new FormData();
-        formData.append('file', file);
-    
-        try {
-            const response = await fetch('/api/extract-resume-text', {
-                method: 'POST',
-                body: formData
-            });
-    
-            if (!response.ok) {
-                throw new Error('Failed to extract text from resume');
-            }
-    
-            const { extractedText } = await response.json();
-            console.log('Extracted text:', extractedText);  // This will show the extracted text in console
-        } catch (error) {
-            console.error('Error extracting text:', error);
+    async function handleFileChange(event) {
+        const selectedFile = event.target.files[0];
+        if (selectedFile) {
+            // Get file extension
+            const fileExt = selectedFile.name.split('.').pop();
+            
+            // Get user's first and last name from candidateFormData
+            const firstName = candidateFormData.name?.split(' ')[0] || '';
+            const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
+
+            const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
+                `${firstName}_${lastName}_Resume.${fileExt}`;
+
+            // Create new file with custom name
+            const renamedFile = new File(
+                [selectedFile],
+                newFileName,
+                { type: selectedFile.type }
+            );
+
+            setFile(renamedFile);
         }
     }
+
     
+    async function uploadAndParseFile(file) {
+        if (!file) return;
+
+
+
+            try {
+                // Create FormData for parsing
+                const formData = new FormData();
+                formData.append('file', file);
+                console.log('SENDING FILE TO PARSER')
+
+                // Parse resume first to get skills
+                const parseResponse = await fetch('/api/parse-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                
+
+                if (!parseResponse.ok) {
+                    throw new Error('Failed to parse resume');
+                }
+
+
+                const parsedData = await parseResponse.json();
+                console.log('PARSED DATA', parsedData)
+                
+                // Update profile with parsed response
+                try {
+                    console.log('UPDATING PROFILE', profileInfo?.userId, profileInfo?.role)
+                    const updateProfileResponse = await fetch(`/api/profiles/parsed-response/${profileInfo?.userId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            parsedResponse: JSON.stringify(parsedData)
+                        })
+                    });
+                    console.log("last step")
+                    if (!updateProfileResponse.ok) {
+                        throw new Error('Failed to update profile with parsed response');
+                    }
+                } catch (error) {
+                    console.error('Error updating profile with parsed response:', error);
+                    toast.error('Failed to update profile with parsed data');
+                }
+
+                // Update form data with parsed information
+                if (parsedData.name && parsedData.name.length > 0) {
+                    setCandidateFormData(prev => ({
+                        ...prev,
+                        name: parsedData.name
+                    }));
+                }
+                if (parsedData.skills && parsedData.skills.length > 0) {
+                    setCandidateFormData(prev => ({
+                        ...prev,
+                        skills: parsedData.skills.join(', ')
+                    }));
+                }
+
+                // Upload file to Supabase
+                const { data, error } = await supabaseClient.storage
+                    .from("rekrutor-public")
+                    .upload(`/public/${file.name}`, file, {
+                        cacheControl: "3600",
+                        upsert: true
+                    });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data) {
+                    setCandidateFormData((prev) => ({
+                        ...prev,
+                        resume: file.name,
+                    }));
+                    toast.success('Resume uploaded and parsed successfully');
+                }
+            } catch (error) {
+                console.error('Error processing file:', error);
+                toast.error('Failed to process resume');
+            }
+        };
+
+   
+
 
     async function handleUpdateAccount() {
         let updatedResume = candidateFormData.resume;
@@ -139,18 +230,19 @@ function AccountInfo({ profileInfo }) {
                             <input
                                 id="resume-upload"
                                 type="file"
-                                accept=".pdf,.doc,.docx"
-                                onChange={(e) => {setNewResume(e.target.files[0]); extractText(e.target.files[0])}}
+                                accept=".pdf"
+                                onChange={(e) => {setNewResume(e.target.files[0]); uploadAndParseFile(e.target.files[0])}}
                                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
                             />
                             {candidateFormData?.resume && (
+
                                 <p className="mt-2 text-sm text-gray-600">
                                     Current Resume:{" "}
                                     <button
                                         onClick={() => window.open(`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/${candidateFormData.resume}`, '_blank')}
                                         className="text-blue-600 hover:underline"
                                     >
-                                        {candidateFormData.resume}
+                                        View Resume
                                     </button>
                                 </p>
                             )}
@@ -174,8 +266,11 @@ function AccountInfo({ profileInfo }) {
                         }
                         buttonText={"Update Profile"}
                         action={handleUpdateAccount}
+                        handleFileChange={handleFileChange}
                     />
+                    <p1>Hello{candidateFormData.parsedResponse===""? "No summary yet": candidateFormData.parsedResponse}</p1>
                     
+
                 </div>
             </div>
         </div>

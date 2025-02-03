@@ -111,7 +111,7 @@ function OnBoard(){
                     method: 'POST',
                     body: formData
                 });
-    
+
                 if (!parseResponse.ok) {
                     const errorText = await parseResponse.text();
                     console.error('Parse response error:', errorText);
@@ -120,7 +120,27 @@ function OnBoard(){
     
                 const parsedData = await parseResponse.json();
                 console.log('Parsed resume data:', parsedData);
-    
+
+                
+                try {
+                    // Update profile with parsed response
+                    const updateProfileResponse = await fetch(`/api/profiles/${user?.id}/parsed-response`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            parsedResponse: JSON.stringify(parsedData)
+                        })
+                    });
+                
+                    if (!updateProfileResponse.ok) {
+                        throw new Error('Failed to update profile with parsed response');
+                    }
+                } catch (error) {
+                    console.error('Error updating profile with parsed response:', error);
+                }
+                
                 // Update form data with parsed skills
                 if (parsedData.name && parsedData.name.length > 0) {
                     setCandidateFormData(prev => ({

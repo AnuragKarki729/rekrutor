@@ -192,7 +192,7 @@ function CandidateVideo() {
       console.log("Video CV updated successfully:", updateData);
 
       // Update the UI to show new video
-      setPreviousVideo("https://www.youtube.com/watch?v=1O0yazhqaxs&t=1s");
+      setPreviousVideo(publicUrl);
 
       const videoElement = document.querySelector('video[src*="rekrutor-public"]');
       if (videoElement) {
