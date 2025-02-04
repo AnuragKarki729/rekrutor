@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const generateYearOptions = () => {
   const currentYear = new Date().getFullYear();
@@ -21,6 +21,32 @@ const generateYearOptions = () => {
 
 function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, formData, setFormData, handleFileChange }) {
   const [skillInputValue, setSkillInputValue] = useState('');
+
+  useEffect(() => {
+    if (formData.previousCompanies?.length) {
+      const calculateTotalExperience = () => {
+        const totalYears = formData.previousCompanies.reduce((total, company) => {
+          if (!company.startDate || !company.endDate) return total;
+
+          const start = new Date(company.startDate);
+          const end = new Date(company.endDate);
+          const years = (end - start) / (1000 * 60 * 60 * 24 * 365.25);
+
+          return total + Math.max(0, years);
+        }, 0);
+
+        return totalYears.toFixed(1);
+      };
+
+      const totalExp = calculateTotalExperience();
+      if (formData.totalExperience !== totalExp) {
+        setFormData(prev => ({
+          ...prev,
+          totalExperience: totalExp
+        }));
+      }
+    }
+  }, [formData.previousCompanies]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -146,22 +172,6 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
         );
 
       case "totalExperience":
-        const calculateTotalExperience = () => {
-          if (!formData.previousCompanies?.length) return "0 years";
-
-          const totalYears = formData.previousCompanies.reduce((total, company) => {
-            if (!company.startDate || !company.endDate) return total;
-
-            const start = new Date(company.startDate);
-            const end = new Date(company.endDate);
-            const years = (end - start) / (1000 * 60 * 60 * 24 * 365.25);
-
-            return total + Math.max(0, years);
-          }, 0);
-
-          return `${totalYears.toFixed(1)} years`;
-        };
-
         return (
           <Box className="mt-6 mb-6">
             <TextField
@@ -172,7 +182,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
               disabled={true}
               name={getCurrentControl.name}
               id={getCurrentControl.name}
-              value={calculateTotalExperience()}
+              value={`${formData.totalExperience || "0"} years`}
             />
           </Box>
         );
@@ -327,10 +337,11 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                 <TextField
                   label="Company Name"
                   variant="outlined"
-                  value={company.name || ""}
+                  value={company.companyName || ""}
                   onChange={(event) => {
                     const newCompanies = [...(formData.previousCompanies || [])];
-                    newCompanies[index] = { ...newCompanies[index], name: event.target.value };
+                    newCompanies[index] = { ...newCompanies[index], companyName: event.target.value };
+
                     setFormData({
                       ...formData,
                       previousCompanies: newCompanies,
@@ -359,13 +370,10 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                     type="date"
                     label="Start Date"
                     variant="outlined"
-                    value={company.startDate || ""}
+                    value={company.startDate ? new Date(company.startDate).toISOString().split('T')[0] : ""}
                     onChange={(event) => {
                       const newCompanies = [...(formData.previousCompanies || [])];
-                      newCompanies[index] = {
-                        ...newCompanies[index],
-                        startDate: event.target.value
-                      };
+                      newCompanies[index] = {...newCompanies[index], startDate: new Date(event.target.value)};
                       setFormData({
                         ...formData,
                         previousCompanies: newCompanies,
@@ -377,12 +385,14 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                     type="date"
                     label="End Date"
                     variant="outlined"
-                    value={company.endDate || ""}
+                    value={company.endDate ? new Date(company.endDate).toISOString().split('T')[0] : ""}
+                    
+
                     onChange={(event) => {
                       const newCompanies = [...(formData.previousCompanies || [])];
                       newCompanies[index] = {
                         ...newCompanies[index],
-                        endDate: event.target.value
+                        endDate: new Date(event.target.value)
                       };
                       setFormData({
                         ...formData,

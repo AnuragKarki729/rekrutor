@@ -33,3 +33,29 @@ export async function PUT(request, { params }) {
         )
     }
 } 
+
+export async function DELETE(request, { params }) {
+    try {
+        await connectToDB()
+        
+        const result = await Application.findByIdAndDelete(params.id)
+
+        if (!result) {
+            return NextResponse.json(
+                { error: "Application not found" },
+                { status: 404 }
+            )
+        }
+
+        // Get the pathToRevalidate from headers or query params
+        const pathToRevalidate = request.headers.get('x-revalidate-path') || '/activity'
+        revalidatePath(pathToRevalidate)
+
+        return NextResponse.json({ message: "Application deleted successfully" })
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to delete application" },
+            { status: 500 }
+        )
+    }
+}

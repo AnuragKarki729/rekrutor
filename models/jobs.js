@@ -13,9 +13,12 @@ const JobSchema = new mongoose.Schema({
     salary: String,
     skills: String,
     recruiterId: String,
+    hiredFlag: {type: Boolean, default: false},
     applicants: [
         {
             name: String,
+
+
             email: String,
             userId: String,
             status: String

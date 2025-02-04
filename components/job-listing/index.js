@@ -44,11 +44,12 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
     })
 
     const [filterParams, setFilterParams] = useState({})
-    const [activeTab, setActiveTab] = useState('High Match Potential')
+    const [activeTab, setActiveTab] = useState('All Jobs')
     const [loading, setLoading] = useState(false)
     const [localJobApplications, setLocalJobApplications] = useState(jobApplications)
     const [searchedJobs, setSearchedJobs] = useState(jobList);
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+    const [removedJobs, setRemovedJobs] = useState(new Set());
 
     console.log(initialJobList, 'initialJobList')
 
@@ -144,8 +145,20 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
     }, [filterParams, searchParams]);
 
     const handleApplicationSubmit = (newApplication) => {
-        setLocalJobApplications(prev => [...prev, newApplication])
-    }
+        if (!newApplication || !newApplication.jobID) return;
+        
+        if (newApplication.deleted) {
+            // Remove the application from local state
+            setLocalJobApplications(prev => 
+                prev.filter(app => app.jobID !== newApplication.jobID)
+            );
+        } else {
+            // Add new application
+            setLocalJobApplications(prev => [...prev, newApplication]);
+        }
+        
+        setRemovedJobs(prev => new Set([...prev, newApplication.jobID]));
+    };
 
     const appliedJobs = jobList.filter(job =>
         localJobApplications.some(
@@ -168,63 +181,40 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
         "Perfect Match": searchedJobs.filter(jobItem => {
             const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
             const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
-
-            const HighSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
             const candidateIndustry = profileInfo?.candidateInfo?.industry
             const jobIndustry = jobItem?.industry
-
-            const CandidateIndustryMatch = candidateIndustry === jobIndustry
-
             const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
-            const jobExpYears = parseFloat(jobItem?.yearsOfExperience.split("-")[0]) + 0.5
+            const yearsRange = jobItem?.yearsOfExperience?.match(/\((\d+)-(\d+)/);
+            const jobExpYears = yearsRange ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2 : 0;
+            
+            const industryMatch = candidateIndustry === jobIndustry
+            const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
+            const expMatch = candidateExpYears >= jobExpYears
+            const freshGradMatch = profileInfo?.candidateInfo?.experienceLevel === "Fresher" && jobItem?.experience === "Fresher"
 
-            const ExpMatch = candidateExpYears >= jobExpYears
-
-            const HighexperienceMatch = CandidateIndustryMatch && ExpMatch && HighSkillsMatch
-
-            if (CandidateIndustryMatch && (profileInfo?.candidateInfo?.experienceLevel === "Fresher") && (jobItem?.experience === "Fresher")) {
-                return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
-            }
-
-            return HighexperienceMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
+            return (perfectSkillsMatch && expMatch && industryMatch) || 
+                   (freshGradMatch && industryMatch);
         }),
-        "Medium Match": searchedJobs.filter(jobItem => {
-            const candidateIndustry = profileInfo?.candidateInfo?.industry
-            const jobIndustry = jobItem?.industry
-
-            const CandidateIndustryMatch = candidateIndustry === jobIndustry
-
+        "Good Match": searchedJobs.filter(jobItem => {
             const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
             const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
-
-            const MedSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
-
-            const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
-            const jobExpYears = parseFloat(jobItem?.yearsOfExperience.split("-")[0]) + 0.5
-
-            const MedExpMatch = candidateExpYears < jobExpYears
-
-            const MedexperienceMatch = CandidateIndustryMatch && MedExpMatch
-            const MedexperienceSkillsMatch = CandidateIndustryMatch && MedSkillsMatch
-
-            return MedexperienceMatch && MedexperienceSkillsMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id); // Only consider high match potential
-        }),
-        "Industry Match": searchedJobs.filter(jobItem => {
             const candidateIndustry = profileInfo?.candidateInfo?.industry
             const jobIndustry = jobItem?.industry
+            const candidateExpYears = profileInfo?.candidateInfo?.totalExperience || 0
+            const yearsRange = jobItem?.yearsOfExperience?.match(/\((\d+)-(\d+)/);
+            const jobExpYears = yearsRange ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2 : 0;
+            
+            const industryMatch = candidateIndustry === jobIndustry
+            const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
+            const expMatch = candidateExpYears >= jobExpYears
 
-            const CandidateIndustryMatch = candidateIndustry === jobIndustry
-
-            return CandidateIndustryMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id);
-            // Only consider high match potential
+            return (expMatch && industryMatch) || (expMatch && perfectSkillsMatch);
         }),
-        "Fresh Graduates": searchedJobs.filter(jobItem => {
-            const candidateExpLevel = profileInfo?.candidateInfo?.experienceLevel
-            const jobExpLevel = jobItem?.experience
-
-            const FreshGradMatch = candidateExpLevel === jobExpLevel
-
-            return FreshGradMatch && !appliedJobs.some(jobItem => jobItem._id === jobItem._id);
+        "My Industry": searchedJobs.filter(jobItem => {
+            const candidateIndustry = profileInfo?.candidateInfo?.industry
+            const jobIndustry = jobItem?.industry
+            
+            return candidateIndustry === jobIndustry;
         }),
         "Applied Jobs": appliedJobs,
     };
@@ -381,68 +371,21 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                             className="w-full"
                         >
                             <TabsList className="mb-6 flex flex-wrap gap-2 justify-start">
-                                {/* Tab triggers with consistent spacing */}
+                                {["Perfect Match", "Good Match", "My Industry", "All Jobs", "Applied Jobs"].map((tab) => (
+                                    <TabsTrigger 
+                                        key={tab}
+                                        value={tab}
 
-                                <TabsTrigger value="Perfect Match"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    Perfect Match
-                                    {filteredJobList["Perfect Match"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["Perfect Match"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Medium Match"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    Medium Match
-                                    {filteredJobList["Medium Match"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["Medium Match"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Industry Match"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    Industry Match
-                                    {filteredJobList["Industry Match"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["Industry Match"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Fresh Graduates"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    Fresh Graduates
-                                    {filteredJobList["Fresh Graduates"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["Fresh Graduates"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="All Jobs"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    All Jobs
-                                    {filteredJobList["All Jobs"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["All Jobs"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="Applied Jobs"
-                                    className="text-sm lg:text-base px-3 py-2 transition-colors duration-200">
-                                    Applied Jobs
-                                    {filteredJobList["Applied Jobs"].length > 0 && (
-                                        <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 
-                                            rounded-full transition-colors duration-200">
-                                            {filteredJobList["Applied Jobs"].length}
-                                        </span>
-                                    )}
-                                </TabsTrigger>
+                                        className="text-sm lg:text-base px-3 py-2 transition-colors duration-200"
+                                    >
+                                        {tab}
+                                        {filteredJobList[tab].length > 0 && (
+                                            <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                                                {filteredJobList[tab].length}
+                                            </span>
+                                        )}
+                                    </TabsTrigger>
+                                ))}
                             </TabsList>
 
                             {/* Content grid with responsive columns */}
@@ -459,15 +402,26 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                                                     .sort((a, b) => {
                                                         const aApplied = localJobApplications.some(app => app.jobID === a._id && app.status[0] === "Applied");
                                                         const bApplied = localJobApplications.some(app => app.jobID === b._id && app.status[0] === "Applied");
-                                                        return aApplied - bApplied; // Applied jobs go to the bottom
+                                                        return aApplied - bApplied;
                                                     }).map((jobItem, index) => (
-                                                        <CandidateJobCard
-                                                            profileInfo={profileInfo}
-                                                            key={jobItem.id || index}
-                                                            jobItem={jobItem}
-                                                            jobApplications={localJobApplications}
-                                                            onApplicationSubmit={handleApplicationSubmit}
-                                                        />
+                                                        <div
+                                                            key={jobItem._id || index}
+                                                            className={`transform transition-all duration-500 ease-in-out ${
+                                                                removedJobs.has(jobItem._id) 
+                                                                    ? 'h-0 opacity-0 m-0 p-0 overflow-hidden' 
+                                                                    : 'h-auto opacity-100'
+                                                            }`}
+                                                            style={{
+                                                                gridRow: removedJobs.has(jobItem._id) ? 'span 0' : 'auto',
+                                                            }}
+                                                        >
+                                                            <CandidateJobCard
+                                                                profileInfo={profileInfo}
+                                                                jobItem={jobItem}
+                                                                jobApplications={localJobApplications}
+                                                                onApplicationSubmit={handleApplicationSubmit}
+                                                            />
+                                                        </div>
                                                     ))
                                             ) : (
                                                 <p className="text-gray-600 col-span-full text-center py-8 text-sm sm:text-base">

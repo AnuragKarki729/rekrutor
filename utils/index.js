@@ -81,6 +81,13 @@ export const candidateOnBoardFormControls = [
         showWhen: (formData) => formData.experienceLevel === 'Experienced'
     },
     {
+        label: 'Current Position',
+        name: 'currentPosition',
+        placeholder: 'e.g., Software Engineer, Product Manager, etc.',
+        componentType: 'text',
+        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+    },
+    {
         label: 'Current Job Location',
         name: 'currentJobLocation',
         placeholder: 'City, Country (e.g., New York, USA)',
@@ -198,6 +205,7 @@ export const initialCandidateFormData = {
     noticePeriod: '',
     skills: '',
     currentCompany: '',
+    currentPosition: '',
     previousCompanies: [],
     totalExperience: '',
     college: '',
@@ -219,6 +227,7 @@ export const initialCandidateAccountFormData = {
     noticePeriod: '',
     skills: '',
     currentCompany: '',
+    currentPosition: '',
     previousCompanies: [],
     totalExperience: '',
     college: '',

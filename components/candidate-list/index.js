@@ -14,10 +14,75 @@ const supabaseClient = createClient(
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YnR0ZXpqZHdxaXhtYWZ0aXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0Mjc1MjksImV4cCI6MjA0ODAwMzUyOX0.giYTTB68BJchfDZdqnsMDpt7rhgVPOvPwYp90-Heo4c"
 )
 
+
+function calculateMatchScore(candidateData, jobData) {
+    // Experience score calculation
+    const candidateSkills = candidateData?.candidateInfo?.skills?.split(",")
+    .map(skill => skill.trim().toLowerCase()) || [];
+const jobSkills = jobData?.skills?.split(",")
+    .map(skill => skill.trim().toLowerCase()) || [];
+const candidateIndustry = candidateData?.candidateInfo?.industry;
+const jobIndustry = jobData?.industry;
+const candidateExpYears = candidateData?.candidateInfo?.totalExperience || 0;
+const jobExpYears = parseFloat(jobData?.yearsOfExperience?.split("-")[0]) + 0.5;
+const candidateExpLevel = candidateData?.candidateInfo?.experienceLevel;
+const jobExpLevel = jobData?.experience;
+
+console.log(jobData, "jobData");
+console.log(candidateData, "candidateData");
+
+// Check for matches
+const industryMatch = candidateIndustry === jobIndustry;
+const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill));
+const mediumSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
+const lowSkillsMatch = candidateSkills.every(skill => !jobSkills.includes(skill));
+const expMatch = candidateExpYears >= jobExpYears;
+const medExpMatch = candidateExpYears - jobExpYears <= 1.5 && candidateExpYears - jobExpYears >= -1.5;
+const lowExpMatch = candidateExpYears < jobExpYears;
+const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresher";
+
+// Calculate score based on match type (1-5 scale)
+let score;
+if (perfectSkillsMatch && expMatch && industryMatch) {
+    score = 5.0; // Perfect Match!
+} else if (expMatch && industryMatch || (freshGradMatch && industryMatch)) {
+    score = 4.5; // High Match / Perfect Match for freshers
+} else if (medExpMatch && mediumSkillsMatch && industryMatch) {
+    score = 4.0; // Great Match
+} else if (perfectSkillsMatch && medExpMatch && industryMatch) {
+    score = 3.5; // Great Match
+} else if (medExpMatch && mediumSkillsMatch && !industryMatch || 
+           freshGradMatch && !industryMatch ||
+           perfectSkillsMatch && medExpMatch && !industryMatch) {
+    score = 3.0; // Worth a Shot
+} else if (perfectSkillsMatch && lowExpMatch && industryMatch) {
+    score = 2.0; // Low Match
+} else if (lowSkillsMatch && lowExpMatch && !industryMatch ||
+           perfectSkillsMatch && lowExpMatch && !industryMatch) {
+    score = 1.0; // Low Match!
+} else {
+    score = 1.5; // Default score for unmatched conditions
+}
+
+// Count matching skills for additional context
+const matchingSkillsCount = jobSkills.filter(skill => 
+    candidateSkills.includes(skill)
+).length;
+
+return {
+    candidateData,
+    totalScore: score,
+    matchingSkillsCount,
+    experienceMatch: expMatch || medExpMatch,
+    industryMatch,
+    skillsMatch: perfectSkillsMatch || mediumSkillsMatch
+};
+}
+
+
 function CandidateList({ jobApplications }) {
     const [candidatesWithDetails, setCandidatesWithDetails] = useState([]);
     const [currentCandidateDetails, setCurrentCandidateDetails] = useState(null);
-    const [showCurrentCandidateDetailsModal, setShowCurrentCandidateDetailsModal] = useState(false);
     const [resumeUrl, setResumeUrl] = useState(null)
     const [showResumeModal, setShowResumeModal] = useState(false)
     const [videoUrl, setVideoUrl] = useState(null);
@@ -31,6 +96,7 @@ function CandidateList({ jobApplications }) {
     const [error, setError] = useState(null);
     const [isPDFOpen, setIsPDFOpen] = useState(false);
     const [currentPDFUrl, setCurrentPDFUrl] = useState('');
+    const [swipedCandidates, setSwipedCandidates] = useState([]); // NEW state to track swiped cards
 
 
     // Add default avatar as a constant
@@ -46,16 +112,16 @@ function CandidateList({ jobApplications }) {
                         try {
                             const jobID = jobApplicant?.jobID;
                             const candidateID = jobApplicant?.candidateUserID;
-
+    
                             if (!jobID || !candidateID) {
                                 console.warn('Missing jobID or candidateID:', { jobID, candidateID });
                                 return null;
                             }
-
+    
                             // Fetch job and candidate details
                             const jobResponse = await fetch(`/api/jobs/${jobID}`);
                             const candidateResponse = await fetch(`/api/profiles/${candidateID}`);
-
+    
                             // Check individual responses
                             if (!jobResponse.ok) {
                                 throw new Error(`Job API error: ${jobResponse.status}`);
@@ -63,40 +129,23 @@ function CandidateList({ jobApplications }) {
                             if (!candidateResponse.ok) {
                                 throw new Error(`Profile API error: ${candidateResponse.status}`);
                             }
-
+    
                             const jobData = await jobResponse.json();
                             const candidateData = await candidateResponse.json();
-
+    
                             // Validate required data
                             if (!jobData || !candidateData) {
                                 throw new Error('Missing job or candidate data');
                             }
-
-                            // Calculate scores with null checks
-                            const candidateExperience = parseFloat(candidateData?.candidateInfo?.totalExperience) || 0;
-                            const requiredExperience = parseFloat(jobData?.experience?.match(/[\d.]+/)?.[0]) || 0;
-
-                            const candidateSkills = candidateData?.candidateInfo?.skills?.split(",")
-                                .map(skill => skill.trim().toLowerCase()) || [];
-                            const requiredSkills = jobData?.skills?.split(",")
-                                .map(skill => skill.trim().toLowerCase()) || [];
-
-                            const matchingSkillsCount = requiredSkills.filter(skill =>
-                                candidateSkills.includes(skill)
-                            ).length;
-
-                            const experienceScore = candidateExperience >= requiredExperience ? 1 : 0;
-                            const skillsMatchScore = requiredSkills.length > 0
-                                ? matchingSkillsCount / requiredSkills.length
-                                : 0;
-
+    
+                            // Calculate match scores
+                            const matchScores = calculateMatchScore(candidateData, jobData);
+    
                             return {
                                 ...jobApplicant,
                                 candidateDetails: candidateData?.candidateInfo,
                                 jobDetails: jobData,
-                                totalScore: matchingSkillsCount + experienceScore,
-                                experienceScore,
-                                skillsMatchScore,
+                                ...matchScores // Spread the calculated scores
                             };
                         } catch (error) {
                             console.warn('Error processing candidate:', error);
@@ -104,6 +153,7 @@ function CandidateList({ jobApplications }) {
                         }
                     })
                 );
+    
 
                 if (isMounted) {
                     // Filter out null values from failed fetches
@@ -149,6 +199,20 @@ function CandidateList({ jobApplications }) {
 
         fetchReportedVideos();
     }, []);
+
+    async function handleSelectCandidate(candidateUserID) {
+        console.log(candidateUserID, "candidateUserID");
+        console.log(swipedCandidates, "swipedCandidates");
+        // Add candidate id to the state triggering the CSS animation
+        setSwipedCandidates(prev => [...prev, candidateUserID]);
+       
+        // Wait for the animation to complete (here 500ms, adjust as needed)
+        setTimeout(() => {
+            // Now update application status with 'Selected'
+            handleUpdateJobStatus(candidateUserID, 'Selected');
+        }, 500);
+
+    }
 
     // Handle showing candidate details in the modal
     async function handleUpdateJobStatus(candidateUserID, getCurrentStatus, rejectionReason) {
@@ -210,8 +274,9 @@ function CandidateList({ jobApplications }) {
 
     // Handle resume download
     function handlePreviewResume(candidate) {
+        console.log(candidate, "candidate");
         const { data } = supabaseClient.storage.from('rekrutor-public')
-            .getPublicUrl(`public/${candidate?.resume}`);
+            .getPublicUrl(`${candidate?.resume}`);
         console.log(data);
 
         if (data?.publicUrl && data.publicUrl.endsWith('.pdf')) {
@@ -317,428 +382,452 @@ function CandidateList({ jobApplications }) {
     }
 
     return (
-        <div>
-            <div className="grid grid-cols-1 gap-6 p-10 md:grid-cols-2 lg:grid-cols-3 justify-center">
-                {candidatesWithDetails.map((candidate) => {
-                    const displaySkills = getDisplaySkills(candidate);
-
-                    return (
-                        <div key={candidate?.candidateUserID} className="card shadow-lg" data-state="#about">
-                            <div className="card-header">
-                            
-                                <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
-                                <h2 className="card-jobtitle text-center">
-                                    {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
-                                </h2>
-                            </div>
-                            <div className="card-main">
-                                <div className="card-content">
-                                    <div className="card-subtitle text-center mt-[110px]">Match Score</div>
-                                    <div className="flex justify-center transform -translate-y-[80px]">
-                                        <span
-                                            className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
-                                                ? "bg-green-500 text-white"
-                                                : candidate.totalScore >= 1
-                                                    ? "bg-yellow-500 text-black"
-                                                    : "bg-red-500 text-white"
-                                                }`}
-                                        >
-                                            {candidate.totalScore.toFixed(2)}
-                                        </span>
-                                    </div>
-                                    <div className="card-desc mt-1 transform -translate-y-[80px]">
-                                        <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
-                                            {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
-                                        </p>
-                                        <div className="flex flex-wrap gap-1 justify-center">
-                                            {displaySkills.skills.map((skill, index) => (
-                                                <span
-                                                    key={index}
-                                                    className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
-                                                        ? 'bg-green-800 text-white-800'
-                                                        : 'bg-yellow-100 text-black font-bold'
-                                                        }`}
-                                                >
-                                                    {skill}
-                                                </span>
-                                            ))}
+        <div className="grid grid-cols-1 gap-6 p-10 md:grid-cols-2 lg:grid-cols-3 justify-center">
+            {candidatesWithDetails.map((candidate) => {
+                const displaySkills = getDisplaySkills(candidate);
+                const isDetailView = currentCandidateDetails?.userId === candidate.candidateUserID;
+                const isSwipedRight = swipedCandidates.includes(candidate.candidateUserID);
+                return (
+                    
+                    <div key={candidate?.candidateUserID} className={`card shadow-lg ${isSwipedRight ? 'swipeRight' : ''}`}
+                     data-state="#about">
+                        {!isDetailView ? (
+                            // Original card view
+                            <>
+                                <div className="card-header">
+                                    <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
+                                    <h2 className="card-jobtitle text-center">
+                                        {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
+                                    </h2>
+                                </div>
+                                <div className="card-main">
+                                    <div className="card-content">
+                                        <div className="card-subtitle text-center mt-[110px]">Match Score</div>
+                                        <div className="flex justify-center transform -translate-y-[80px]">
+                                            <span
+                                                className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
+                                                    ? "bg-green-500 text-white"
+                                                    : candidate.totalScore >= 1
+                                                        ? "bg-yellow-500 text-black"
+                                                        : "bg-red-500 text-white"
+                                                    }`}
+                                            >{console.log(candidate)}
+                                                {candidate.totalScore.toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className="card-desc mt-1 transform -translate-y-[80px]">
+                                            <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
+                                                {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
+                                            </p>
+                                            <div className="flex flex-wrap gap-1 justify-center">
+                                                {displaySkills.skills.map((skill, index) => (
+                                                    <span
+                                                        key={index}
+                                                        className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
+                                                            ? 'bg-green-800 text-white-800'
+                                                            : 'bg-yellow-100 text-black font-bold'
+                                                            }`}
+                                                    >
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex justify-center transform -translate-y-[70px]">
-                                    <Button
-                                        className="justify-center"
-                                        onClick={() => {
-                                            const candidateDetailswithId = {...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status}
-                                            console.log(candidateDetailswithId, "candidateDetailswithId")
-                                            setCurrentCandidateDetails(candidateDetailswithId);
-                                            setShowCurrentCandidateDetailsModal(true);
-                                        }}
-                                    >
-                                        View Profile
-                                        {console.log(candidate, "candidate.candidateDetails")}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-            {showCurrentCandidateDetailsModal && (
-                <Dialog
-                    open={showCurrentCandidateDetailsModal}
-                    onOpenChange={() => setShowCurrentCandidateDetailsModal(false)}
-                    className="max-w-[100vh] max-h-[100vh]"
-                >
-                    <DialogContent className="max-h-[150vh] max-w-[100vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-bold">
-                                <div className="flex justify-evenly gap-20">
-                                {currentCandidateDetails?.name}
-                                <div className="text-lg text-white mt-1">
-                                {currentCandidateDetails.status.slice(-1)[0] === "Rejected" ? <div className="bg-red-500 rounded-full px-2 py-1">Rejected Candidate</div>:
-                                currentCandidateDetails.status.slice(-1)[0] === "Selected" ? <div className="bg-green-500 rounded-full px-2 py-1">Selected Candidate</div>:
-                                currentCandidateDetails.status.slice(-1)[0] === "Shortlisted" ? <div className="bg-grey-500 rounded-full px-2 py-1">Select OR Reject ?</div>: ""
-                                }
-                                </div>
-                                </div>
-                            </DialogTitle>
-                        </DialogHeader>
-                        <div className="grid grid-cols-2 gap-6 py-4">
-                            <div className="space-y-4">
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-                                    <p><span className="font-medium">College:</span> {currentCandidateDetails?.college}</p>
-                                    <p><span className="font-medium">Location:</span> {currentCandidateDetails?.collegeLocation}</p>
-                                    {console.log(currentCandidateDetails)}
-                                    <p><span className="font-medium">Experience Level:</span> {currentCandidateDetails?.totalExperience === "" ? "Fresher" : currentCandidateDetails?.experienceLevel}</p>
-                                </div>
-
-                                {currentCandidateDetails?.experienceLevel === 'Experienced' && (
-                                    <div>
-                                        <h3 className="text-lg font-semibold mb-2">Professional Details</h3>
-                                        <p><span className="font-medium">Current Company:</span> {currentCandidateDetails?.currentCompany}</p>
-                                        <p><span className="font-medium">Current Location:</span> {currentCandidateDetails?.currentJobLocation}</p>
-                                        <p><span className="font-medium">Total Experience:</span> {currentCandidateDetails?.totalExperience}</p>
-                                        <p><span className="font-medium">Notice Period:</span> {currentCandidateDetails?.noticePeriod}</p>
-                                        <p><span className="font-medium">Current Salary:</span> ${currentCandidateDetails?.currentSalary}/year</p>
+                                    <div className="flex justify-center transform -translate-y-[70px]">
+                                        <Button
+                                            className="justify-center"
+                                            onClick={() => {
+                                                const candidateDetailswithId = { ...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status }
+                                                setCurrentCandidateDetails(candidateDetailswithId);
+                                            }}
+                                        >
+                                            View Profile
+                                        </Button>
                                     </div>
-                                )}
-                            </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-2">Skills & Preferences</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {currentCandidateDetails?.skills?.split(',').map((skill, index) => (
-                                            <span
-                                                key={index}
-                                                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                                </div>
+                                <h2 className="card-subtitle text-center mt-[-80px]">
+                                    <div className="text-sm text-white mb-4 flex justify-center">
+                                        {candidate.status.slice(-1)[0] === "Rejected" ? (
+                                            <div className="bg-red-500 rounded-full px-2 py-1 text-center">Rejected Candidate</div>
+
+                                        ) : candidate.status.slice(-1)[0] === "Selected" ? (
+                                            <div className="bg-green-500 rounded-full px-2 py-1 text-center">Selected Candidate</div>
+                                        ) : candidate.status.slice(-1)[0] === "Applied" ? (
+                                            <div className="bg-grey-500 rounded-full px-2 py-1 text-center">Select OR Reject ?</div>
+                                        ) : null}
+                                    </div>
+                                </h2>
+                            </>
+                        ) : (
+                            <>
+                                <div className="card-header">
+                                    <h1 className="card-fullname">
+                                        <div className="flex justify-evenly mt-[-70px]">
+                                            <p className="text-black">{candidate?.candidateDetails?.name}</p>
+                                            <Button
+                                                onClick={() => setCurrentCandidateDetails(null)}
+                                                className="p-1 h-4 hover:bg-gray-300 mt-[7px] ml-[100px]"
                                             >
-                                                {skill.trim()}
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <p className="mt-4"><span className="font-medium">Preferred Location:</span> {currentCandidateDetails?.preferedJobLocation}</p>
+                                                Flip Card
+                                            </Button>
+
+                                        </div>
+                                    </h1>
+
                                 </div>
+                                <div className="card-main">
+                                    <div className="card-content ml-2">
+                                        {/* Personal Information */}
 
-                                {currentCandidateDetails?.profileLinks && (
-                                    <div>
-                                        <h3 className="text-lg font-semibold mb-2">Profile Links</h3>
-                                        <p>{currentCandidateDetails?.profileLinks}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                        {candidate?.candidateDetails?.experienceLevel === 'Fresher' && (
+                                            <div>
+                                                <p><span className="text-sm font-semibold">College:</span> <span className="text-sm">{candidate?.candidateDetails?.college}</span></p>
+                                                <p><span className="text-sm font-semibold">Location:</span> <span className="text-sm">{candidate?.candidateDetails?.collegeLocation}</span></p>
 
-                        <DialogFooter className="mt-6">
-                            <div className="flex justify-evenly items-center w-full">
-                                {/* Reject Button - Left */}
-                                <Button
-                                    onClick={() => handleUpdateJobStatus(currentCandidateDetails?.userId, 'Rejected')}
-                                    disabled={
-                                        candidatesWithDetails.find(
-                                            (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                        )?.status.slice(-1)[0] === "Rejected"
-                                    }
-                                    className={`rounded-full p-3 ${candidatesWithDetails.find(
-                                        (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                    )?.status.slice(-1)[0] === "Rejected"
-                                        ? "bg-gray-300"
-                                        : "bg-red-500 hover:bg-red-600"
-                                        }`}
-                                >
-                                    <svg
-                                        className="w-6 h-6 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </Button>
+                                                <p><span className="text-sm font-semibold">Experience Level:</span> <span className="text-sm">{candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.experienceLevel}</span></p>
 
-                                {/* Middle Buttons */}
-                                <div className="flex gap-3">
-                                    <Button onClick={() => handlePreviewResume(currentCandidateDetails)}>
-                                        Resume
-                                    </Button>
-                                    <Button onClick={() => handlePreviewVideoCV(currentCandidateDetails)}>
-                                        Video CV
-                                    </Button>
-                                </div>
-
-                                {console.log(currentCandidateDetails, "currentCandidateDetails?.userId")}
-                                {/* Select Button - Right */}
-                                <Button
-                                    onClick={() => handleUpdateJobStatus(currentCandidateDetails?.userId,'Selected')}
-                                    
-                                    disabled={
-                                        candidatesWithDetails.find(
-                                            (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                        )?.status.slice(-1)[0] === "Selected"
-                                    }
-                                    className={`rounded-full p-3 ${candidatesWithDetails.find(
-                                        (item) => item.candidateUserID === currentCandidateDetails?.userId
-                                    )?.status.slice(-1)[0] === "Selected"
-                                        ? "bg-gray-300"
-                                        : "bg-green-500 hover:bg-green-600"
-                                        }`}
-                                >
-                                    <svg
-                                        className="w-6 h-6 text-white"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    </svg>
-                                </Button>
-                            </div>
-
-                            {isPDFOpen && (
-    <div className="fixed inset-0 z-[9999] bg-white">
-        <button
-            onClick={() => setIsPDFOpen(false)}
-            className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-        <object
-            data={`${currentPDFUrl}#view=Fit`}
-            type="application/pdf"
-            className="w-full h-full"
-            style={{ 
-                height: 'calc(100vh)', 
-                width: '100%',
-                border: 'none'
-            }}
-        >
-            <p>Unable to display PDF file. <a href={currentPDFUrl} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
-        </object>
-    </div>
-)}
-
-                            {showResumeModal && (
-                                <Dialog open={showResumeModal} onOpenChange={() => setShowResumeModal(false)}>
-                                    <DialogHeader>
-                                        <DialogTitle>Resume Preview</DialogTitle>
-                                    </DialogHeader>
-                                    <DialogContent className="max-w-3xl w-[80vw] h-[70vh] p-0">
-                                        <iframe
-                                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resumeUrl)}`}
-                                            className="w-full h-full border-0"
-                                            title="Resume Preview"
-                                        ></iframe>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                            {showVideoModal && (
-                                <Dialog open={showVideoModal} onOpenChange={() => setShowVideoModal(false)}>
-                                    <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0 mt-[5vh]">
-                                        {reportedVideos.includes(videoUrl) ? (
-                                            <div className="flex flex-col items-center justify-center h-full space-y-4">
-                                                <p className="text-lg text-gray-600">This video has been reported by a recruiter.</p>
-                                                <Button
-                                                    onClick={() => setReportedVideos(prev =>
-                                                        prev.filter(url => url !== videoUrl)
-                                                    )}
-                                                    className="bg-blue-500 hover:bg-blue-600"
-                                                >
-                                                    Proceed to watch
-                                                </Button>
                                             </div>
-                                        ) : (
-                                            <>
-                                                <video
-                                                    src={videoUrl}
-                                                    controls
-                                                    className="w-full h-full"
-                                                    title="Video CV Preview"
-                                                />
-                                                <Button
-                                                    className="absolute top-4 left-4 bg-red-500 hover:bg-red-600"
-                                                    onClick={() => {
-                                                        console.log('Current video URL when opening report dialog:', videoUrl);
-                                                        setShowReportDialog(true);
-                                                    }}
-                                                >
-                                                    REPORT VIDEO
-                                                </Button>
-                                            </>
                                         )}
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                            {showRejectionForm && (
-                                <Dialog open={showRejectionForm} onOpenChange={() => setShowRejectionForm(false)}>
-                                    <DialogContent className="max-w-lg">
-                                        <DialogTitle>Why was {currentCandidateDetails?.name} rejected?</DialogTitle>
-                                        <div className="mt-4 space-y-4">
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="rejectionReason"
-                                                    value="Skills missing"
-                                                    onChange={(e) => setRejectionReason(e.target.value)}
-                                                />
-                                                <span>Skills missing</span>
-                                            </label>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="rejectionReason"
-                                                    value="Experience not enough"
-                                                    onChange={(e) => setRejectionReason(e.target.value)}
-                                                />
-                                                <span>Experience not enough</span>
-                                            </label>
-                                            <label className="flex items-start space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="rejectionReason"
-                                                    value="Other"
-                                                    onChange={(e) => setRejectionReason(e.target.value)}
-                                                />
-                                                <span>Other (please specify):</span>
-                                            </label>
-                                            {rejectionReason === "Other" && (
-                                                <textarea
-                                                    className="w-full border rounded p-2"
-                                                    placeholder="Type your reason here..."
-                                                    value={otherReason}
-                                                    onChange={(e) => setOtherReason(e.target.value)}
-                                                />
+                                        {/* Professional Details */}
+
+                                        {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
+                                            <div>
+                                                {/* <h2 className="text-medium font-semibold mb-0 ">Professional Details</h2> */}
+                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} , {candidate?.candidateDetails?.currentJobLocation}</span> <span className="text-sm bg-green-900 rounded-full px-2 py-1"> $1000{candidate?.candidateDetails?.currentSalary}/year</span></p>
+                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.noticePeriod}</span><span className="text-gray-300 text-sm"> Notice Period</span></p>
+
+
+                                                {candidate.candidateDetails?.previousCompanies?.length > 0 ? (
+                                                    <div className="text-sm ml-2 items-center text-center">
+                                                        {candidate.candidateDetails.previousCompanies.map((company, index) => (
+                                                            <p key={index} className="mb-1">
+                                                                • {company.companyName} - {company.position}
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm ml-2 text-center">No previous companies</p>
+                                                )}
+
+
+                                                <p><span className="font-semibold">Total Experience:</span><span className="text-sm"> 1 year{candidate?.candidateDetails?.totalExperience}</span></p>
+
+
+                                            </div>
+
+
+                                        )}
+
+                                        {/* Skills & Preferences */}
+                                        <div className="mt-[20px]">
+                                            {/* <h3 className="text-medium font-semibold mb-2 text-center">
+                                                {candidate?.candidateDetails?.experienceLevel === 'Experienced' ? 'Top Skills:' : 'Skills:'}
+                                            </h3> */}
+
+                                            <div className="flex flex-wrap gap-2 justify-center max-h-[180px] overflow-y-auto scroll-smooth">
+
+                                                {candidate?.candidateDetails?.experienceLevel === 'Experienced'
+                                                    ? ((candidate?.candidateDetails?.skills || '')
+                                                        .split(',')
+                                                        .filter(skill => skill.trim().length > 0)
+                                                        .sort(() => 0.5 - Math.random())
+                                                        .slice(0, 4)
+                                                    ).map((skill, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="items-center justify-center px-2 py-2 bg-gradient-to-r from-gray-500 to-blue-800 text-white rounded-full text-xs"
+                                                        >
+                                                            {skill.trim()}
+                                                        </span>
+
+                                                    ))
+                                                    : (candidate?.candidateDetails?.skills || '')
+                                                        .split(',')
+                                                        .filter(skill => skill.trim().length > 0)
+                                                        // .sort(() => 0.5 - Math.random())
+                                                        // .slice(0, 15)
+                                                        .map((skill, index) => (
+                                                            <span
+                                                                key={index}
+                                                                className="items-center justify-center px-2 py-2 bg-gradient-to-r from-gray-500 to-blue-800 text-white rounded-full text-xs"
+                                                            >
+                                                                {skill.trim()}
+                                                            </span>
+
+
+
+                                                        ))
+                                                }
+                                            </div>
+
+                                            {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
+                                                <p className="mt-4 text-center">
+                                                    <span className="font-medium">Preferred Location:</span> {candidate?.candidateDetails?.preferedJobLocation}
+                                                </p>
                                             )}
                                         </div>
-                                        <DialogFooter>
+
+                                        {/* Action Buttons */}
+                                        <div className="flex justify-between items-center pt-4 mt-[0px]">
                                             <Button
-                                                onClick={async () => {
-                                                    if (rejectionReason === "Other" && !otherReason) {
-                                                        alert("Please specify the reason.");
-                                                        return;
-                                                    }
-
-                                                    const finalReason = rejectionReason === "Other" ? otherReason : rejectionReason;
-
-                                                    console.log(`Reason for rejection: ${finalReason}`);
-                                                    console.log("Candidate", currentCandidateDetails)
-
-
-                                                    // Call the update function with the rejection reason
-                                                    await handleUpdateJobStatus(currentCandidateDetails?.userId, "Rejected", finalReason);
-
-                                                    // Close the rejection form
-                                                    setShowRejectionForm(false);
-                                                    setRejectionReason("");
-                                                    setOtherReason("");
-                                                }}
+                                                onClick={() => handleUpdateJobStatus(candidate.candidateUserID, 'Rejected')}
+                                                disabled={candidate.status.slice(-1)[0] === "Rejected"}
+                                                className={`rounded-full p-3 ${candidate.status.slice(-1)[0] === "Rejected"
+                                                    ? "bg-gray-300"
+                                                    : "bg-red-500 hover:bg-red-600"
+                                                    }`}
                                             >
-                                                Submit
+                                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
                                             </Button>
-                                            <Button onClick={() => setShowRejectionForm(false)}>Cancel</Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            )}
-                            {showReportDialog && (
-                                <Dialog open={showReportDialog} onOpenChange={() => setShowReportDialog(false)}>
-                                    <DialogContent className="max-w-lg">
-                                        <DialogHeader>
-                                            <DialogTitle>Report Video</DialogTitle>
-                                        </DialogHeader>
-                                        <div className="mt-4 space-y-4">
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="reportReason"
-                                                    value="Inappropriate content"
-                                                    onChange={(e) => setReportReason(e.target.value)}
-                                                />
-                                                <span>Inappropriate content</span>
-                                            </label>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="reportReason"
-                                                    value="Video not playing"
-                                                    onChange={(e) => setReportReason(e.target.value)}
-                                                />
-                                                <span>Video not playing</span>
-                                            </label>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="reportReason"
-                                                    value="Spam content"
-                                                    onChange={(e) => setReportReason(e.target.value)}
-                                                />
-                                                <span>Spam content</span>
-                                            </label>
+
+                                            <div className="flex gap-3">
+                                                <Button onClick={() => handlePreviewResume(candidate.candidateDetails)}>
+                                                    Resume
+                                                </Button>
+                                                <Button onClick={() => handlePreviewVideoCV(candidate.candidateDetails)}>
+                                                    Video CV
+                                                </Button>
+                                            </div>
+
+                                            <Button
+                                                onClick={() => handleSelectCandidate(candidate.candidateUserID, 'Selected')}
+                                                // disabled={candidate.status.slice(-1)[0] === "Selected"}
+                                                className={`rounded-full p-3 ${candidate.status.slice(-1)[0] === "Selected"
+                                                    ? "bg-gray-300"
+                                                    : "bg-green-500 hover:bg-green-600"
+                                                    }`}
+
+                                            >
+                                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </Button>
                                         </div>
-                                        <DialogFooter>
-                                            <Button
-                                                onClick={() => {
-                                                    if (!reportReason) {
-                                                        alert("Please select a reason for reporting");
-                                                        return;
-                                                    }
-                                                    console.log("Current video URL:", videoUrl);
+                                    </div>
+                                </div>
 
-                                                    if (!videoUrl) {
-                                                        alert("Error: Cannot identify video");
-                                                        return;
-                                                    }
-                                                    handleReportVideo(videoUrl, reportReason);
-                                                }}
-                                                className="bg-red-500 hover:bg-red-600"
-                                            >
-                                                Submit Report
-                                            </Button>
-                                            <Button onClick={() => setShowReportDialog(false)}>
-                                                Cancel
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
+                            </>
+
+
+                        )}
+                    </div>
+                );
+
+            })}
+
+            {/* Keep the modals for PDF, Video, etc. */}
+            {isPDFOpen && (
+                <div className="fixed inset-0 z-[9999] bg-white">
+                    <button
+                        onClick={() => setIsPDFOpen(false)}
+                        className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <object
+                        data={`${currentPDFUrl}#view=Fit`}
+                        type="application/pdf"
+                        className="w-full h-full"
+                        style={{
+                            height: 'calc(100vh)',
+                            width: '100%',
+                            border: 'none'
+                        }}
+                    >
+                        <p>Unable to display PDF file. <a href={currentPDFUrl} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+                    </object>
+                </div>
+            )}
+            {showResumeModal && (
+                <Dialog open={showResumeModal} onOpenChange={() => setShowResumeModal(false)}>
+                    <DialogHeader>
+                        <DialogTitle>Resume Preview</DialogTitle>
+                    </DialogHeader>
+                    <DialogContent className="max-w-3xl w-[80vw] h-[70vh] p-0">
+                        <iframe
+                            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resumeUrl)}`}
+                            className="w-full h-full border-0"
+                            title="Resume Preview"
+                        ></iframe>
+                    </DialogContent>
+                </Dialog>
+            )}
+            {showVideoModal && (
+                <Dialog open={showVideoModal} onOpenChange={() => setShowVideoModal(false)}>
+                    <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0 mt-[5vh]">
+                        {reportedVideos.includes(videoUrl) ? (
+                            <div className="flex flex-col items-center justify-center h-full space-y-4">
+                                <p className="text-lg text-gray-600">This video has been reported by a recruiter.</p>
+                                <Button
+                                    onClick={() => setReportedVideos(prev =>
+                                        prev.filter(url => url !== videoUrl)
+                                    )}
+                                    className="bg-blue-500 hover:bg-blue-600"
+                                >
+                                    Proceed to watch
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <video
+                                    src={videoUrl}
+                                    controls
+                                    className="w-full h-full"
+                                    title="Video CV Preview"
+                                />
+                                <Button
+                                    className="absolute top-4 left-4 bg-red-500 hover:bg-red-600"
+                                    onClick={() => {
+                                        console.log('Current video URL when opening report dialog:', videoUrl);
+                                        setShowReportDialog(true);
+                                    }}
+                                >
+                                    REPORT VIDEO
+                                </Button>
+                            </>
+                        )}
+                    </DialogContent>
+                </Dialog>
+            )}
+            {showRejectionForm && (
+                <Dialog open={showRejectionForm} onOpenChange={() => setShowRejectionForm(false)}>
+                    <DialogContent className="max-w-lg">
+                        <DialogTitle>Why was {currentCandidateDetails?.name} rejected?</DialogTitle>
+                        <div className="mt-4 space-y-4">
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    name="rejectionReason"
+                                    value="Skills missing"
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                />
+                                <span>Skills missing</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    name="rejectionReason"
+                                    value="Experience not enough"
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                />
+                                <span>Experience not enough</span>
+                            </label>
+                            <label className="flex items-start space-x-2">
+                                <input
+                                    type="radio"
+                                    name="rejectionReason"
+                                    value="Other"
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                />
+                                <span>Other (please specify):</span>
+                            </label>
+                            {rejectionReason === "Other" && (
+                                <textarea
+                                    className="w-full border rounded p-2"
+                                    placeholder="Type your reason here..."
+                                    value={otherReason}
+                                    onChange={(e) => setOtherReason(e.target.value)}
+                                />
                             )}
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                onClick={async () => {
+                                    if (rejectionReason === "Other" && !otherReason) {
+                                        alert("Please specify the reason.");
+                                        return;
+                                    }
+
+                                    const finalReason = rejectionReason === "Other" ? otherReason : rejectionReason;
+
+                                    console.log(`Reason for rejection: ${finalReason}`);
+                                    console.log("Candidate", currentCandidateDetails)
+
+
+                                    // Call the update function with the rejection reason
+                                    await handleUpdateJobStatus(currentCandidateDetails?.userId, "Rejected", finalReason);
+
+                                    // Close the rejection form
+                                    setShowRejectionForm(false);
+                                    setRejectionReason("");
+                                    setOtherReason("");
+                                }}
+                            >
+                                Submit
+                            </Button>
+                            <Button onClick={() => setShowRejectionForm(false)}>Cancel</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
             )}
-        </div >
+            {showReportDialog && (
+                <Dialog open={showReportDialog} onOpenChange={() => setShowReportDialog(false)}>
+                    <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle>Report Video</DialogTitle>
+                        </DialogHeader>
+                        <div className="mt-4 space-y-4">
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    name="reportReason"
+                                    value="Inappropriate content"
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                />
+                                <span>Inappropriate content</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    name="reportReason"
+                                    value="Video not playing"
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                />
+                                <span>Video not playing</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                                <input
+                                    type="radio"
+                                    name="reportReason"
+                                    value="Spam content"
+                                    onChange={(e) => setReportReason(e.target.value)}
+                                />
+                                <span>Spam content</span>
+                            </label>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                onClick={() => {
+                                    if (!reportReason) {
+                                        alert("Please select a reason for reporting");
+                                        return;
+                                    }
+                                    console.log("Current video URL:", videoUrl);
+
+                                    if (!videoUrl) {
+                                        alert("Error: Cannot identify video");
+                                        return;
+                                    }
+                                    handleReportVideo(videoUrl, reportReason);
+                                }}
+                                className="bg-red-500 hover:bg-red-600"
+                            >
+                                Submit Report
+                            </Button>
+                            <Button onClick={() => setShowReportDialog(false)}>
+                                Cancel
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </div>
     );
 }
 

@@ -70,3 +70,245 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Base styles */
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+/* Grid Animations */
+.grid {
+  display: grid;
+  grid-auto-rows: max-content;
+}
+
+.grid > div {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card Animations */
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-20px);
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Confirmation Animation */
+.confirmation-overlay {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+/* Smooth transitions */
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.transition-height {
+  transition-property: height;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Card Grid Layout */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+/* Card Styles */
+.job-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Animations */
+.button-hover {
+  transition: all 0.2s ease;
+}
+
+.button-hover:hover {
+  transform: translateY(-1px);
+}
+
+.button-active {
+  transition: all 0.1s ease;
+}
+
+.button-active:active {
+  transform: translateY(1px);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Drawer Animation */
+.drawer-enter {
+  transform: translateX(100%);
+}
+
+.drawer-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-in-out;
+}
+
+.drawer-exit {
+  transform: translateX(0);
+}
+
+.drawer-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in-out;
+}
+
+/* Match Label Colors */
+.match-perfect {
+  @apply text-white bg-gradient-to-r from-green-600 to-purple-800;
+}
+
+.match-high {
+  @apply text-white bg-gradient-to-r from-orange-600 to-yellow-800;
+}
+
+.match-good {
+  @apply text-white bg-gradient-to-r from-blue-600 to-purple-800;
+}
+
+.match-worth {
+  @apply text-white bg-gradient-to-r from-blue-600 to-green-800;
+}
+
+.match-low {
+  @apply text-white bg-gradient-to-r from-red-600 to-purple-600;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Add these new animations to your existing globals.css */
+@keyframes slideRightUp {
+    0% {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(100%, -100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideLeftDown {
+    0% {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-100%, 100%);
+        opacity: 0;
+    }
+}
+
+/* Update your transition utilities */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.duration-\[1500ms\] {
+    transition-duration: 1500ms;
+}
+
+/* Add these utility classes */
+.transform {
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) 
+               rotate(var(--tw-rotate)) 
+               skew(var(--tw-skew-x)) 
+               skewY(var(--tw-skew-y)) 
+               scaleX(var(--tw-scale-x)) 
+               scaleY(var(--tw-scale-y));
+}
+
+.translate-x-full {
+    --tw-translate-x: 100%;
+}
+
+.-translate-x-full {
+    --tw-translate-x: -100%;
+}
+
+.translate-y-full {
+    --tw-translate-y: 100%;
+}
+
+.-translate-y-full {
+    --tw-translate-y: -100%;
+}

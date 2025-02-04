@@ -5,9 +5,11 @@
 }
 
 .card-container {
-  max-width: 340px;
+  max-width: 320px;
   margin: auto;
   
+
+
 }
 
 .card {
@@ -15,9 +17,10 @@
   transition: transform 0.8s;
   transform-style: preserve-3d;
   cursor: pointer;
+  
   min-height: 50px;
-  max-height: 310px;
-  max-width: 310px;
+  max-height: 380px;
+  max-width: 320px;
   margin: auto;
   position: relative;
   z-index: 1;
@@ -27,7 +30,7 @@
   
   color: white;
   display: flex;
-  transition: 0.3s;
+  transition: 1s;
   flex-direction: column;
   border-radius: 10px;
   margin-bottom: 1;
@@ -279,6 +282,37 @@
       lighten(#516acc, 20%) 0%,
       #516acc 100%
     );
+  }
+}
+
+.swipeRight {
+  animation: swipeRight 3s ease forwards;
+}
+
+@keyframes swipeRight {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(300%);
+    opacity: 1;
+
+  }
+}
+
+.swipeLeft {
+  animation: swipeLeft 3s ease forwards;
+}
+
+@keyframes swipeLeft {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-3000%);
+    opacity: 1;
   }
 }
 

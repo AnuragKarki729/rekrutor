@@ -17,6 +17,9 @@ function AccountInfo({ profileInfo }) {
     const [recruiterFormData, setRecruiterFormData] = useState({});
     const [newResume, setNewResume] = useState(null); // Store the new resume file
     const [file, setFile] = useState(null)
+    
+
+    console.log(candidateFormData)
 
     useEffect(() => {
         if (profileInfo?.role === 'recruiter') {
@@ -53,9 +56,6 @@ function AccountInfo({ profileInfo }) {
     
     async function uploadAndParseFile(file) {
         if (!file) return;
-
-
-
             try {
                 // Create FormData for parsing
                 const formData = new FormData();
@@ -163,7 +163,6 @@ function AccountInfo({ profileInfo }) {
         }
 
         // Call the `updateProfileAction` to update the profile
-        
         try {
             await updateProfileAction(
                 profileInfo?.role === "candidate"
@@ -181,6 +180,7 @@ function AccountInfo({ profileInfo }) {
                           resume: updatedResume, // Set the updated resume path
                       },
                   }
+
                 : {
                       _id: profileInfo?._id,
                       userId: profileInfo?.userId,
@@ -268,7 +268,7 @@ function AccountInfo({ profileInfo }) {
                         action={handleUpdateAccount}
                         handleFileChange={handleFileChange}
                     />
-                    <p1>Hello{candidateFormData.parsedResponse===""? "No summary yet": candidateFormData.parsedResponse}</p1>
+
                     
 
                 </div>
