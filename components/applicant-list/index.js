@@ -110,8 +110,13 @@ const ApplicantList = ({ userId }) => {
         applicant => applicant.status.slice(-1)[0] === "Selected"
     );
 
+    const appliedApplicants = applicants.filter(
+        applicant => applicant.status.slice(-1)[0] === "Applied"
+    );
+
     const rejectedApplicants = applicants.filter(
         applicant => applicant.status.slice(-1)[0] === "Rejected"
+
     );
 
     if (loading) {
@@ -254,6 +259,9 @@ const ApplicantList = ({ userId }) => {
                         <TabsTrigger value="selected" className="font-bold text-base sm:text-lg">
                             Selected ({selectedApplicants.length})
                         </TabsTrigger>
+                        <TabsTrigger value="applied" className="font-bold text-base sm:text-lg">
+                            Applied ({appliedApplicants.length})
+                        </TabsTrigger>
                         <TabsTrigger value="rejected" className="font-bold text-base sm:text-lg">
                             Rejected ({rejectedApplicants.length})
                         </TabsTrigger>
@@ -271,6 +279,17 @@ const ApplicantList = ({ userId }) => {
                                 )}
                             </div>
                         </TabsContent>
+
+                        <TabsContent value="applied">
+                            <div className="flex flex-col gap-4">
+                                {appliedApplicants.length === 0 ? (
+                                    <p className="text-gray-500 text-center">No applied candidates</p>
+                                ) : (
+                                    appliedApplicants.map(renderApplicantCard)
+                                )}
+                            </div>
+                        </TabsContent>
+
 
                         <TabsContent value="rejected">
                             <div className="flex flex-col gap-4">

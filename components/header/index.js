@@ -27,6 +27,7 @@ function Header({ user, profileInfo }) {
         { id: 'register', label: 'Register', path: '/sign-up', show: !user },
         { id: 'jobs', label: 'Jobs', path: '/jobs', show: user },
         { id: 'activity', label: 'Activity', path: '/activity', show: profileInfo?.role === 'candidate' },
+        { id: 'myapplicants', label: 'My Applicants', path: '/myapplicants', show: profileInfo?.role === 'recruiter' },
         { 
             id: 'nudge',
             label: (

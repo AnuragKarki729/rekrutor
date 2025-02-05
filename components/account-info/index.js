@@ -32,111 +32,94 @@ function AccountInfo({ profileInfo }) {
     async function handleFileChange(event) {
         const selectedFile = event.target.files[0];
         if (selectedFile) {
-            // Get file extension
-            const fileExt = selectedFile.name.split('.').pop();
-            
-            // Get user's first and last name from candidateFormData
-            const firstName = candidateFormData.name?.split(' ')[0] || '';
-            const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
-
-            const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
-                `${firstName}_${lastName}_Resume.${fileExt}`;
-
-            // Create new file with custom name
-            const renamedFile = new File(
-                [selectedFile],
-                newFileName,
-                { type: selectedFile.type }
-            );
-
-            setFile(renamedFile);
+            setFile(selectedFile);
         }
     }
 
     
     async function uploadAndParseFile(file) {
         if (!file) return;
+        try {
+            // Create FormData for parsing
+            const formData = new FormData();
+            formData.append('file', file);
+            console.log('SENDING FILE TO PARSER')
+
+            // Parse resume first to get skills
+            const parseResponse = await fetch('/api/parse-resume', {
+                method: 'POST',
+                body: formData
+            });
+
+            
+
+            if (!parseResponse.ok) {
+                throw new Error('Failed to parse resume');
+            }
+
+
+            const parsedData = await parseResponse.json();
+            console.log('PARSED DATA', parsedData)
+            
+            // Update profile with parsed response
             try {
-                // Create FormData for parsing
-                const formData = new FormData();
-                formData.append('file', file);
-                console.log('SENDING FILE TO PARSER')
-
-                // Parse resume first to get skills
-                const parseResponse = await fetch('/api/parse-resume', {
-                    method: 'POST',
-                    body: formData
+                console.log('UPDATING PROFILE', profileInfo?.userId, profileInfo?.role)
+                const updateProfileResponse = await fetch(`/api/profiles/parsed-response/${profileInfo?.userId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        parsedResponse: JSON.stringify(parsedData)
+                    })
                 });
-
-                
-
-                if (!parseResponse.ok) {
-                    throw new Error('Failed to parse resume');
-                }
-
-
-                const parsedData = await parseResponse.json();
-                console.log('PARSED DATA', parsedData)
-                
-                // Update profile with parsed response
-                try {
-                    console.log('UPDATING PROFILE', profileInfo?.userId, profileInfo?.role)
-                    const updateProfileResponse = await fetch(`/api/profiles/parsed-response/${profileInfo?.userId}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            parsedResponse: JSON.stringify(parsedData)
-                        })
-                    });
-                    console.log("last step")
-                    if (!updateProfileResponse.ok) {
-                        throw new Error('Failed to update profile with parsed response');
-                    }
-                } catch (error) {
-                    console.error('Error updating profile with parsed response:', error);
-                    toast.error('Failed to update profile with parsed data');
-                }
-
-                // Update form data with parsed information
-                if (parsedData.name && parsedData.name.length > 0) {
-                    setCandidateFormData(prev => ({
-                        ...prev,
-                        name: parsedData.name
-                    }));
-                }
-                if (parsedData.skills && parsedData.skills.length > 0) {
-                    setCandidateFormData(prev => ({
-                        ...prev,
-                        skills: parsedData.skills.join(', ')
-                    }));
-                }
-
-                // Upload file to Supabase
-                const { data, error } = await supabaseClient.storage
-                    .from("rekrutor-public")
-                    .upload(`/public/${file.name}`, file, {
-                        cacheControl: "3600",
-                        upsert: true
-                    });
-
-                if (error) {
-                    throw error;
-                }
-
-                if (data) {
-                    setCandidateFormData((prev) => ({
-                        ...prev,
-                        resume: file.name,
-                    }));
-                    toast.success('Resume uploaded and parsed successfully');
+                console.log("last step")
+                if (!updateProfileResponse.ok) {
+                    throw new Error('Failed to update profile with parsed response');
                 }
             } catch (error) {
-                console.error('Error processing file:', error);
-                toast.error('Failed to process resume');
+                console.error('Error updating profile with parsed response:', error);
+                toast.error('Failed to update profile with parsed data');
             }
-        };
+
+            // Update form data with parsed information
+            if (parsedData.name && parsedData.name.length > 0) {
+                setCandidateFormData(prev => ({
+                    ...prev,
+                    name: parsedData.name
+                }));
+            }
+            if (parsedData.skills && parsedData.skills.length > 0) {
+                setCandidateFormData(prev => ({
+                    ...prev,
+                    skills: parsedData.skills.join(', ')
+                }));
+            }
+
+            // Upload file to Supabase with original filename
+            const { data, error } = await supabaseClient.storage
+                .from("rekrutor-public")
+                .upload(`/public/${file.name}`, file, {
+                    cacheControl: "3600",
+                    upsert: true
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            if (data) {
+                setCandidateFormData((prev) => ({
+                    ...prev,
+                    resume: file.name,
+                }));
+                toast.success('Resume uploaded and parsed successfully');
+            }
+        } catch (error) {
+            console.error('Error processing file:', error);
+            toast.error('Failed to process resume');
+        }
+    };
 
    
 
@@ -239,7 +222,7 @@ function AccountInfo({ profileInfo }) {
                                 <p className="mt-2 text-sm text-gray-600">
                                     Current Resume:{" "}
                                     <button
-                                        onClick={() => window.open(`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/${candidateFormData.resume}`, '_blank')}
+                                        onClick={() => window.open(`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/public/${candidateFormData.resume}`, '_blank')}
                                         className="text-blue-600 hover:underline"
                                     >
                                         View Resume

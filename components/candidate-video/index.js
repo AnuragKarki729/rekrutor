@@ -24,26 +24,28 @@ function CandidateVideo() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [previewUrl, setPreviewUrl] = useState(null);
   const timerRef = useRef(null);
+  const [aiSummary, setAiSummary] = useState("");
 
   const videoConstraints = {
     facingMode: "user",
   };
 
-  // Fetch previous video on component mount
+  // Fetch previous video and AI summary on component mount
   useEffect(() => {
-    const fetchPreviousVideo = async () => {
+    const fetchPreviousData = async () => {
       try {
         const response = await fetch(`/api/profile/${user.id}`);
         const profile = await response.json();
         setPreviousVideo(profile?.candidateInfo?.videoCV);
+        setAiSummary(profile?.candidateInfo?.aiSummary || ""); // Set AI summary from profile
         console.log('Profile data:', profile?.candidateInfo);
       } catch (error) {
-        console.error("Error fetching previous video:", error);
+        console.error("Error fetching previous data:", error);
       }
     };
 
     if (user?.id) {
-      fetchPreviousVideo();
+      fetchPreviousData();
     }
   }, [user?.id]);
 
@@ -68,6 +70,78 @@ function CandidateVideo() {
       clearInterval(timerRef.current);
     };
   }, [capturing]);
+
+  const handlePrintDetails = async () => {
+    try {
+      const response = await fetch(`/api/profiles/${user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile data');
+      }
+      const profileData = await response.json();
+      
+      // First ensure candidateInfo exists and filter out parsedResponse
+      const candidateInfo = profileData.candidateInfo || {};
+      const { parsedResponse, totalExperience, profileLinks, resume, videoCV, ...filteredInfo } = candidateInfo;
+      
+
+      const cleanData = Object.entries(filteredInfo)
+        .reduce((acc, [key, value]) => {
+          if (value !== "" && value !== undefined) {
+            if (typeof value === 'object') {
+              const cleanNested = Object.entries(value)
+                .reduce((nestedAcc, [nestedKey, nestedValue]) => {
+                  if (nestedValue !== "" && nestedValue !== undefined) {
+                    nestedAcc[nestedKey] = nestedValue;
+                  }
+                  return nestedAcc;
+                }, {});
+              if (Object.keys(cleanNested).length > 0) {
+                acc[key] = cleanNested;
+              }
+            } else {
+              acc[key] = value;
+            }
+          }
+          return acc;
+        }, {});
+
+      // Format the data into a readable string
+      const formattedText = Object.entries(cleanData)
+        .map(([key, value]) => {
+          if (typeof value === 'object') {
+            return `${key}: ${JSON.stringify(value, null, 2)}`;
+          }
+          return `${key}: ${value}`;
+        })
+        .join('\n');
+
+      console.log('Formatted Text:', formattedText);
+      console.log(profileData)
+
+      // Uncomment and modify the summary API call
+      const summaryResponse = await fetch('/api/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: formattedText }),
+      });
+
+      if (!summaryResponse.ok) {
+        throw new Error('Failed to generate summary');
+      }
+
+      const { summary } = await summaryResponse.json();
+      setAiSummary(JSON.stringify(summary)); // Store the summary in state
+      console.log('Generated Summary:', summary);
+      
+      toast.success('Summary generated successfully!');
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to generate summary');
+    }
+  };
 
   // Modify handleStopCaptureClick to properly handle the recorded chunks
   const handleStopCaptureClick = useCallback(() => {
@@ -225,6 +299,14 @@ function CandidateVideo() {
     <div className="flex flex-row gap-8 mx-8 max-w-7xl">
       {/* Main recording section */}
       <div className="flex-1 flex flex-col items-center space-y-4">
+        {/* Display AI Summary above the video */}
+        {aiSummary && (
+          <div className="w-full max-w-[500px] mt-4 p-4 bg-white rounded-lg shadow-md">
+            <h3 className="font-medium text-gray-900 mb-2">AI Summary</h3>
+            <p className="text-sm text-gray-600">{aiSummary}</p>
+          </div>
+        )}
+        
         {isCameraOn ? (
           <>
             {!previewUrl ? (
@@ -294,6 +376,12 @@ function CandidateVideo() {
         )}
 
         <div className="flex space-x-4">
+        <button
+              onClick={handlePrintDetails}
+            className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-900 text-white font-bold rounded-lg hover:bg-purple-600"
+          >
+            AI !! Summarize Me
+          </button>
           <button
             onClick={toggleCamera}
             className="px-6 py-2 bg-gray-500 text-white font-bold rounded-lg hover:bg-gray-600"

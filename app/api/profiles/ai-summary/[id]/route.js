@@ -7,15 +7,14 @@ export async function PATCH(req, { params }) {
         await connectToDB();
         
         const { id } = params;
-        const { parsedResponse } = await req.json();
+        const { aiSummary } = await req.json();
         
         console.log('route hit')
-        console.log(id, parsedResponse !== null ? 'true' : 'false')
-
+        console.log(id, aiSummary !== null ? 'true' : 'false')
 
         const updatedProfile = await Profile.findOneAndUpdate(
             { userId: id },
-            { 'candidateInfo.parsedResponse': parsedResponse },
+            { 'candidateInfo.aiSummary': aiSummary },
             { new: true }
         );
 

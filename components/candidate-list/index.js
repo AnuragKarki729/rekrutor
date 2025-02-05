@@ -24,7 +24,12 @@ const jobSkills = jobData?.skills?.split(",")
 const candidateIndustry = candidateData?.candidateInfo?.industry;
 const jobIndustry = jobData?.industry;
 const candidateExpYears = candidateData?.candidateInfo?.totalExperience || 0;
-const jobExpYears = parseFloat(jobData?.yearsOfExperience?.split("-")[0]) + 0.5;
+const yearsRange = jobData?.yearsOfExperience?.match(/\((\d+)-(\d+)/);
+const jobExpYears = jobData?.yearsOfExperience === "5+ years" 
+    ? 5 
+    : yearsRange 
+        ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2 
+        : 0;
 const candidateExpLevel = candidateData?.candidateInfo?.experienceLevel;
 const jobExpLevel = jobData?.experience;
 
@@ -44,24 +49,55 @@ const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresh
 // Calculate score based on match type (1-5 scale)
 let score;
 if (perfectSkillsMatch && expMatch && industryMatch) {
-    score = 5.0; // Perfect Match!
-} else if (expMatch && industryMatch || (freshGradMatch && industryMatch)) {
-    score = 4.5; // High Match / Perfect Match for freshers
-} else if (medExpMatch && mediumSkillsMatch && industryMatch) {
-    score = 4.0; // Great Match
-} else if (perfectSkillsMatch && medExpMatch && industryMatch) {
-    score = 3.5; // Great Match
-} else if (medExpMatch && mediumSkillsMatch && !industryMatch || 
-           freshGradMatch && !industryMatch ||
-           perfectSkillsMatch && medExpMatch && !industryMatch) {
-    score = 3.0; // Worth a Shot
-} else if (perfectSkillsMatch && lowExpMatch && industryMatch) {
-    score = 2.0; // Low Match
-} else if (lowSkillsMatch && lowExpMatch && !industryMatch ||
-           perfectSkillsMatch && lowExpMatch && !industryMatch) {
-    score = 1.0; // Low Match!
-} else {
-    score = 1.5; // Default score for unmatched conditions
+    score = 5.0; // Perfect all-round match
+}
+// Near Perfect Matches (4.5)
+else if (
+    (perfectSkillsMatch && expMatch && !industryMatch) || // Perfect skills/exp, different industry
+    (expMatch && industryMatch) || // Experience and industry match
+    (freshGradMatch && industryMatch) // Fresh grad in right industry
+) {
+    score = 4.5;
+}
+// Strong Matches (4.0)
+else if (
+    (medExpMatch && mediumSkillsMatch && industryMatch) || // Good all-round match
+    (perfectSkillsMatch && medExpMatch) // Perfect skills with okay experience
+) {
+    score = 4.0;
+}
+// Good Matches (3.5)
+else if (
+    (perfectSkillsMatch && medExpMatch && industryMatch) || // Perfect skills, okay exp, same industry
+    (mediumSkillsMatch && expMatch && industryMatch) // Some skills, good exp, same industry
+) {
+    score = 3.5;
+}
+// Worth Considering (3.0)
+else if (
+    (medExpMatch && mediumSkillsMatch && !industryMatch) || // Good match but different industry
+    (freshGradMatch && !industryMatch) || // Fresh grad different industry
+    (perfectSkillsMatch && medExpMatch && !industryMatch) // Perfect skills but different industry
+) {
+    score = 3.0;
+}
+// Potential but Risky (2.0)
+else if (
+    (perfectSkillsMatch && lowExpMatch && industryMatch) || // Right skills but underexperienced
+    (mediumSkillsMatch && lowExpMatch && industryMatch) // Some skills but underexperienced
+) {
+    score = 2.0;
+}
+// Low Matches (1.0)
+else if (
+    (noSkillsMatch && lowExpMatch) || // No matching skills and underexperienced
+    (perfectSkillsMatch && lowExpMatch && !industryMatch) // Right skills but wrong industry and experience
+) {
+    score = 1.0;
+}
+// Default case for any remaining scenarios
+else {
+    score = 1.5;
 }
 
 // Count matching skills for additional context
@@ -78,7 +114,6 @@ return {
     skillsMatch: perfectSkillsMatch || mediumSkillsMatch
 };
 }
-
 
 function CandidateList({ jobApplications }) {
     const [candidatesWithDetails, setCandidatesWithDetails] = useState([]);
@@ -97,6 +132,8 @@ function CandidateList({ jobApplications }) {
     const [isPDFOpen, setIsPDFOpen] = useState(false);
     const [currentPDFUrl, setCurrentPDFUrl] = useState('');
     const [swipedCandidates, setSwipedCandidates] = useState([]); // NEW state to track swiped cards
+    const [slideCardLeft, setSlideCardLeft] = useState(false);
+    const [slidingCardId, setSlidingCardId] = useState(null);
 
 
     // Add default avatar as a constant
@@ -389,8 +426,15 @@ function CandidateList({ jobApplications }) {
                 const isSwipedRight = swipedCandidates.includes(candidate.candidateUserID);
                 return (
                     
-                    <div key={candidate?.candidateUserID} className={`card shadow-lg ${isSwipedRight ? 'swipeRight' : ''}`}
-                     data-state="#about">
+                    <div 
+                        key={candidate?.candidateUserID} 
+                        className={`card shadow-lg w-[300px] ${
+                            isSwipedRight ? 'swipeRight' : ''
+                        } ${
+                            slidingCardId === candidate?.candidateUserID ? 'slide-left' : ''
+                        }`}
+                        data-state="#about"
+                    >
                         {!isDetailView ? (
                             // Original card view
                             <>
@@ -455,7 +499,7 @@ function CandidateList({ jobApplications }) {
                                         ) : candidate.status.slice(-1)[0] === "Selected" ? (
                                             <div className="bg-green-500 rounded-full px-2 py-1 text-center">Selected Candidate</div>
                                         ) : candidate.status.slice(-1)[0] === "Applied" ? (
-                                            <div className="bg-grey-500 rounded-full px-2 py-1 text-center">Select OR Reject ?</div>
+                                            <div className="bg-cyan-800 rounded-full px-2 py-1 text-center">Select OR Reject ?</div>
                                         ) : null}
                                     </div>
                                 </h2>
@@ -463,12 +507,12 @@ function CandidateList({ jobApplications }) {
                         ) : (
                             <>
                                 <div className="card-header">
-                                    <h1 className="card-fullname">
+                                    <h1 className="card-fullname ml-2 mr-2">
                                         <div className="flex justify-evenly mt-[-70px]">
                                             <p className="text-black">{candidate?.candidateDetails?.name}</p>
                                             <Button
                                                 onClick={() => setCurrentCandidateDetails(null)}
-                                                className="p-1 h-4 hover:bg-gray-300 mt-[7px] ml-[100px]"
+                                                className="p-1 h-4 hover:bg-gray-300 mt-[7px] ml-[50px]"
                                             >
                                                 Flip Card
                                             </Button>
@@ -485,7 +529,6 @@ function CandidateList({ jobApplications }) {
                                             <div>
                                                 <p><span className="text-sm font-semibold">College:</span> <span className="text-sm">{candidate?.candidateDetails?.college}</span></p>
                                                 <p><span className="text-sm font-semibold">Location:</span> <span className="text-sm">{candidate?.candidateDetails?.collegeLocation}</span></p>
-
                                                 <p><span className="text-sm font-semibold">Experience Level:</span> <span className="text-sm">{candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.experienceLevel}</span></p>
 
                                             </div>
@@ -493,26 +536,31 @@ function CandidateList({ jobApplications }) {
                                         {/* Professional Details */}
 
                                         {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
-                                            <div>
+                                            <div className="ml-2 mr-2">
                                                 {/* <h2 className="text-medium font-semibold mb-0 ">Professional Details</h2> */}
-                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} , {candidate?.candidateDetails?.currentJobLocation}</span> <span className="text-sm bg-green-900 rounded-full px-2 py-1"> $1000{candidate?.candidateDetails?.currentSalary}/year</span></p>
+                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} - {candidate?.candidateDetails?.currentPosition}, {candidate?.candidateDetails?.currentJobLocation}</span></p> 
+                                                <div className="flex justify-center">
+                                                <span className="text-sm bg-green-900 rounded-full px-2 py-1"> ${candidate?.candidateDetails?.currentSalary}/year</span>
+                                                </div>
                                                 <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.noticePeriod}</span><span className="text-gray-300 text-sm"> Notice Period</span></p>
-
-
                                                 {candidate.candidateDetails?.previousCompanies?.length > 0 ? (
-                                                    <div className="text-sm ml-2 items-center text-center">
+                                                    <div className="text-sm ml-2 items-center text-center bg-gradient-to-r from-gray-500 to-blue-200 rounded-full">
                                                         {candidate.candidateDetails.previousCompanies.map((company, index) => (
-                                                            <p key={index} className="mb-1">
-                                                                • {company.companyName} - {company.position}
+
+                                                            <p key={index} className="mb-0.5 text-black rounded-full text-sm mr-4 ml-1">
+                                                                - {company.companyName} - {company.position} [{company.startDate.slice(0, 4)} - {company.endDate.slice(0, 4)}]
                                                             </p>
+
                                                         ))}
+
                                                     </div>
                                                 ) : (
                                                     <p className="text-sm ml-2 text-center">No previous companies</p>
                                                 )}
+                                                <div className="flex justify-center">
+                                                <p><span className="font-semibold text-sm">Work Exp:</span><span className="text-sm"> {candidate?.candidateDetails?.totalExperience} years</span></p>
+                                                </div>
 
-
-                                                <p><span className="font-semibold">Total Experience:</span><span className="text-sm"> 1 year{candidate?.candidateDetails?.totalExperience}</span></p>
 
 
                                             </div>
@@ -521,7 +569,7 @@ function CandidateList({ jobApplications }) {
                                         )}
 
                                         {/* Skills & Preferences */}
-                                        <div className="mt-[20px]">
+                                        <div className="mt-[20px] ml-2 mr-2">
                                             {/* <h3 className="text-medium font-semibold mb-2 text-center">
                                                 {candidate?.candidateDetails?.experienceLevel === 'Experienced' ? 'Top Skills:' : 'Skills:'}
                                             </h3> */}
@@ -564,16 +612,17 @@ function CandidateList({ jobApplications }) {
 
                                             {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
                                                 <p className="mt-4 text-center">
-                                                    <span className="font-medium">Preferred Location:</span> {candidate?.candidateDetails?.preferedJobLocation}
+                                                    <span className="font-medium text-sm">Preferred Location:</span> {candidate?.candidateDetails?.preferedJobLocation}
                                                 </p>
                                             )}
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex justify-between items-center pt-4 mt-[0px]">
+                                        <div className="flex justify-between items-center pt-4 mt-[0px] ml-2 mr-2 mb-2">
                                             <Button
                                                 onClick={() => handleUpdateJobStatus(candidate.candidateUserID, 'Rejected')}
                                                 disabled={candidate.status.slice(-1)[0] === "Rejected"}
+
                                                 className={`rounded-full p-3 ${candidate.status.slice(-1)[0] === "Rejected"
                                                     ? "bg-gray-300"
                                                     : "bg-red-500 hover:bg-red-600"
@@ -745,10 +794,9 @@ function CandidateList({ jobApplications }) {
                                     }
 
                                     const finalReason = rejectionReason === "Other" ? otherReason : rejectionReason;
-
-                                    console.log(`Reason for rejection: ${finalReason}`);
-                                    console.log("Candidate", currentCandidateDetails)
-
+                                    
+                                    // Set the specific card ID that should slide
+                                    setSlidingCardId(currentCandidateDetails?.userId);
 
                                     // Call the update function with the rejection reason
                                     await handleUpdateJobStatus(currentCandidateDetails?.userId, "Rejected", finalReason);
