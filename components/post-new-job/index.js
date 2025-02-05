@@ -59,13 +59,38 @@ function PostNewJob({profileInfo, user, jobToEdit = null, mode = "create"}){
         <div className="relative w-full sm:w-auto">
             <Button
                 onClick={() => setShowJobDialog(true)}
-                className={`w-full sm:w-auto disabled:opacity-60 flex h-10 sm:h-11 items-center justify-center 
-                    px-4 sm:px-5 text-sm sm:text-base transition-all duration-200 
+                className={`
+                    w-full sm:w-auto
+                    px-4 sm:px-6
+                    h-[44px]
+                    py-2.5 sm:py-3
+                    text-sm sm:text-base font-medium
+                    rounded-lg
+                    shadow-sm
+                    transition-all duration-300 ease-in-out
+                    transform hover:scale-[1.05]
+                    disabled:opacity-60 disabled:cursor-not-allowed
+                    flex items-center justify-center gap-2
                     ${isEditMode 
-                        ? 'absolute bottom-0 right-0 sm:right-4 bg-blue-500 text-white hover:bg-gradient-to-r from-red-500 to-blue-800' 
-                        : 'hover:bg-gradient-to-r from-red-500 to-blue-800'}`}
+                        ? 'ml-4 bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white hover:shadow-lg'
+                    }`}
             >
-                {isEditMode ? 'Edit Job' : 'Post New Job'}
+                {isEditMode ? (
+                    <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <span>Edit Job</span>
+                    </>
+                ) : (
+                    <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span>Post New Job</span>
+                    </>
+                )}
             </Button>
             <Dialog 
                 open={showJobDialog} 

@@ -266,7 +266,7 @@ function OnBoard(){
                 <Tabs value={currentTab} onValueChange={handleTabChange} className="p-6">
                     <div className="w-full text-center mb-8">
                         <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-4">
-                            Welcome to Onboarding
+                            Lets get you started
                         </h1>
                         <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1">
                             <TabsTrigger 

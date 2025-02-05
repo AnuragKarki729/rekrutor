@@ -292,36 +292,28 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
       case "file":
         return (
           <Box className="mt-6 mb-6">
-            <TextField
-              fullWidth
-              label={getCurrentControl.label}
-              variant="outlined"
-              name={getCurrentControl.name}
-              placeholder={getCurrentControl.placeholder}
-              disabled={getCurrentControl.disabled}
-              InputProps={{
-                endAdornment: (
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    style={{ display: 'none' }}
-                    id={getCurrentControl.name}
-                    onChange={(event) => {
-                      if (event.target.files && event.target.files.length > 0) {
-                        const selectedFile = event.target.files[0];
-                        setFormData((prev) => ({
-                          ...prev,
-                          [getCurrentControl.name]: selectedFile.name,
-                        }));
-                        handleFileChange(event);
-                      }
-                    }}
-                  />
-                ),
-                readOnly: true,
+            <label
+              htmlFor={getCurrentControl.name}
+              className="block text-sm font-medium text-gray-700"
+            >
+              Upload your resume
+            </label>
+            <input
+              id={getCurrentControl.name}
+              type="file"
+              accept=".pdf"
+              onChange={(event) => {
+                if (event.target.files && event.target.files.length > 0) {
+                  const selectedFile = event.target.files[0];
+                  setFormData((prev) => ({
+                    ...prev,
+                    [getCurrentControl.name]: selectedFile.name,
+                  }));
+                  handleFileChange(event);
+                }
               }}
-              value={formData[getCurrentControl.name] || ""}
-              onClick={() => document.getElementById(getCurrentControl.name).click()}
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
+              disabled={getCurrentControl.disabled}
             />
           </Box>
         );
