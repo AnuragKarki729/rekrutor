@@ -530,14 +530,14 @@ function CandidateVideo() {
                 <>
                   <button
                     onClick={handleRecordAgain}
-                    className="px-6 py-2.5 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md"
+                    className="hover:shadow-4xl hover:scale-105 px-6 py-2.5 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md"
                   >
                     Record Again
                   </button>
                   <button
                     onClick={handleUpload}
                     disabled={uploading}
-                    className={`px-6 py-2.5 font-medium rounded-lg transition-all duration-200 shadow-md ${
+                    className={`hover:shadow-4xl hover:scale-105 px-6 py-2.5 font-medium rounded-lg transition-all duration-200 shadow-md ${
                       uploading 
                         ? "bg-gray-400 cursor-not-allowed" 
                         : "bg-green-500 text-white hover:bg-green-600"

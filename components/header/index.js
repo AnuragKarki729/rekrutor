@@ -58,10 +58,13 @@ function Header({ user, profileInfo }) {
     ]
 
     return (
-        <div className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="sticky top-0 z-50 w-full border-[2px] border-gray-900 rounded-full backdrop-blur" style={{background: "linear-gradient(98.24deg,rgba(251, 251, 251, 0.64) 10%,rgba(156, 156, 251, 0.48) 50.4%, #EBECF7 90%)"}}>
             <header className="container mx-auto flex h-16 items-center justify-between px-4">
+
                 {/* Mobile Menu */}
                 <Sheet>
+
+
                     <SheetTrigger asChild>
                         <Button variant="ghost" className="lg:hidden -ml-4 px-4">
                             <AlignJustify className="h-5 w-5" />
