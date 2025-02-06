@@ -365,11 +365,14 @@ function CandidateVideo() {
   }, []);
 
   return (
-    <div className="flex flex-row gap-12 mx-auto max-w-7xl px-4 py-8">
+    <div className="flex flex-row gap-12 mx-auto min-w-[1400px] max-w-7xl px-4 py-8">
       {/* Main recording section */}
-      <div className="flex-1 flex flex-col items-center space-y-6">
-        <div className="flex flex-row gap-12 w-full justify-center">
-          <div className="flex-1 max-w-[500px]">
+      <div className="flex-1 flex flex-col items-center justify-between space-y-6 min-w-[500px]">
+        <div className="flex flex-row w-full ">
+
+
+
+          <div className="flex-1 min-w-[100px] max-w-[900px]">
             {isCameraOn ? (
               <>
                 {!previewUrl ? (
@@ -379,7 +382,7 @@ function CandidateVideo() {
                     mirrored={true}
                     ref={webcamRef}
                     videoConstraints={videoConstraints}
-                    className="w-full h-[500px] object-cover rounded-2xl shadow-lg transform scale-x-[-1] border-[4px] border-gray-900"
+                    className="w-[500px] h-[500px] object-cover rounded-2xl shadow-lg transform scale-x-[-1] border-[4px] border-gray-900 ml-[100px]"
                   />
                 ) : (
                   <video
@@ -411,7 +414,7 @@ function CandidateVideo() {
           </div>
 
           {aiSummary && (
-            <div className="w-full max-w-[500px] bg-white rounded-2xl shadow-lg p-6 self-start border border-gray-100">
+            <div className="w-full max-w-[500px] bg-white rounded-2xl shadow-lg p-6 border-[4px] border-gray-900 ">
               <h3 className="font-semibold text-lg mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg inline-block border-[3px] border-gray-900">
                 My Summary
               </h3>
@@ -457,7 +460,7 @@ function CandidateVideo() {
               <button
                 onClick={handleUpdateSummary}
                 disabled={editedSummary === "" || aiSummary === ""}
-                className={`mt-4 px-6 py-2.5 text-white font-medium rounded-lg transition-all duration-200 shadow-lg ${
+                className={`mt-4 px-6 py-2.5 text-white font-medium rounded-lg transition-all duration-200 shadow-lg hover:shadow-4xl hover:scale-105 ${
                   editedSummary === "" || aiSummary === ""
                     ? "bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed"
                     : "bg-gradient-to-r from-green-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
@@ -480,7 +483,7 @@ function CandidateVideo() {
         <div className="flex space-x-4 mt-6">
           <button
             onClick={toggleCamera}
-            className="px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md"
+            className="hover:shadow-4xl hover:scale-105 px-6 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-all duration-200 shadow-md"
           >
             {isCameraOn ? 'Turn Off Camera' : 'Turn On Camera'}
           </button>
@@ -489,7 +492,7 @@ function CandidateVideo() {
               {capturing ? (
                 <button 
                   onClick={handleStopCaptureClick} 
-                  className="px-6 py-2.5 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-md flex items-center"
+                  className="hover:shadow-4xl hover:scale-105 px-6 py-2.5 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-all duration-200 shadow-md flex items-center"
                 >
                   <span className="mr-2 h-2 w-2 bg-white rounded-full animate-pulse"></span>
                   Stop Recording
@@ -499,7 +502,7 @@ function CandidateVideo() {
                   {!previewUrl && (
                     <button 
                       onClick={handleStartCaptureClick} 
-                      className="px-6 py-2.5 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md"
+                      className="hover:shadow-4xl hover:scale-105 px-6 py-2.5 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md"
                     >
                       Start Recording
                     </button>
@@ -509,8 +512,9 @@ function CandidateVideo() {
               <div className="flex flex-col items-center">
                 <button
                   onClick={handlePrintDetails}
-                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md flex items-center gap-2"
+                  className="hover:scale-105 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md flex items-center gap-2"
                 >
+
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                     <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clipRule="evenodd" />
                   </svg>
@@ -550,7 +554,7 @@ function CandidateVideo() {
 
       {/* Previous video section */}
       {previousVideo && (
-        <div className="w-80 shrink-0">
+        <div className="w-[200px] shrink-0">
           <div className="sticky top-24 rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100">
             <div className="aspect-video w-full bg-gray-900">
               <video 
@@ -562,10 +566,10 @@ function CandidateVideo() {
             <div className="p-6">
               <h3 className="font-semibold text-gray-900">Previous Video CV</h3>
               <p className="text-sm text-gray-500 mt-2">
-                Currently active: {previousVideo.split('/').pop()}
+                Updated Video will appear on the next login
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                ID: {user.id}
+                
               </p>
             </div>
           </div>
