@@ -176,6 +176,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           <Box className="mt-6 mb-6">
             <TextField
               fullWidth
+              className=""
               type="text"
               label="Total Experience"
               variant="outlined"

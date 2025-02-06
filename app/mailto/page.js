@@ -100,7 +100,10 @@ export default async function MailPage() {
     // console.log("HELLO", rejectedData)
 
     return (
+      <div className="w-full h-[1000px] overflow-hidden"style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
       <MailComponent
+
+
         selectedData={selectedData.filter(Boolean)}
         rejectedData={rejectedData.filter(Boolean)}
         appliedData={appliedData.filter(Boolean)}
@@ -108,6 +111,7 @@ export default async function MailPage() {
         userEmail={userEmail}
         userName={userName}
       />
+      </div>
     );
   }
 

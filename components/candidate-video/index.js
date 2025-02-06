@@ -365,14 +365,14 @@ function CandidateVideo() {
   }, []);
 
   return (
-    <div className="flex flex-row gap-12 mx-auto min-w-[1400px] max-w-7xl px-4 py-8">
+    <div style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
+    <div className='text-center bg-transparent' style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
+    <div className="flex flex-row gap-12 mx-auto min-w-[400px] max-w-7xl px-0 py-8 h-[1000px] lg:w-[1200px]" style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
       {/* Main recording section */}
-      <div className="flex-1 flex flex-col items-center justify-between space-y-6 min-w-[500px]">
-        <div className="flex flex-row w-full ">
+      <div className="flex flex-col space-y-6 min-w-[600px]">
+        <div className="flex flex-row ml-0 w-full justify-start ">
+          <div className="flex-1 min-w-[200px] max-w-[900px]">
 
-
-
-          <div className="flex-1 min-w-[100px] max-w-[900px]">
             {isCameraOn ? (
               <>
                 {!previewUrl ? (
@@ -382,7 +382,7 @@ function CandidateVideo() {
                     mirrored={true}
                     ref={webcamRef}
                     videoConstraints={videoConstraints}
-                    className="w-[500px] h-[500px] object-cover rounded-2xl shadow-lg transform scale-x-[-1] border-[4px] border-gray-900 ml-[100px]"
+                    className="w-[500px] h-[500px] object-cover rounded-2xl shadow-lg transform border-[4px] border-gray-900"
                   />
                 ) : (
                   <video
@@ -553,7 +553,7 @@ function CandidateVideo() {
       </div>
 
       {/* Previous video section */}
-      {previousVideo && (
+      {previousVideo ? (
         <div className="w-[200px] shrink-0">
           <div className="sticky top-24 rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100">
             <div className="aspect-video w-full bg-gray-900">
@@ -574,7 +574,25 @@ function CandidateVideo() {
             </div>
           </div>
         </div>
+      ):(
+        <div className="w-[200px] shrink-0">
+        <div className="sticky top-24 rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100">
+          <div className="aspect-video w-full bg-gray-900 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="p-6">
+            <h3 className="font-semibold text-gray-900">Previous Video CV</h3>
+            <p className="text-sm text-gray-500 mt-2">
+              You have not uploaded a video yet
+            </p>
+          </div>
+        </div>
+      </div>
       )}
+    </div>
+    </div>
     </div>
   );
 }

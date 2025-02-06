@@ -106,7 +106,7 @@ export default function MailComponent({
         }
     };
     return (
-        <div>
+        <div className='mt-4 bg-transparent' >
 
             {role === 'candidate' ? (
                 <Tabs value={activeTab} onValueChange={setActiveTab}>

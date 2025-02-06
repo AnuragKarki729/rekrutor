@@ -192,15 +192,14 @@ function AccountInfo({ profileInfo }) {
     }
 
     return (
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-7xl" style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.51) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
             <div className="flex items-baseline justify-between pb-6 border-b pt-24">
-                <h1 className="text-4xl font-bold tracking-tight text-grey-950">
+                <h1 className="text-4xl font-bold tracking-tight text-grey-999">
                     Account Page
                 </h1>
             </div>
-            <div className="py-20 pb-24 pt-6">
-                
-                <div className="container mx-auto p=0 space-y-8">
+            <div className="py-10 px-10 pb-6 pt-6 border-2 border-gray-900 rounded-3xl">
+                <div className="container mx-auto p=0 space-y-8 ml-2">
                     
                 {profileInfo?.role === "candidate" && (
                         <div className="mt-4">
@@ -215,15 +214,16 @@ function AccountInfo({ profileInfo }) {
                                 type="file"
                                 accept=".pdf"
                                 onChange={(e) => {setNewResume(e.target.files[0]); uploadAndParseFile(e.target.files[0])}}
-                                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
+                                className="mt-1 block h-11 py-1 px-2 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-[2px] file:border-gray-900 file:bg-white 
+                                file:text-medium file:font-medium file:cursor-pointer file:hover:scale-105 file:transition-all file:duration-300 file:ease-in-out file:hover:border-[2px] file:hover:border-gray-900"
                             />
                             {candidateFormData?.resume && (
 
-                                <p className="mt-2 text-sm text-gray-600">
+                                <p className="mt-2 text-sm text-gray-800">
                                     Current Resume:{" "}
                                     <button
                                         onClick={() => window.open(`https://hwbttezjdwqixmaftiyl.supabase.co/storage/v1/object/public/rekrutor-public/public/${candidateFormData.resume}`, '_blank')}
-                                        className="text-blue-600 hover:underline"
+                                        className="text-blue-600 hover:underline pointer-cursor"
                                     >
                                         View Resume
                                     </button>

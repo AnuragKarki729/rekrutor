@@ -63,18 +63,17 @@ function Header({ user, profileInfo }) {
 
                 {/* Mobile Menu */}
                 <Sheet>
-
-
                     <SheetTrigger asChild>
-                        <Button variant="ghost" className="lg:hidden -ml-4 px-4">
+                        <Button variant="ghost" className="lg:hidden -ml-4 px-4 rounded-full bg-white hover:scale-[1.5] transition-all duration-300 hover:border-[2px] hover:border-gray-900">
                             <AlignJustify className="h-5 w-5" />
                             <DialogTitle className="sr-only">
                                 Toggle navigation Menu
+
                             </DialogTitle>
                         </Button>
                     </SheetTrigger>
 
-                    <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                    <SheetContent side="left" className="w-[300px] sm:w-[200px]">
                         <Link href={'/'} className="flex items-center space-x-2">
                             <span className="font-bold text-2xl">reKrutor</span>
                         </Link>
@@ -85,10 +84,11 @@ function Header({ user, profileInfo }) {
                                         key={menuItem.id} 
                                         href={menuItem.path} 
                                         onClick={() => sessionStorage.removeItem("filterParams")}
-                                        className="flex items-center space-x-2 text-lg font-medium transition-colors hover:text-blue-500"
+                                        className="flex items-center space-x-2 text-lg font-medium transition-colors hover:text-black hover:font-bold hover:scale-[1.02] transition-all duration-300"
                                     >
                                         {menuItem.label}
                                     </Link>
+
                                 ) : null
                             )}
                             {user && (
@@ -118,7 +118,7 @@ function Header({ user, profileInfo }) {
                             key={menuItem.id} 
                             href={menuItem.path} 
                             onClick={() => sessionStorage.removeItem("filterParams")}
-                            className="text-sm font-medium text-gray-700 transition-colors hover:text-blue-500"
+                            className="text-lg hover:font-bold hover:scale-[1.02] transition-all duration-300 font-medium text-gray-700 transition-colors hover:text-black"
                         >
                             {menuItem.label}
                         </Link>

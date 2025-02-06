@@ -239,7 +239,7 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50" style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
             <div className="container mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 max-w-[1440px]">
             <h1 className="text-xl mt-4 relative justify-center items-center text-start ml-4 sm:text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight text-gray-900">
                         {profileInfo?.role === 'candidate' ? "Explore All Jobs" : "Jobs Dashboard"}
@@ -247,16 +247,14 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                     </h1>
 
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between 
-                    border-b border-gray-200 pb-3 sm:pb-4 lg:pb-6 pt-4 sm:pt-8 lg:pt-12 
+                    pb-3 sm:pb-4 lg:pb-6 pt-4 sm:pt-8 lg:pt-12 
                     space-y-3 sm:space-y-0">
-                    
-
                     {/* Filter/Post Job Section - Enhanced mobile layout */}
-                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto bg-transparent">
                         {profileInfo?.role === "candidate" ? (
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                                 {/* Filter Menu - Improved scrollable layout */}
-                                <Menubar className="border rounded-lg shadow-sm h-full bg-white w-full sm:w-auto overflow-x-auto">
+                                <Menubar className="border rounded-lg shadow-sm h-full bg-transparent w-full sm:w-auto overflow-x-auto">
                                     <div className="flex flex-nowrap gap-2 p-1">
                                         {filterMenu.map((menu, index) => (
                                             <MenubarMenu key={menu.id || index}>
@@ -266,7 +264,7 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                                                             <input
                                                                 type="text"
                                                                 placeholder="Search Jobs"
-                                                                className="px-2 py-1 border rounded bg-gray-250"
+                                                                className="px-2 py-1 border-[2px] border-gray-900 rounded bg-gray-250"
                                                                 value={searchTerm}
                                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                                                 onKeyDown={(e) => {
@@ -281,7 +279,7 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                                                                     e.stopPropagation();
                                                                     handleFilter(menu.id, searchTerm);
                                                                 }}
-                                                                className="ml-2 bg-blue-200 hover:bg-blue-400 hover:scale-110 transform transition-all duration-200 ease-in-out text-white"
+                                                                className="ml-2 bg-blue-200 hover:bg-blue-400 hover:scale-110 border-[2px] border-gray-900 transform transition-all duration-200 ease-in-out text-white"
                                                                 size="sm"
                                                             >
                                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" id="search" className="w-4 h-4">
@@ -387,13 +385,13 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                             className="w-full"
                         >
                             <div className="overflow-x-auto">
-                                <TabsList className=" mb-4 sm:mb-6">
+                                <TabsList className=" mb-4 sm:mb-6 bg-transparent">
                                     {["Perfect Match", "Good Match", "My Industry", "All Jobs", "Applied Jobs"].map((tab) => (
                                         <TabsTrigger
                                             key={tab}
                                             value={tab}
                                             disabled={filteredJobList[tab].length === 0}
-                                            className="text-xs sm:text-sm lg:text-base px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap hover:scale-110 transform transition-all duration-200 ease-in-out cursor-pointer hover:bg-blue-200 hover:rounded-full"
+                                            className="text-xs sm:text-sm lg:text-base px-2 sm:px-3 py-1.5 sm:py-2 rounded-full whitespace-nowrap bg-transparent hover:scale-110 transform transition-all duration-200 ease-in-out cursor-pointer hover:bg-blue-200 hover:rounded-full"
                                         >
                                             {tab}
                                             {filteredJobList[tab].length > 0 && (
