@@ -24,6 +24,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
     const [showConfirmation, setShowConfirmation] = useState(false)
     const [slideDirection, setSlideDirection] = useState('');
     const [isRemoving, setIsRemoving] = useState(false);
+    const [showVacancyClosed, setShowVacancyClosed] = useState(false);
 
     console.log(jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()))
     const jobExperience = parseFloat(jobItem?.experience?.match(/[\d.]+/)?.[0]) || 0
@@ -100,8 +101,11 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
             } else if (lowExpMatch && !industryMatch) {
                 return "Low Match !"
             }
+        } else {
+            return "Qualifications"
         }
     }
+
 
     const matchPotential = calculateMatchPotential()
 
@@ -119,7 +123,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
             case "Low Match !":
                 return "text-white bg-gradient-to-r from-red-600 to-purple-600"
             default:
-                return "text-gray-600 bg-gray-50"
+                return "text-gray-100 bg-gray-500"
         }
     }
 
@@ -218,15 +222,14 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
 
     return (
         <Fragment>
-            <div className="relative">
+            <div className="relative mt-5">
                 <div
-                    className={`transition-all duration-[1500ms] ease-in-out ${
-                        isRemoving && slideDirection === 'right-up' 
-                            ? 'transform translate-x-full -translate-y-full opacity-0' 
+                    className={`transition-all duration-[1500ms] ease-in-out ${isRemoving && slideDirection === 'right-up'
+                            ? 'transform translate-x-full -translate-y-full opacity-0'
                             : isRemoving && slideDirection === 'left-down'
-                            ? 'transform -translate-x-full translate-y-full opacity-0'
-                            : ''
-                    }`}
+                                ? 'transform -translate-x-full translate-y-full opacity-0'
+                                : ''
+                        }`}
                 >
                     <Drawer open={showJobDetailsDrawer} onOpenChange={setShowJobDetailsDrawer}>
                         <CommonCard
@@ -236,10 +239,60 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                     <JobIcon industry={jobItem?.industry} className="h-25 w-25" />
 
                                     {isJobApplied && (
-                                        <div className="relative -top-2 right-2 bg-green-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                        <div className="relative-top-2 right-2 bg-green-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+
+
                                             Applied
                                         </div>
                                     )}
+
+                                    {jobItem?.hiredFlag && (
+                                        <>
+                                            <div
+                                                onClick={() => setShowVacancyClosed(true)}
+                                                className="relative-top-2 right-2 bg-red-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer hover:bg-red-600"
+                                            >
+                                                Vacancy Closed
+                                            </div>
+
+                                            {showVacancyClosed && (
+                                                <div className="fixed inset-3 bg-opacity-50 z-50 flex justify-center items-center">
+                                                    <div className="relative bg-white border-[5px] border-gray-900 rounded-lg shadow-sm p-6 max-w-md">
+                                                        <button
+                                                            onClick={() => setShowVacancyClosed(false)}
+
+                                                            className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 flex justify-center items-center"
+                                                        >
+
+                                                            <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                                                            </svg>
+                                                            <span className="sr-only">Close modal</span>
+                                                        </button>
+                                                        <div className="text-center">
+                                                            <svg className="mx-auto mb-4 text-gray-400 w-12 h-12" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                            </svg>
+                                                            <h3 className="mb-5 text-lg font-normal text-gray-500">
+                                                                An applicant has already been hired for this position {jobItem?.title} at {jobItem?.companyName}
+                                                            </h3>
+                                                            <button
+                                                                onClick={() => setShowVacancyClosed(false)}
+                                                                className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border-[2px] border-gray-900 text-sm font-medium px-5 py-2.5 
+                                                                    hover:text-gray-900
+                                                                    hover:scale-105 transform transition-all duration-200 ease-in-out"
+                                                            >
+                                                                Close prompt
+                                                            </button>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+
                                 </div>
                             ) : (
                                 <div className="text-2xl font-bold">{jobItem?.type} {jobItem?.title}</div>
@@ -248,21 +301,25 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                 <div className="flex justify-between items-center">
                                     {jobItem?.title}
                                 </div>
+
                             ) : null}
                             description={!showJobDetailsDrawer ? (
                                 <>
-                                    {jobItem?.companyName}
+                                    <p className="text-sm text-gray-600">{jobItem?.companyName} | {jobItem?.location}</p>
+                                    <p className="text-sm text-gray-600 font-semibold">{jobItem?.industry} Industry </p>
+
+
                                     {showMatchDetails && (
                                         <>
                                             <div className="text-lg font-bold mb-2">Why {matchPotential}?</div>
                                             <div className="mb-4">
                                                 <h3 className="text-sm font-semibold mb-2">Job Qualifications</h3>
                                                 <p className="text-xs mb-1">
-                                                    <span className="font-medium">Required:</span> {jobItem?.experience} in {jobItem?.industry} Industry 
+                                                    <span className="font-medium">Required:</span> {jobItem?.experience} in {jobItem?.industry} Industry
                                                     {jobItem?.yearsOfExperience ? ` (${jobItem?.yearsOfExperience})` : ""}
                                                 </p>
                                                 <p className="text-xs">
-                                                    <span className="font-medium">Your Experience:</span> {profileInfo?.candidateInfo?.totalExperience ? 
+                                                    <span className="font-medium">Your Experience:</span> {profileInfo?.candidateInfo?.totalExperience ?
                                                         `${profileInfo?.candidateInfo?.totalExperience} years` : "Fresher"}
                                                 </p>
                                             </div>
@@ -272,9 +329,8 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                                     {jobSkills.map((skill, index) => (
                                                         <div
                                                             key={index}
-                                                            className={`px-1.5 py-0.5 rounded text-[10px] text-white font-medium ${
-                                                                candidateSkills.includes(skill) ? "bg-green-500" : "bg-red-500"
-                                                            }`}
+                                                            className={`px-1.5 py-0.5 rounded text-[10px] text-white font-medium ${candidateSkills.includes(skill) ? "bg-green-500" : "bg-red-500"
+                                                                }`}
                                                         >
                                                             {skill}
                                                         </div>
@@ -306,8 +362,8 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                                     <div
                                                         key={index}
                                                         className={`rounded-md px-3 py-1 text-sm font-medium ${isMatch
-                                                                ? 'bg-green-500 text-white'
-                                                                : 'bg-yellow-500 text-white'
+                                                            ? 'bg-green-500 text-white'
+                                                            : 'bg-yellow-500 text-white'
                                                             }`}
                                                     >
                                                         {skillItem.trim()}
@@ -321,49 +377,52 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                             footerContent={
                                 <div className="ml-[-15px] flex space-x-1 ">
 
-                                <Button 
-                                    className="h-7 w-7 bg-red-600 hover:bg-red-700 text-white rounded-full p-0"
-                                    onClick={handleJobReject}
-                                    disabled={applying}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShowJobDetailsDrawer(!showJobDetailsDrawer);
-                                        setShowMatchDetails(false);
-                                    }}
-                                    className="relative h-7 px-2 text-l text-white hover:bg-gradient-to-r from-green-600 to-purple-800"
-                                >
-                                    {showJobDetailsDrawer ? 'Show Less' : 'View Details'}
-                                </Button>
+                                    <Button
+                                        className="h-7 w-7 bg-red-600 hover:bg-red-700 hover:scale-110 transform transition-all duration-200 ease-in-out text-white rounded-full p-0 disabled:cursor-not-allowed"
+                                        onClick={handleJobReject}
+                                        disabled={jobItem?.hiredFlag || applying}
+                                    >
 
-                                <Button
-                                    onClick={() => {
-                                        setShowMatchDetails(!showMatchDetails);
-                                        setShowJobDetailsDrawer(false);
-                                    }}
-                                    className={`h-7 px-2 text-l ${getMatchColor()}`}
-                                >
-                                    {showMatchDetails ? 'Hide Match' : matchPotential}
-                                </Button>
-                                <Button 
-                                    onClick={handleJobApply}
-                                    disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 || applying}
-                                    className={`h-7 w-7 p-0 rounded-full ${jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
-                                        ? 'bg-green-500 text-white cursor-not-allowed'
-                                        : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                                >
-                                    {applying ? '...' :
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
                                         </svg>
-                                    }
-                                </Button>
-                            </div>
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            setShowJobDetailsDrawer(!showJobDetailsDrawer);
+                                            setShowMatchDetails(false);
+                                        }}
+                                        className="relative h-7 px-2 text-l text-white hover:bg-gradient-to-r from-green-600 to-purple-800 hover:scale-110 transform transition-all duration-200 ease-in-out"
+                                    >
+                                        {showJobDetailsDrawer ? 'Show Less' : 'View Details'}
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => {
+                                            setShowMatchDetails(!showMatchDetails);
+                                            setShowJobDetailsDrawer(false);
+                                        }}
+                                        className={`h-7 px-2 text-l hover:scale-110 transform transition-all duration-200 ease-in-out ${getMatchColor()}`}
+                                    >
+                                        {showMatchDetails ? 'Hide Match' : matchPotential}
+                                    </Button>
+                                    <Button
+                                        onClick={handleJobApply}
+                                        disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 || applying || jobItem?.hiredFlag}
+                                        className={`h-7 w-7 p-0 rounded-full hover:scale-110 transform transition-all duration-200 ease-in-out ${
+                                            jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
+                                            ? 'bg-green-500 text-white cursor-not-allowed'
+                                            : 'bg-green-600 hover:bg-green-700 text-white'
+                                        }`}
+                                    >
+                                        {applying ? '...' :
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        }
+                                    </Button>
+                                </div>
                             }
                         />
                     </Drawer>
@@ -371,9 +430,8 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
 
                 {/* Confirmation overlay */}
                 <div
-                    className={`absolute top-0 left-0 w-full h-full flex items-center justify-center transition-all duration-300 ${
-                        showConfirmation ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
+                    className={`absolute top-0 left-0 w-full h-full flex items-center justify-center transition-all duration-300 ${showConfirmation ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                        }`}
                 >
                     <div className="bg-white rounded-lg shadow-lg p-6 text-center transform transition-all">
                         <div className="mb-4">
