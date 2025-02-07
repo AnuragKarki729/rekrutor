@@ -10,6 +10,7 @@ const Loading = () => {
         <div className="pinwheel__line"></div>
         <div className="pinwheel__line"></div>
         <div className="pinwheel__line"></div>
+        <div className="pinwheel__line"></div>
       </div>
     </div>
   );

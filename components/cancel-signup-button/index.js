@@ -34,28 +34,32 @@ export default function CancelSignupButton() {
         <>
             <Button
                 onClick={() => setShowConfirmDialog(true)}
-                className="fixed top-4 right-4 z-50 rounded-full w-12 h-12 bg-red-500 hover:bg-red-600 p-0 shadow-lg"
+                className="fixed top-4 right-4 z-50 rounded-full w-12 h-12 hover:scale-110 transition-all duration-300 border-[2px] border-gray-900 bg-red-500 hover:bg-red-600 p-0 shadow-lg"
                 aria-label="Cancel signup"
             >
                 <X className="h-6 w-6" />
             </Button>
 
-            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <AlertDialogContent>
+            <AlertDialog 
+            open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                <AlertDialogContent className="border-[5px] border-gray-900">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Cancel Sign Up?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will delete your account and all associated data. This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>No, continue signup</AlertDialogCancel>
+                    <AlertDialogFooter className="flex flex-row gap-4">
+                        <AlertDialogCancel
+                        className= "border-[3px] border-gray-900 hover:scale-110 items-center justify-center transition-all duration-300"
+                        >No, continue signup</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleCancelSignup}
-                            className="bg-red-500 hover:bg-red-600"
+                            className="text-center border-[3px] border-gray-900 w-2/7 items-center justify-center bg-red-500 hover:bg-red-600"
                         >
                             Yes, cancel signup
                         </AlertDialogAction>
+
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

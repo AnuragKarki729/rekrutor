@@ -1,0 +1,59 @@
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.loader {
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    height: 22px;
+    border-radius: 20px;
+   
+    border: 4px solid;
+    border-color:black;
+    position: relative;
+    overflow: hidden;
+}
+
+.loader::before {
+    content: "";
+    position: absolute;
+    margin: 2px;
+    inset: 0 100% 0 0;
+    border-radius: inherit;
+    background: linear-gradient(to right, #fbd0d0, #4ade80);
+    animation: l8 7s infinite;
+}
+
+
+@keyframes l8 {
+    0% {
+        inset: 0 100% 0 0;
+        background: #fbd0d0; /* Start with pink */
+    }
+    50% {
+        background: linear-gradient(to right, #fbd0d0, #4ade80); /* Mid-way transition */
+    }
+    75% {
+        background: linear-gradient(to right, #fbd0d0, #4ade80); /* Mid-way transition */
+    }
+    98% {
+        background: linear-gradient(to right, #fbd0d0, #4ade80); /* Mid-way transition */
+    }
+    100% {
+        inset: 0;
+        background: #4ade80; /* End with green */
+    }
+
+}

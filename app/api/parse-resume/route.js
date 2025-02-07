@@ -35,8 +35,22 @@ export async function POST(request) {
             isBase64Encoded: true,
             fileType: isDocx ? 'docx' : 'pdf'  // Explicitly specify file type
         };
+        try {
+            await fetch('https://resume-parser-903918110499.us-east1.run.app/health', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                signal: AbortSignal.timeout(5000) // 5 second timeout for health check
+            });
+            console.log('Parser API warmed up successfully');
+        } catch (error) {
+            console.log('Health check failed, proceeding with parse request anyway:', error);
+        }        
+
 
         console.log('Sending payload with file type:', parserPayload.fileType);
+
 
         const parserResponse = await fetch('https://resume-parser-903918110499.us-east1.run.app/parse-resume', {
             method: 'POST',

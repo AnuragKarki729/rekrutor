@@ -10,7 +10,7 @@ const ApplicantList = ({ userId }) => {
     const [applicants, setApplicants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [candidateProfile, setCandidateProfile] = useState(null);
-    const [isProfileCardOpen, setIsProfileCardOpen] = useState(false);
+    const [openCardKey, setOpenCardKey] = useState(null);
     const [thisJob, setThisJob] = useState(null);
     const [promptOpen, setPromptOpen] = useState(false);
     const [selectedCandidateId, setSelectedCandidateId] = useState(null);
@@ -98,13 +98,21 @@ const ApplicantList = ({ userId }) => {
         setPromptOpen(true);
     };
 
-    const fetchCandidateProfile = async (candidateId) => {
-        const response = await fetch(`/api/profiles/${candidateId}`);
-        const data = await response.json();
-        setCandidateProfile(data);
-        console.log(data, "data")
-        setIsProfileCardOpen(!isProfileCardOpen);
-    }
+    const fetchCandidateProfile = async (candidateId, jobId) => {
+        const cardKey = `${candidateId}-${jobId}`;
+        
+        if (openCardKey === cardKey) {
+            // If clicking the same card, close it
+            setOpenCardKey(null);
+            setCandidateProfile(null);
+        } else {
+            // If clicking a different card, fetch and open it
+            const response = await fetch(`/api/profiles/${candidateId}`);
+            const data = await response.json();
+            setCandidateProfile(data);
+            setOpenCardKey(cardKey);
+        }
+    };
 
     const selectedApplicants = applicants.filter(
         applicant => applicant.status.slice(-1)[0] === "Selected"
@@ -125,93 +133,132 @@ const ApplicantList = ({ userId }) => {
 
     const renderApplicantCard = (applicant) => {
         const relatedJob = jobs.find(job => job._id === applicant.jobID);
+        const isThisCardOpen = openCardKey === `${applicant.candidateUserID}-${applicant.jobID}`;
 
         return (
-            <CommonCard
-                key={applicant._id}
-                className="h-25 w-25"
-                icon={
-                    <div className='w-full sm:mb-2 flex flex-col items-center justify-center gap-2'>
-                        {isProfileCardOpen && candidateProfile && (
-                            <div className="w-[300px] p-4 space-y-5 ">
-                                <h3 className="text-lg font-semibold">{candidateProfile.candidateInfo.name}</h3>
-                                <p className="text-gray-600">
-                                    Graduated from {candidateProfile.candidateInfo.college}, {candidateProfile.candidateInfo.collegeLocation}
-                                </p>
-                                <div className="flex flex-wrap gap-2 mb-4"> {candidateProfile.candidateInfo.skills.split(',').map((skill, index) => ( <span key={index} className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm" > {skill.trim()} </span> ))} </div>
-                                <div className="mt-4">
-                                    {applicant.status.slice(-1)[0] === "Rejected" ? (
-                                        <div className="text-red-600 font-semibold">
-                                            Rejected due to: {applicant.rejectionReason || "Reason Not Specified"}
+            <div key={applicant._id}>
+                <CommonCard
+                    className="h-25 w-25"
+                    icon={
+                        <div className='w-full sm:mb-2 flex flex-col items-center justify-center gap-2'>
+                            {isThisCardOpen && candidateProfile && (
+                                <div className="w-[300px] p-4 space-y-2 ">
+                                    <h2 className="text-lg font-semibold text-center">{relatedJob.title}</h2>
+                                    <h2 className="text-lg font-semibold mb-[0px] text-center">{candidateProfile.candidateInfo.name}</h2>
+                                    <p className="text-gray-600 text-center">
+                                        Graduated from {candidateProfile.candidateInfo.college}, {candidateProfile.candidateInfo.collegeLocation}
+                                        <br />
+                                    </p>
+                                    <p className = "text-center ">
+                                        {candidateProfile.candidateInfo.experienceLevel === "Fresher" ? <span className="font-bold">Fresher</span> 
+                                        : <span className="font-bold">{candidateProfile.candidateInfo.totalExperience} years</span>} 
+                                        {candidateProfile.candidateInfo.experienceLevel === "Experienced" ? <span className="text-gray-500"> (work experience)</span> : ""}
+
+                                    </p>
+
+
+
+
+
+                                    <div className="flex flex-wrap gap-2 mb-4"> {candidateProfile.candidateInfo.skills.split(',').map((skill, index) => ( <span key={index} className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-sm" > {skill.trim()} </span> ))} </div>
+                                    <div className="mt-4">
+                                        {applicant.status.slice(-1)[0] === "Rejected" ? (
+                                            <div className="text-red-600 border-2 border-gray-900 w-fit px-2 py-1 rounded-2xl font-semibold">
+                                                Rejected due to: {applicant.rejectionReason || "Reason Not Specified"}
+                                            </div>
+                                        ) : applicant.status.slice(-1)[0] === "Selected" ? (
+
+                                            <div className="text-green-600 border-2 border-gray-900 w-fit px-2 py-1 rounded-2xl font-semibold">
+                                                Currently Selected
+                                            </div>
+                                        ):(
+                                            <div className="text-blue-600 border-2 border-gray-900 w-fit px-2 py-1 rounded-2xl font-semibold">
+                                                Applied For the Job
+                                            </div>
+                                        )}
+
+            
+                                        <div className="mt-4 flex flex-col sm:flex-row gap-1 overflow:hidden">
+                                            
+
+                                            {applicant.status.slice(-1)[0] === "Selected" || applicant.status.slice(-1)[0] === "Rejected" ? (
+                                                <div>
+                                                <p className="text-gray-700 px-1 py-1 font-bold">Change status </p>
+                                                <button 
+                                                    onClick={() => handleReconsider(applicant.candidateUserID)} 
+                                                    className="px-1 py-1 border-2 border-gray-900 bg-blue-300 hover:scale-105 transition-all duration-300 ease-in-out text-blue-900 hover:text-blue-800 font-semibold rounded-lg"
+                                                >
+                                                {applicant.status.slice(-1)[0] === "Selected" ? "Reject Candidate" : "Select Candidate"}
+                                            </button>
+                                            </div>
+                                            ) : (
+                                                <button 
+                                                onClick={() => handleReconsider(applicant.candidateUserID)}
+                                                className="text-gray-700 px-1 py-1"></button>
+
+                                            )}
+
+
+
                                         </div>
-                                    ) : (
-                                        <div className="text-green-600 font-semibold">
-                                            Currently Selected
-                                        </div>
-                                    )}
-                                    <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                                        <p className="text-gray-700">Change status?</p>
-                                        <button 
-                                            onClick={() => handleReconsider(applicant.candidateUserID)} 
-                                            className="text-blue-600 hover:text-blue-800 font-semibold"
-                                        >
-                                            {applicant.status.slice(-1)[0] === "Selected" ? "Reject Candidate" : "Reconsider and Select"}
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                        {!isProfileCardOpen && (
-                            <div className="flex flex-col sm:flex-row items-center gap-4 w-full p-2">
-                                <JobIcon
-                                    industry={relatedJob?.industry}
-                                    className="h-16 w-16"
-                                />
-                                <span className={`${
-                                    applicant.status.slice(-1)[0] === "Selected"
-                                        ? "bg-green-500"
-                                        : "bg-red-500"
-                                    } text-white px-3 py-1 rounded-full text-sm`}
-                                >
-                                    {applicant.status.slice(-1)[0]}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                }
-                title={
-                    <div>
-                        {!isProfileCardOpen && (
-                            <div className='flex flex-col items-center sm:items-start p-4 space-y-2'>
-                                <h3 className='text-xl font-bold'>
-                                    {applicant.name}
-                                </h3>
-                                <p className='text-lg text-gray-600'>
-                                    {relatedJob?.title}
-                                </p>
-                                <p className='text-sm text-gray-500'>
-                                    Applied on: {applicant.JobAppliedOnDate}
-                                </p>
-                                {applicant.status.slice(-1)[0] === "Rejected" && (
-                                    <p className="text-red-600 font-semibold text-sm">
-                                        Reason: {applicant.rejectionReason || "Reason Not Specified"}
+                            )}
+                            {!isThisCardOpen && (
+                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full p-2">
+                                    <JobIcon
+                                        industry={relatedJob?.industry}
+
+                                    />
+                                    <span className={`${
+                                        applicant.status.slice(-1)[0] === "Selected"
+                                            ? "bg-green-500"
+                                            :applicant.status.slice(-1)[0] === "Applied"
+                                            ? "bg-blue-500"
+                                            : "bg-red-500"
+
+                                        } text-white px-3 py-1 rounded-full text-medium border-[3px] border-gray-900`}
+                                    >
+                                        {applicant.status.slice(-1)[0]}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    }
+                    title={
+                        <div>
+                            {!isThisCardOpen && (
+                                <div className='flex flex-col items-center sm:items-start p-4 space-y-2'>
+                                    <h3 className='text-xl font-bold'>
+                                        {applicant.name}
+                                    </h3>
+                                    <p className='text-lg text-gray-600'>
+                                        {relatedJob?.title}
                                     </p>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                }
-                description={
-                    <div className="p-4">
-                        <button 
-                            onClick={() => fetchCandidateProfile(applicant.candidateUserID)}
-                            className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                        >
-                            {isProfileCardOpen ? "Close Profile" : "View Profile"}
-                        </button>
-                    </div>
-                }
-            />
+                                    <p className='text-sm text-gray-500'>
+                                        Applied on: {applicant.JobAppliedOnDate}
+                                    </p>
+                                    {applicant.status.slice(-1)[0] === "Rejected" && (
+                                        <p className="text-red-600 font-semibold text-sm">
+                                            Reason: {applicant.rejectionReason || "Reason Not Specified"}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    }
+                    description={
+                        <div className="p-4 flex justify-end">
+                            <button 
+                                onClick={() => fetchCandidateProfile(applicant.candidateUserID, applicant.jobID)}
+                                className="w-full sm:w-auto px-4 py-2 bg-blue-500 hover:scale-105 transition-all duration-300 ease-in-out text-white text-lg rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
+                            >
+                                {isThisCardOpen ? "Close Profile" : "View Profile"}
+                            </button>
+                        </div>
+                    }
+                />
+            </div>
         );
     };
 
@@ -255,52 +302,53 @@ const ApplicantList = ({ userId }) => {
                     <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-950 mb-4 sm:mb-0">
                         Applicants Overview
                     </h1>
-                    <TabsList className="w-full sm:w-auto">
-                        <TabsTrigger value="selected" className="font-bold text-base sm:text-lg">
-                            Selected ({selectedApplicants.length})
+                    <TabsList className="w-full sm:w-auto bg-transparent ">
+                        <TabsTrigger value="selected" className="font-bold border-2 border-gray-900 text-base sm:text-lg rounded-3xl data-[state=active]:bg-blue-300 data-[state=active]:text-black">
+                            Selected <span className="text-white ml-1 bg-blue-900 px-2 rounded-3xl">{selectedApplicants.length}</span>
                         </TabsTrigger>
-                        <TabsTrigger value="applied" className="font-bold text-base sm:text-lg">
-                            Applied ({appliedApplicants.length})
+
+                        <TabsTrigger value="applied" className="font-bold border-2 border-gray-900 text-base sm:text-lg data-[state=active]:bg-blue-300 data-[state=active]:text-black rounded-3xl">
+
+                            Applied <span className="text-white ml-1 bg-blue-900 px-2 rounded-3xl">{appliedApplicants.length}</span>
                         </TabsTrigger>
-                        <TabsTrigger value="rejected" className="font-bold text-base sm:text-lg">
-                            Rejected ({rejectedApplicants.length})
+                        <TabsTrigger value="rejected" className="font-bold border-2 border-gray-900 data-[state=active]:bg-blue-300 data-[state=active]:text-white text-base sm:text-lg rounded-3xl">
+                            Rejected <span className="text-white ml-1 bg-blue-900 px-2 rounded-3xl">{rejectedApplicants.length}</span>
+
+
                         </TabsTrigger>
                     </TabsList>
                 </div>
 
                 <div className="pb-24 pt-6">
-                    <div className="container mx-auto p-0 space-y-8">
-                        <TabsContent value="selected">
-                            <div className="flex flex-col gap-4">
-                                {selectedApplicants.length === 0 ? (
-                                    <p className="text-gray-500 text-center">No selected candidates yet</p>
-                                ) : (
-                                    selectedApplicants.map(renderApplicantCard)
-                                )}
-                            </div>
-                        </TabsContent>
+                    <TabsContent value="selected">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {selectedApplicants.length === 0 ? (
+                                <p className="text-gray-500 text-center col-span-full">No selected candidates yet</p>
+                            ) : (
+                                selectedApplicants.map(renderApplicantCard)
+                            )}
+                        </div>
+                    </TabsContent>
 
-                        <TabsContent value="applied">
-                            <div className="flex flex-col gap-4">
-                                {appliedApplicants.length === 0 ? (
-                                    <p className="text-gray-500 text-center">No applied candidates</p>
-                                ) : (
-                                    appliedApplicants.map(renderApplicantCard)
-                                )}
-                            </div>
-                        </TabsContent>
+                    <TabsContent value="applied">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {appliedApplicants.length === 0 ? (
+                                <p className="text-gray-500 text-center col-span-full">No applied candidates</p>
+                            ) : (
+                                appliedApplicants.map(renderApplicantCard)
+                            )}
+                        </div>
+                    </TabsContent>
 
-
-                        <TabsContent value="rejected">
-                            <div className="flex flex-col gap-4">
-                                {rejectedApplicants.length === 0 ? (
-                                    <p className="text-gray-500 text-center">No rejected candidates</p>
-                                ) : (
-                                    rejectedApplicants.map(renderApplicantCard)
-                                )}
-                            </div>
-                        </TabsContent>
-                    </div>
+                    <TabsContent value="rejected">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {rejectedApplicants.length === 0 ? (
+                                <p className="text-gray-500 text-center col-span-full">No rejected candidates</p>
+                            ) : (
+                                rejectedApplicants.map(renderApplicantCard)
+                            )}
+                        </div>
+                    </TabsContent>
                 </div>
             </Tabs>
             {promptOpen && (

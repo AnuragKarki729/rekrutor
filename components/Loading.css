@@ -1,9 +1,9 @@
 /* From Uiverse.io by G4b413l */ 
 .pinwheel {
-  --uib-size: 45px;
-  --uib-speed: 0.8s;
-  --uib-color: #312f2b;
-  --uib-line-weight: 4px;
+  --uib-size: 100px;
+  --uib-speed: 1s;
+  --uib-color: #11100f;
+  --uib-line-weight: 6px;
   position: relative;
   display: flex;
   align-items: center;

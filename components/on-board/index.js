@@ -10,11 +10,40 @@ import { createClient } from "@supabase/supabase-js"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog"
 import { Button } from "../ui/button"
 import CancelSignupButton from "../cancel-signup-button"
+import '@/components/ui/loadingfile.css'
 
 const supabaseClient = createClient(
     "https://hwbttezjdwqixmaftiyl.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YnR0ZXpqZHdxaXhtYWZ0aXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0Mjc1MjksImV4cCI6MjA0ODAwMzUyOX0.giYTTB68BJchfDZdqnsMDpt7rhgVPOvPwYp90-Heo4c"
 )
+
+function LoadingOverlay() {
+    const [loadingText, setLoadingText] = useState("Parsing resume...");
+        useEffect(() => {
+            const timer1 = setTimeout(() => {
+                setLoadingText("Let's see your skills...");
+            }, 3000);
+    
+            const timer2 = setTimeout(() => {
+                setLoadingText("Almost there...");
+            }, 6000);
+    
+            // Cleanup timers on unmount
+            return () => {
+                clearTimeout(timer1);
+                clearTimeout(timer2);
+            };
+        }, []);
+    
+        return (
+            <div className="loading-overlay flex justify-center items-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="loader"></div>
+                    <div className="text-white text-xl">{loadingText}</div>
+                </div>
+            </div>
+        )
+    }
 
 function OnBoard(){
     const searchParams = useSearchParams()
@@ -31,13 +60,14 @@ function OnBoard(){
     const [candidateFormData, setCandidateFormData] = useState(initialCandidateFormData)
     const [file, setFile] = useState(null)
     const [loading, setLoading] = useState(false)
-
+    const [isParsing, setIsParsing] = useState(false)
     const { user } = useUser()
+    
 
     useEffect(() => {
         const email = user?.primaryEmailAddress?.emailAddress
         const isGmail = email?.toLowerCase().endsWith('@gmail.com')
-        
+        console.log(user?.id)
         const typeParam = searchParams.get('type')
         if (typeParam) {
             setCurrentTab(typeParam)
@@ -83,6 +113,7 @@ function OnBoard(){
         const selectedFile = event.target.files[0];
         if (selectedFile) {
             try {
+                setIsParsing(true)
                 // Get file extension
                 const fileExt = selectedFile.name.split('.').pop();
                 
@@ -124,7 +155,7 @@ function OnBoard(){
                 
                 try {
                     // Update profile with parsed response
-                    const updateProfileResponse = await fetch(`/api/profiles/${user?.id}/parsed-response`, {
+                    const updateProfileResponse = await fetch(`/api/profiles/parsed-response/${user?.id}`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json'
@@ -159,9 +190,12 @@ function OnBoard(){
                 setFile(renamedFile);
             } catch (error) {
                 console.error('Error processing file:', error);
+            } finally {
+                setIsParsing(false)
             }
         }
     }
+
 
     useEffect(() => {
         const uploadFile = async () => {
@@ -287,6 +321,7 @@ function OnBoard(){
                             </TabsTrigger>
                         </TabsList>
                     </div>
+                    {isParsing && <LoadingOverlay/>}
 
                     <div className="mt-8">
                         <TabsContent value="candidate" className="space-y-6">
