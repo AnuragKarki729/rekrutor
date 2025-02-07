@@ -41,8 +41,7 @@ export default async function MailPage() {
     const appliedJobApplications = jobApplicants.filter(
       (application) => application.status.slice(-1)[0] === 'Applied'
     );
-
-
+    
     const selectedData = await Promise.all(
         selectedJobApplications.map(async (application) => {
           const jobDetails = jobList.find((job) => job._id === application.jobID);
@@ -55,7 +54,7 @@ export default async function MailPage() {
       
           const recruiterEmail = recruiter.email;
       
-          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
+          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID, jobDetails?.hiredFlag];
         })
       );
 
@@ -74,7 +73,7 @@ export default async function MailPage() {
       
           const recruiterEmail = recruiter.email;
       
-          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
+          return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID, jobDetails?.hiredFlag];
         })
       );
 
@@ -92,7 +91,7 @@ export default async function MailPage() {
     
         const recruiterEmail = recruiter.email;
     
-        return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID];
+        return [recruiterEmail, jobDetails?.title, jobDetails?.companyName, application.jobID, jobDetails?.hiredFlag];
        })
     );
 
@@ -102,8 +101,6 @@ export default async function MailPage() {
     return (
       <div className="w-full h-[1000px] overflow-hidden"style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.64) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
       <MailComponent
-
-
         selectedData={selectedData.filter(Boolean)}
         rejectedData={rejectedData.filter(Boolean)}
         appliedData={appliedData.filter(Boolean)}
@@ -118,24 +115,28 @@ export default async function MailPage() {
 
 
   if (role === 'recruiter') {
+
+    
     const jobList = await fetchJobsForCandidateAction();
     const jobApplicants = await fetchJobApplicationsForRecruiter(userID);
-
     const selectedJobApplications = jobApplicants.filter(
         (application) => application.status.slice(-1)[0] === 'Selected'
     );
 
     const selectedData = selectedJobApplications.map((application) => {
         const jobDetails = jobList.find((job) => job._id === application.jobID);
+        console.log(jobDetails, "jobDetails")
         
         return [
             application.email,      // Candidate email
             application.name,       // Candidate name
             jobDetails?.title,      // Job title
             jobDetails?.companyName, // Company name
-            application.jobID       // Added jobID
+            application.jobID,      // Added jobID
+            jobDetails?.hiredFlag
         ];
     });
+
 
     if (!selectedData) return <Loading />
     return (

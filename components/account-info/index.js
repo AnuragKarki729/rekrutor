@@ -192,7 +192,7 @@ function AccountInfo({ profileInfo }) {
     }
 
     return (
-        <div className="mx-auto max-w-7xl" style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.51) 10%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 80%,rgb(251, 251, 251) 90%,rgb(255, 253, 255) 90%)"}}>
+        <div className="mx-auto max-w-7xl" style={{background: "radial-gradient(circle,rgba(253, 144, 144, 0.51)0%,rgba(164, 179, 252, 0.48) 20%,rgba(156, 156, 251, 0.64) 40%,rgba(200, 200, 248, 0.84) 60%,rgba(224, 224, 251, 0.23) 70%,rgb(251, 251, 251) 80%,rgb(255, 253, 255) 80%)"}}>
             <div className="flex items-baseline justify-between pb-6 border-b pt-24">
                 <h1 className="text-4xl font-bold tracking-tight text-grey-999">
                     Account Page

@@ -270,9 +270,10 @@ function CandidateVideo() {
   // Upload video to Supabase
   const handleUpload = async () => {
     if (recordedChunks.length === 0) {
-      alert("No video recorded to upload.");
+      toast.error("No video recorded to upload.");
       return;
     }
+
 
     // Add confirmation dialog if there's a previous video
     if (previousVideo) {
@@ -341,12 +342,13 @@ function CandidateVideo() {
       if (videoElement) {
         videoElement.load();
       }
-      alert("Video CV updated successfully!");
+      toast.success("Video CV updated successfully!");
       setRecordedChunks([]);
+
 
     } catch (error) {
       console.error("Error during upload process:", error);
-      alert(error.message || "Failed to upload video");
+      toast.error(error.message || "Failed to upload video");
     } finally {
       setUploading(false);
     }

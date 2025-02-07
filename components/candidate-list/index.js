@@ -8,7 +8,8 @@ import Image from "next/image"
 import '../ui/new_card.css'
 import Loading from "@/components/Loading"
 import PDFViewer from "@/components/PDFViewer"
-
+import toast from "react-hot-toast"
+import { Toaster } from "react-hot-toast"
 const supabaseClient = createClient(
     "https://hwbttezjdwqixmaftiyl.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YnR0ZXpqZHdxaXhtYWZ0aXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0Mjc1MjksImV4cCI6MjA0ODAwMzUyOX0.giYTTB68BJchfDZdqnsMDpt7rhgVPOvPwYp90-Heo4c"
@@ -90,7 +91,7 @@ else if (
 }
 // Low Matches (1.0)
 else if (
-    (noSkillsMatch && lowExpMatch) || // No matching skills and underexperienced
+    (lowSkillsMatch && lowExpMatch) || // No matching skills and underexperienced
     (perfectSkillsMatch && lowExpMatch && !industryMatch) // Right skills but wrong industry and experience
 ) {
     score = 1.0;
@@ -311,10 +312,23 @@ function CandidateList({ jobApplications }) {
 
     // Handle resume download
     function handlePreviewResume(candidate) {
-        console.log(candidate, "candidate");
-        const { data } = supabaseClient.storage.from('rekrutor-public')
-            .getPublicUrl(`${candidate?.resume}`);
-        console.log(data);
+        if (!candidate?.resume) {
+            toast.error("No resume available");
+            return;
+        }
+    
+
+        // Determine the correct path based on the resume string format
+        const storagePath = candidate.resume.startsWith('public/') 
+            ? candidate.resume.substring(7) // Remove 'public/' prefix
+            : `public/${candidate.resume}`;  // Add 'public/' prefix
+    
+        const { data } = supabaseClient.storage
+            .from('rekrutor-public')
+            .getPublicUrl(storagePath);
+    
+        console.log('Storage path:', storagePath);
+        console.log('Public URL:', data?.publicUrl);
 
         if (data?.publicUrl && data.publicUrl.endsWith('.pdf')) {
             console.log(data.publicUrl, "data.publicUrl");
@@ -334,9 +348,10 @@ function CandidateList({ jobApplications }) {
             setVideoUrl(publicUrl); // Set the video URL for the video modal
             setShowVideoModal(true); // Open the modal
         } else {
-            alert("No video CV available.");
+            toast.error("No video CV available.");
         }
     }
+
 
     // Add this function to handle video reporting
     async function handleReportVideo(videoUrl, reason) {
@@ -371,11 +386,12 @@ function CandidateList({ jobApplications }) {
             setReportedVideos(prev => [...prev, videoUrl]);
             setShowReportDialog(false);
             setReportReason("");
-            alert("Video has been reported successfully");
+            toast.success("Video has been reported successfully");
         } catch (error) {
             console.error('Error reporting video:', error);
-            alert(error.message);
+            toast.error('Error reporting video');
         }
+
     }
 
     const getDisplaySkills = (candidate) => {
@@ -439,14 +455,14 @@ function CandidateList({ jobApplications }) {
                             // Original card view
                             <>
                                 <div className="card-header">
-                                    <h1 className="card-fullname">{candidate?.candidateDetails?.name}</h1>
-                                    <h2 className="card-jobtitle text-center">
+                                    <h1 className="card-fullname text-gray-900">{candidate?.candidateDetails?.name}</h1>
+                                    <h2 className="card-jobtitle">
                                         {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
                                     </h2>
                                 </div>
                                 <div className="card-main">
                                     <div className="card-content">
-                                        <div className="card-subtitle text-center mt-[110px]">Match Score</div>
+                                        <div className="card-subtitle text-center mt-[110px] text-gray-900">Match Score</div>
                                         <div className="flex justify-center transform -translate-y-[80px]">
                                             <span
                                                 className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
@@ -468,8 +484,8 @@ function CandidateList({ jobApplications }) {
                                                     <span
                                                         key={index}
                                                         className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
-                                                            ? 'bg-green-800 text-white-800'
-                                                            : 'bg-yellow-100 text-black font-bold'
+                                                            ? 'bg-green-800 text-white'
+                                                            : 'bg-yellow-100 text-white font-bold'
                                                             }`}
                                                     >
                                                         {skill}
@@ -480,7 +496,7 @@ function CandidateList({ jobApplications }) {
                                     </div>
                                     <div className="flex justify-center transform -translate-y-[70px]">
                                         <Button
-                                            className="justify-center"
+                                            className="justify-center hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
                                             onClick={() => {
                                                 const candidateDetailswithId = { ...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status }
                                                 setCurrentCandidateDetails(candidateDetailswithId);
@@ -512,7 +528,7 @@ function CandidateList({ jobApplications }) {
                                             <p className="text-black">{candidate?.candidateDetails?.name}</p>
                                             <Button
                                                 onClick={() => setCurrentCandidateDetails(null)}
-                                                className="p-1 h-4 hover:bg-gray-300 mt-[7px] ml-[50px]"
+                                                className="p-1 h-4 hover:bg-gray-300 mt-[7px] ml-[5px]"
                                             >
                                                 Flip Card
                                             </Button>
@@ -527,9 +543,12 @@ function CandidateList({ jobApplications }) {
 
                                         {candidate?.candidateDetails?.experienceLevel === 'Fresher' && (
                                             <div>
-                                                <p><span className="text-sm font-semibold">College:</span> <span className="text-sm">{candidate?.candidateDetails?.college}</span></p>
-                                                <p><span className="text-sm font-semibold">Location:</span> <span className="text-sm">{candidate?.candidateDetails?.collegeLocation}</span></p>
-                                                <p><span className="text-sm font-semibold">Experience Level:</span> <span className="text-sm">{candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.experienceLevel}</span></p>
+                                                <p><span className="text-sm font-semibold text-gray-900">College:</span> <span className="text-sm text-gray-900">{candidate?.candidateDetails?.college}</span></p>
+                                                <p><span className="text-sm font-semibold text-gray-900">Location:</span> <span className="text-sm text-gray-900">{candidate?.candidateDetails?.collegeLocation}</span></p>
+
+
+                                                <p><span className="text-sm font-semibold text-gray-900">Experience Level:</span> <span className="text-sm text-gray-900">{candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.experienceLevel}</span></p>
+
 
                                             </div>
                                         )}
@@ -538,17 +557,18 @@ function CandidateList({ jobApplications }) {
                                         {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
                                             <div className="ml-2 mr-2">
                                                 {/* <h2 className="text-medium font-semibold mb-0 ">Professional Details</h2> */}
-                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} - {candidate?.candidateDetails?.currentPosition}, {candidate?.candidateDetails?.currentJobLocation}</span></p> 
+                                                <p className="text-center text-gray-900 font-bold mt-2"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} - {candidate?.candidateDetails?.currentPosition}, {candidate?.candidateDetails?.currentJobLocation}</span></p> 
                                                 <div className="flex justify-center">
                                                 <span className="text-sm bg-green-900 rounded-full px-2 py-1"> ${candidate?.candidateDetails?.currentSalary}/year</span>
                                                 </div>
-                                                <p className="text-center"><span className="text-sm"> {candidate?.candidateDetails?.noticePeriod}</span><span className="text-gray-300 text-sm"> Notice Period</span></p>
+                                                <p className="text-center text-gray-900"><span className="text-sm"> {candidate?.candidateDetails?.noticePeriod}</span><span className="text-gray-500 text-sm"> Notice Period</span></p>
                                                 {candidate.candidateDetails?.previousCompanies?.length > 0 ? (
-                                                    <div className="text-sm ml-2 items-center text-center bg-gradient-to-r from-gray-500 to-blue-200 rounded-full">
+
+                                                    <div className="text-sm ml-2 items-center text-center bg-gradient-to-r from-gray-500 to-blue-200 rounded-md">
                                                         {candidate.candidateDetails.previousCompanies.map((company, index) => (
 
-                                                            <p key={index} className="mb-0.5 text-black rounded-full text-sm mr-4 ml-1">
-                                                                - {company.companyName} - {company.position} [{company.startDate.slice(0, 4)} - {company.endDate.slice(0, 4)}]
+                                                            <p key={index} className="mb-2 text-black rounded-full text-sm mr-4 ml-1">
+                                                               • {company.companyName} - {company.position} [{company.startDate.slice(0, 4)} - {company.endDate.slice(0, 4)}]
                                                             </p>
 
                                                         ))}
@@ -557,12 +577,9 @@ function CandidateList({ jobApplications }) {
                                                 ) : (
                                                     <p className="text-sm ml-2 text-center">No previous companies</p>
                                                 )}
-                                                <div className="flex justify-center">
-                                                <p><span className="font-semibold text-sm">Work Exp:</span><span className="text-sm"> {candidate?.candidateDetails?.totalExperience} years</span></p>
+                                                <div className="flex justify-center mt-0 mb-0">
+                                                <p><span className="font-semibold text-sm text-gray-900">Work Exp:</span><span className="text-sm text-gray-900"> {candidate?.candidateDetails?.totalExperience} years</span></p>
                                                 </div>
-
-
-
                                             </div>
 
 
@@ -575,7 +592,6 @@ function CandidateList({ jobApplications }) {
                                             </h3> */}
 
                                             <div className="flex flex-wrap gap-2 justify-center max-h-[180px] overflow-y-auto scroll-smooth">
-
                                                 {candidate?.candidateDetails?.experienceLevel === 'Experienced'
                                                     ? ((candidate?.candidateDetails?.skills || '')
                                                         .split(',')
@@ -594,15 +610,16 @@ function CandidateList({ jobApplications }) {
                                                     : (candidate?.candidateDetails?.skills || '')
                                                         .split(',')
                                                         .filter(skill => skill.trim().length > 0)
-                                                        // .sort(() => 0.5 - Math.random())
-                                                        // .slice(0, 15)
+                                                        .sort(() => 0.5 - Math.random())
+                                                        .slice(0, 8)
                                                         .map((skill, index) => (
                                                             <span
                                                                 key={index}
-                                                                className="items-center justify-center px-2 py-2 bg-gradient-to-r from-gray-500 to-blue-800 text-white rounded-full text-xs"
+                                                                className="items-center justify-center px-2 py-2 bg-gradient-to-r from-gray-500 to-blue-800 mb-[5px] text-white rounded-full text-xs"
                                                             >
                                                                 {skill.trim()}
                                                             </span>
+
 
 
 
@@ -611,19 +628,20 @@ function CandidateList({ jobApplications }) {
                                             </div>
 
                                             {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
-                                                <p className="mt-4 text-center">
-                                                    <span className="font-medium text-sm">Preferred Location:</span> {candidate?.candidateDetails?.preferedJobLocation}
+                                                <p className="mt-1 text-center text-gray-900">
+                                                    <span className="font-medium text-gray-900 text-sm">Preferred Location:</span> <span className="font-bold">{candidate?.candidateDetails?.preferedJobLocation}</span>
                                                 </p>
+
                                             )}
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex justify-between items-center pt-4 mt-[0px] ml-2 mr-2 mb-2">
+                                        <div className="flex justify-between items-center gap-2 pt-1 mt-[2px] ml-[-3px] mr-[10px] mb-2">
                                             <Button
                                                 onClick={() => handleUpdateJobStatus(candidate.candidateUserID, 'Rejected')}
                                                 disabled={candidate.status.slice(-1)[0] === "Rejected"}
 
-                                                className={`rounded-full p-3 ${candidate.status.slice(-1)[0] === "Rejected"
+                                                className={`rounded-full hover:scale-[1.2] hover:bg-gray-900 hover:text-white transition-all duration-300 p-3 ${candidate.status.slice(-1)[0] === "Rejected"
                                                     ? "bg-gray-300"
                                                     : "bg-red-500 hover:bg-red-600"
                                                     }`}
@@ -632,20 +650,20 @@ function CandidateList({ jobApplications }) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </Button>
-
-                                            <div className="flex gap-3">
-                                                <Button onClick={() => handlePreviewResume(candidate.candidateDetails)}>
+                                            <Button 
+                                                className="hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
+                                                onClick={() => handlePreviewResume(candidate.candidateDetails)}>
                                                     Resume
                                                 </Button>
-                                                <Button onClick={() => handlePreviewVideoCV(candidate.candidateDetails)}>
+                                                <Button 
+                                                className="hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
+                                                onClick={() => handlePreviewVideoCV(candidate.candidateDetails)}>
                                                     Video CV
                                                 </Button>
-                                            </div>
-
                                             <Button
                                                 onClick={() => handleSelectCandidate(candidate.candidateUserID, 'Selected')}
                                                 // disabled={candidate.status.slice(-1)[0] === "Selected"}
-                                                className={`rounded-full p-3 ${candidate.status.slice(-1)[0] === "Selected"
+                                                className={`rounded-full p-3 hover:scale-[1.2] hover:bg-gray-900 hover:text-white transition-all duration-300 ${candidate.status.slice(-1)[0] === "Selected"
                                                     ? "bg-gray-300"
                                                     : "bg-green-500 hover:bg-green-600"
                                                     }`}
@@ -789,9 +807,10 @@ function CandidateList({ jobApplications }) {
                             <Button
                                 onClick={async () => {
                                     if (rejectionReason === "Other" && !otherReason) {
-                                        alert("Please specify the reason.");
+                                        toast.error("Please specify the reason.");
                                         return;
                                     }
+
 
                                     const finalReason = rejectionReason === "Other" ? otherReason : rejectionReason;
                                     
@@ -853,16 +872,18 @@ function CandidateList({ jobApplications }) {
                             <Button
                                 onClick={() => {
                                     if (!reportReason) {
-                                        alert("Please select a reason for reporting");
+                                        toast.error("Please select a reason for reporting");
                                         return;
                                     }
                                     console.log("Current video URL:", videoUrl);
 
+
                                     if (!videoUrl) {
-                                        alert("Error: Cannot identify video");
+                                        toast.error("Error: Cannot identify video");
                                         return;
                                     }
                                     handleReportVideo(videoUrl, reportReason);
+
                                 }}
                                 className="bg-red-500 hover:bg-red-600"
                             >

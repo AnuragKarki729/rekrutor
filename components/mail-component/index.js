@@ -5,7 +5,7 @@ import CommonCard from '../common-card';
 import { Concert_One } from 'next/font/google';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "../ui/dialog";
-
+import toast from 'react-hot-toast';
 
 export default function MailComponent({
     selectedData,
@@ -15,9 +15,11 @@ export default function MailComponent({
     userEmail,
     userName,
     jobId,
+    hiredFlag
 }) {
     const sendRecruiterInterestEmail = async (
         candidateEmail,
+
         candidateName,
         jobName,
         companyName,
@@ -44,13 +46,14 @@ export default function MailComponent({
 
             const result = await response.json();
             if (response.ok) {
-                alert('Interest email sent successfully!');
+                toast.success('Interest email sent successfully!');
             } else {
-                alert(`Failed to send email: ${result.message}`);
+                toast.error(`Failed to send email: ${result.message}`);
             }
+
         } catch (error) {
             console.error('Error sending email:', error);
-            alert('An error occurred while sending the email.');
+            toast.error('An error occurred while sending the email.');
         }
     };
 
@@ -82,9 +85,10 @@ export default function MailComponent({
             const data = await response.json();
 
             if (response.status === 429) {
-                alert('Please wait 60 seconds before sending another email for this job application.');
+                toast.error('Please wait 60 seconds before sending another email for this job application.');
                 return;
             }
+
 
             if (data.success) {
                 window.open(data.gmailUrl, '_blank');
@@ -94,17 +98,21 @@ export default function MailComponent({
                     setDisabledButtons(prev => ({ ...prev, [jobId]: false }));
                 }, 60000);
             } else {
-                alert(data.error || 'Failed to generate email link');
+                toast.error(data.error || 'Failed to generate email link');
                 // Re-enable the button if there's an error
                 setDisabledButtons(prev => ({ ...prev, [jobId]: false }));
             }
+
         } catch (error) {
             console.error('Error:', error);
-            alert('Failed to process request');
+            toast.error('Failed to process request');
             // Re-enable the button if there's an error
             setDisabledButtons(prev => ({ ...prev, [jobId]: false }));
+
         }
     };
+
+    console.log(selectedData, "selectedData")
     return (
         <div className='mt-4 bg-transparent' >
 
@@ -114,24 +122,27 @@ export default function MailComponent({
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">
                             Application Status
                         </h1>
-                        <TabsList className="grid grid-cols-3 gap-4">
-                            <TabsTrigger 
-                                value="selected" 
-                                className="text-green-700 hover:text-green-800 data-[state=active]:text-green-700 data-[state=active]:bg-green-0 text-lg font-bold transition-all"
+                        <TabsList className="grid grid-cols-3 gap-4 bg-transparent">
+                            <TabsTrigger
+                                value="selected"
+                                className="text-gray-900 border-[3px] border-gray-900 rounded-full hover:text-green-800 data-[state=active]:text-green-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
                             >
                                 Selected
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="applied" 
-                                className="text-purple-700 hover:text-purple-800 data-[state=active]:text-purple-700 data-[state=active]:bg-purple-0 text-lg font-bold transition-all"
+
+                            <TabsTrigger
+                                value="applied"
+                                className="border-[3px] border-gray-900 rounded-full text-gray-900 hover:text-purple-800 data-[state=active]:text-purple-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
                             >
                                 Applied
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="rejected" 
-                                className="text-red-700 hover:text-red-800 data-[state=active]:text-red-700 data-[state=active]:bg-red-0 text-lg font-bold transition-all"
+
+                            <TabsTrigger
+                                value="rejected"
+                                className="text-gray-900 hover:text-red-800 border-[3px] border-gray-900 rounded-full data-[state=active]:text-red-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
                             >
                                 Rejected
+
                             </TabsTrigger>
                         </TabsList>
                     </div>
@@ -139,33 +150,52 @@ export default function MailComponent({
                     <TabsContent value="selected">
                         <div className="mt-6">
                             <div className="flex justify-center text-center items-center gap-2">
-                            <p className="text-gray-500"><span className="font-bold">Selected but not yet Acknowledged? </span>
+                                <p className="text-gray-500"><span className="font-bold">Selected but not yet Acknowledged? </span>
 
-                                <span><br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800 text-lg font-bold">Nudge </span> your recruiter with an Interest Email</span>
-                                <span className="font-bold"><br />You can only mail the recruiter once every 6 hours</span></p>
-                                </div>
+                                    <span><br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800 text-lg font-bold">Nudge </span> your recruiter with an Interest Email</span>
+                                    <span className="font-bold"><br />You can only mail the recruiter once every 6 hours</span></p>
+                            </div>
 
                             {selectedData?.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                                    {selectedData.map(([email, title, companyName, jobId], index) => (
-
-
+                                    {selectedData.map(([email, title, companyName, jobId, hiredFlag], index) => (
                                         <CommonCard
+                                            className='w-[400px]'
                                             key={index}
                                             title={title}
                                             description={`at ${companyName}`}
                                             footerContent={
-                                                <button
-                                                    onClick={() => handleEmailSend(email, title, companyName, jobId, 'Selected')}
-                                                    disabled={disabledButtons[jobId]}
-                                                    className={`px-4 py-2 rounded ${
-                                                        disabledButtons[jobId]
+                                                <div className='flex gap-6'>
+                                                    <button
+                                                        onClick={() => handleEmailSend(email, title, companyName, jobId, 'Selected')}
+                                                        disabled={disabledButtons[jobId] || hiredFlag}
+                                                        className={`px-4 py-2 rounded ${disabledButtons[jobId] || hiredFlag
                                                             ? 'bg-gray-400 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-green-600 to-green-900 hover:from-green-700 hover:to-green-900'
-                                                        } text-white transition-all duration-200`}
-                                                >
-                                                    {disabledButtons[jobId] ? 'Mail already sent' : 'Nudge Mail'}
-                                                </button>
+                                                            : 'bg-gradient-to-r from-green-600 to-green-900 hover:from-green-700 hover:to-green-900 hover:scale-105'
+                                                            } text-white transition-all duration-200`}
+                                                    >
+                                                        {disabledButtons[jobId]
+                                                            ? 'Mail already sent'
+                                                            : hiredFlag
+                                                                ? 'Already Hired'
+                                                                : 'Nudge Mail'
+                                                        }
+                                                    </button>
+                                                    <div className="relative group inline-block">
+                                                        <button className="border-[3px] border-gray-900 rounded-md px-1 py-2">
+                                                            {hiredFlag ? 'No longer Hiring' : 'Postion still open'}
+                                                        </button>
+                                                        {hiredFlag && (
+                                                            <div className="absolute opacity-0 hover:opacity-100 
+                                                            transition-opacity duration-300 text-gray-900 text-xs font-bold 
+                                                            rounded p-2 bg-white border-[3px] border-gray-900 transform -translate-x-0 -translate-y-14">
+                                                            This Vacancy is Closed
+                                                            </div>
+                                                        )}
+
+                                                    </div>
+                                                </div>
+
 
 
                                             }
@@ -180,7 +210,7 @@ export default function MailComponent({
 
                     <TabsContent value="applied">
                         <div className="mt-6">
-                            
+
                             <div className="flex justify-center text-center items-center gap-2">
                                 <p className="text-gray-500"><span className="font-bold">Applied To Jobs but not yet Acknowledged? </span>
                                     <span><br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800 text-lg font-bold">Nudge </span> your recruiter with a mail </span>
@@ -201,10 +231,9 @@ export default function MailComponent({
                                                 <button
                                                     onClick={() => handleEmailSend(email, title, companyName, jobId, 'Applied')}
                                                     disabled={disabledButtons[jobId]}
-                                                    className={`px-4 py-2 rounded ${
-                                                        disabledButtons[jobId]
-                                                            ? 'bg-gray-400 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-purple-600 to-purple-900 hover:from-purple-700 hover:to-purple-900'
+                                                    className={`px-4 py-2 hover:scale-105 transition-all duration-200 rounded ${disabledButtons[jobId]
+                                                        ? 'bg-gray-400 cursor-not-allowed'
+                                                        : 'bg-gradient-to-r from-purple-600 to-purple-900 hover:from-purple-700 hover:to-purple-900'
                                                         } text-white transition-all duration-200`}
                                                 >
                                                     {disabledButtons[jobId] ? 'Mail already sent' : 'Nudge for Acknowledgement'}
@@ -225,7 +254,7 @@ export default function MailComponent({
 
                     <TabsContent value="rejected">
                         <div className="mt-6">
-                        <div className="flex justify-center text-center items-center gap-2">
+                            <div className="flex justify-center text-center items-center gap-2">
                                 <p className="text-gray-500"><span className="font-bold">Rejected from a Job? </span>
                                     <span><br /><span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-800 to-purple-800 text-lg font-bold">Nudge </span> your recruiter to change his mind using an Appeal Email </span>
                                     <span className="font-bold"><br />You can only appeal once every 6 hours</span></p>
@@ -244,11 +273,11 @@ export default function MailComponent({
                                             footerContent={
                                                 <button
                                                     onClick={() => handleEmailSend(email, title, companyName, jobId, 'Rejected')}
+
                                                     disabled={disabledButtons[jobId]}
-                                                    className={`px-4 py-2 rounded ${
-                                                        disabledButtons[jobId]
-                                                            ? 'bg-gray-400 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-red-600 to-red-900 hover:from-red-700 hover:to-red-900'
+                                                    className={`px-4 py-2 hover:scale-105 transition-all duration-200 rounded ${disabledButtons[jobId]
+                                                        ? 'bg-gray-400 cursor-not-allowed'
+                                                        : 'bg-gradient-to-r from-red-600 to-red-900 hover:from-red-700 hover:to-red-900'
                                                         } text-white transition-all duration-200`}
                                                 >
                                                     {disabledButtons[jobId] ? 'Appeal already sent' : 'Appeal to Company HR'}
@@ -270,8 +299,8 @@ export default function MailComponent({
                         Selected Candidates
                     </h1>
                     {selectedData?.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                            {selectedData.map(([candidateEmail, candidateName, jobName, companyName], index) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                            {selectedData.map(([candidateEmail, candidateName, jobName, companyName, jobID, hiredFlag], index) => (
                                 <CommonCard
                                     key={index}
 
@@ -279,7 +308,7 @@ export default function MailComponent({
                                     description={
                                         <div className="text-center">
                                             <p>Applied for <span className="font-semibold">{jobName}</span></p>
-                                            <p>at {companyName}</p>
+                                            <p>at {companyName} {hiredFlag === Boolean(true) ? "Hired" : "Not Hired"}</p>
                                         </div>
                                     }
                                     footerContent={
@@ -302,13 +331,15 @@ export default function MailComponent({
                                                     if (data.success) {
                                                         window.open(data.gmailUrl, '_blank');
                                                     } else {
-                                                        alert('Failed to generate email link');
+                                                        toast.error('Failed to generate email link');
                                                     }
+
                                                 } catch (error) {
                                                     console.error('Error:', error);
-                                                    alert('Failed to process request');
+                                                    toast.error('Failed to process request');
                                                 }
                                             }}
+
                                             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 flex items-center justify-center gap-2"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

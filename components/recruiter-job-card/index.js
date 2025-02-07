@@ -54,17 +54,26 @@ function RecruiterJobCard({jobItem, jobApplications}){
            <JobIcon industry={jobItem?.industry}/>
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
            <DialogTrigger asChild>
+           <div className="relative group">
                <Button 
-                   className={`bg-gradient-to-r from-blue-500 to-gray-900 text-white 
+               onClick={() => handleStatusChange(hiringStatus === 'Hiring' ? 'Hired' : 'Hiring')}
+                   className={`bg-gradient-to-r from-blue-500 to-gray-900 text-white hover:
                        hover:shadow-lg transform hover:scale-[1.05] rounded-full cursor-pointer
-                        ${hiringStatus === 'Hired' ? 'bg-gradient-to-r from-green-500 to-blue-400 border-[2px] border-gray-900 rounded-md' : ''}`}
+                        ${hiringStatus === 'Hired' ? 'bg-gradient-to-r from-green-500 to-blue-400 border-[2px] border-gray-900 rounded-md text-black font-bold' : ''}`}
                    variant="outline"
                    size="sm"
                >
-                   {hiringStatus === 'Hiring' ? 'Set Status' : 'Hired'}
+                   {hiringStatus === 'Hiring' ? 'Position Open' : 'Hired'}
                </Button>
+               <div className="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 
+                transition-opacity duration-300 bg-black text-white text-sm rounded-md py-1 px-2 
+                -bottom-8 left-0 transform -translate-x-1/2 whitespace-nowrap">
+                Click to change status
+            </div>
+        </div>
            </DialogTrigger>
        </Dialog>
+
        </div>
 }
            title={

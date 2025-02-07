@@ -152,6 +152,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
         return (
           <Box className="mt-6 mb-6">
             <TextField
+              
               fullWidth
               type="number"
               label={getCurrentControl.label}
