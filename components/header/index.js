@@ -6,7 +6,7 @@ import { AlignJustify } from 'lucide-react'
 import Link from "next/link";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { UserButton, useClerk } from "@clerk/nextjs";
-
+import Image from "next/image";
 function Header({ user, profileInfo }) {
     const { signOut } = useClerk()
 
@@ -28,43 +28,44 @@ function Header({ user, profileInfo }) {
         { id: 'jobs', label: 'Jobs', path: '/jobs', show: user },
         { id: 'activity', label: 'Activity', path: '/activity', show: profileInfo?.role === 'candidate' },
         { id: 'myapplicants', label: 'My Applicants', path: '/myapplicants', show: profileInfo?.role === 'recruiter' },
-        { 
+        {
             id: 'nudge',
             label: (
                 profileInfo?.role === 'candidate' ?
-                <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
-                    Nudge Mail
-                </div>
-                :
-                <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
-                    Acknowledge Applicants
-                </div>
-            ), 
-            path: '/mailto', 
+                    <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
+                        Nudge Mail
+                    </div>
+                    :
+                    <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold">
+                        Acknowledge Applicants
+                    </div>
+            ),
+            path: '/mailto',
             show: profileInfo?.role === 'candidate' || profileInfo?.role === 'recruiter'
         },
-        
-        { 
+
+        {
             id: 'video',
             label: (
                 <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-transparent bg-clip-text font-semibold">
                     Video CV
                 </div>
-            ), 
-            path: '/membership', 
-            show: profileInfo?.role === 'candidate' 
+            ),
+            path: '/membership',
+            show: profileInfo?.role === 'candidate'
         },
         { id: 'account', label: 'Account', path: '/account', show: user },
     ]
 
     return (
-        <div className="sticky top-0 z-50 w-full border-[2px] border-gray-900 rounded-full backdrop-blur" style={{background: "linear-gradient(98.24deg,rgba(251, 251, 251, 0.64) 10%,rgba(156, 156, 251, 0.48) 50.4%, #EBECF7 90%)"}}>
+        <div className="sticky top-0 z-50 w-full border-[2px] border-gray-900 rounded-full backdrop-blur" style={{ background: "linear-gradient(98.24deg,rgba(251, 251, 251, 0.64) 10%,rgba(156, 156, 251, 0.48) 50.4%, #EBECF7 90%)" }}>
             <header className="container mx-auto flex h-16 items-center justify-between px-4">
+
 
                 {/* Mobile Menu */}
                 <Sheet>
                     <SheetTrigger asChild>
-                        <Button variant="ghost" className="lg:hidden -ml-4 px-4 rounded-full bg-white hover:scale-[1.5] transition-all duration-300 hover:border-[2px] hover:border-gray-900">
+                        <Button variant="ghost" className="lg:hidden -ml-4 px-4 rounded-full bg-transparent hover:scale-[1.5] transition-all duration-300 hover:border-[2px] hover:border-gray-900">
                             <AlignJustify className="h-5 w-5" />
                             <DialogTitle className="sr-only">
                                 Toggle navigation Menu
@@ -73,18 +74,25 @@ function Header({ user, profileInfo }) {
                         </Button>
                     </SheetTrigger>
 
-                    <SheetContent side="left" className="w-[300px] sm:w-[200px]">
-                        <Link href={'/'} className="flex items-center space-x-2">
-                            <span className="font-bold text-2xl">reKrutor</span>
-                        </Link>
-                        <nav className="mt-8 flex flex-col space-y-3">
+                    <SheetContent side="left" className="w-[300px] sm:w-[240px] rounded-3xl border-[4px] border-gray-900">
+                        <Link href={'/'} className="flex items-center space-x-2 bg-red-200 rounded-full">
+                            <Image
+                                src="/logo.png"
+                                width={200}
+                                height={100}
+                                alt="reKrutor Logo"
+                                
+
+                            /></Link>
+
+                        <nav className="mt-1 flex flex-col space-y-3">
                             {menuItems.map(menuItem =>
                                 menuItem.show ? (
-                                    <Link 
-                                        key={menuItem.id} 
-                                        href={menuItem.path} 
+                                    <Link
+                                        key={menuItem.id}
+                                        href={menuItem.path}
                                         onClick={() => sessionStorage.removeItem("filterParams")}
-                                        className="flex items-center space-x-2 text-lg font-medium transition-colors hover:text-black hover:font-bold hover:scale-[1.02] transition-all duration-300"
+                                        className="flex items-center space-x-2 text-lg font-medium border-[2px] border-gray-900 rounded-full px-4 py-2 transition-colors hover:text-black hover:font-bold hover:scale-[1.02] transition-all duration-300 "
                                     >
                                         {menuItem.label}
                                     </Link>
@@ -94,7 +102,7 @@ function Header({ user, profileInfo }) {
                             {user && (
                                 <button
                                     onClick={handleSignOut}
-                                    className="flex items-center space-x-2 text-lg font-medium text-red-500 transition-colors hover:text-red-600"
+                                    className="flex items-center space-x-2 text-lg border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-red-500 transition-colors hover:text-red-600"
                                 >
                                     Logout
                                 </button>
@@ -104,28 +112,36 @@ function Header({ user, profileInfo }) {
                 </Sheet>
 
                 {/* Desktop Logo */}
-                <Link 
-                    href={'/'} 
+                <Link
+                    href={'/'}
                     className="hidden lg:flex items-center space-x-2 font-bold text-2xl hover:opacity-90 transition-opacity"
                 >
-                    reKrutor
+                    <Image
+                                src="/logo.png"
+                                width={100}
+                                height={10}
+                                alt="reKrutor Logo"
+                                className="h-auto w-auto rounded-md opacity-90 border-t-[5px] border-b-[5px] border-gray-500"
+                                
+
+                            />
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="ml-auto hidden lg:flex items-center space-x-6">
                     {menuItems.map((menuItem) => menuItem.show ? (
-                        <Link 
-                            key={menuItem.id} 
-                            href={menuItem.path} 
+                        <Link
+                            key={menuItem.id}
+                            href={menuItem.path}
                             onClick={() => sessionStorage.removeItem("filterParams")}
-                            className="text-lg hover:font-bold hover:scale-[1.02] transition-all duration-300 font-medium text-gray-700 transition-colors hover:text-black"
+                            className="text-lg hover:font-bold hover:scale-[1.02] transition-all duration-300 border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-gray-700 transition-colors hover:text-black"
                         >
                             {menuItem.label}
                         </Link>
                     ) : null)}
                     <div className="pl-2">
-                        <UserButton 
-                            afterSignOutUrl="/sign-in" 
+                        <UserButton
+                            afterSignOutUrl="/sign-in"
                             signOutForceRedirectUrl="/sign-in"
                             appearance={{
                                 elements: {

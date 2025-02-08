@@ -57,9 +57,9 @@ async function Home() {
                   </span>
                   </span>
                   <h1 className="text-4xl font-bold md:text-6xl">
-                    Recruiter App<br></br> Project
+                    ReKrutor<br></br>
                   </h1>
-                  <p className="text-lg text-gray-600">Find the best talent for your business
+                  <p className="text-lg text-gray-600">Get Employed and Employ the Best
                     </p>
                   <HomepageButtonControls user={JSON.parse(JSON.stringify(user))} profileInfo={profileInfo}/>
               </div>

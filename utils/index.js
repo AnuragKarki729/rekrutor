@@ -41,7 +41,7 @@ export const candidateOnBoardFormControls = [
         name: 'resume',
         placeholder: 'Upload your Resume (PDF format)',
         componentType: 'file',
-        accept: '.pdf, .doc, .docx'
+        accept: '.pdf'
     },
     {
         label: 'Name',

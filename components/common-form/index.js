@@ -177,10 +177,12 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           <Box className="mt-6 mb-6">
             <TextField
               fullWidth
-              className=""
               type="text"
               label="Total Experience"
               variant="outlined"
+              
+
+
               disabled={true}
               name={getCurrentControl.name}
               id={getCurrentControl.name}
@@ -298,7 +300,7 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
               htmlFor={getCurrentControl.name}
               className="block text-sm font-medium text-gray-700"
             >
-              Upload your resume
+              Upload your resume | <span className="text-gray-400 text-sm"> You can sign up without a resume.</span>
             </label>
             <input
               id={getCurrentControl.name}
@@ -363,8 +365,10 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
                   <TextField
                     type="date"
                     label="Start Date"
+                  
                     variant="outlined"
                     value={company.startDate ? new Date(company.startDate).toISOString().split('T')[0] : ""}
+
                     onChange={(event) => {
                       const newCompanies = [...(formData.previousCompanies || [])];
                       newCompanies[index] = {...newCompanies[index], startDate: new Date(event.target.value)};
@@ -470,13 +474,15 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           </div>
         ))}
 
-        <div className="mt-6 w-full">
+        <div className="mt-6 w-full flex justify-center">
           <Button
             type={btnType || "submit"}
-            className="w-full rounded-md h-[60px] px-4 bg-indigo-600 text-white text-lg font-semibold transition-all duration-200 ease-in-out hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+
+            className="w-1/2 rounded-md h-[60px] border-2 border-gray-900 px-4 bg-indigo-600 text-white text-lg font-semibold transition-all duration-200 ease-in-out hover:bg-indigo-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isBtnDisabled}
           >
             {buttonText}
+
           </Button>
         </div>
       </form>

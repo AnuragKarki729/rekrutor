@@ -305,22 +305,24 @@ function OnBoard(){
                         <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1">
                             <TabsTrigger 
                                 value="candidate"
-                                className={`px-6 ${
+                                className={`px-6 hover:scale-105 transition-all duration-300 bg-gray-100 border-2 border-gray-300 rounded-2xl data-[state=active]:scale-105 data-[state=active]:border-2 data-[state=active]:border-gray-900 ${
                                     user?.primaryEmailAddress?.emailAddress?.toLowerCase().endsWith('@gmail.com') 
                                     ? 'font-bold' 
                                     : ''
                                 }`}
                             >
-                                Candidate
+                                Sign up as Applicant
                             </TabsTrigger>
                             <TabsTrigger 
                                 value="recruiter"
-                                className="px-6"
+                                className="px-6 hover:scale-105 transition-all duration-300 bg-gray-100 border-2 border-gray-300 rounded-2xl data-[state=active]:scale-105 data-[state=active]:border-2 data-[state=active]:border-gray-900"
                             >
-                                Recruiter
+                                Sign up as Recruiter
                             </TabsTrigger>
                         </TabsList>
                     </div>
+
+
                     {isParsing && <LoadingOverlay/>}
 
                     <div className="mt-8">
