@@ -19,101 +19,101 @@ const supabaseClient = createClient(
 function calculateMatchScore(candidateData, jobData) {
     // Experience score calculation
     const candidateSkills = candidateData?.candidateInfo?.skills?.split(",")
-    .map(skill => skill.trim().toLowerCase()) || [];
-const jobSkills = jobData?.skills?.split(",")
-    .map(skill => skill.trim().toLowerCase()) || [];
-const candidateIndustry = candidateData?.candidateInfo?.industry;
-const jobIndustry = jobData?.industry;
-const candidateExpYears = candidateData?.candidateInfo?.totalExperience || 0;
-const yearsRange = jobData?.yearsOfExperience?.match(/\((\d+)-(\d+)/);
-const jobExpYears = jobData?.yearsOfExperience === "5+ years" 
-    ? 5 
-    : yearsRange 
-        ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2 
-        : 0;
-const candidateExpLevel = candidateData?.candidateInfo?.experienceLevel;
-const jobExpLevel = jobData?.experience;
+        .map(skill => skill.trim().toLowerCase()) || [];
+    const jobSkills = jobData?.skills?.split(",")
+        .map(skill => skill.trim().toLowerCase()) || [];
+    const candidateIndustry = candidateData?.candidateInfo?.industry;
+    const jobIndustry = jobData?.industry;
+    const candidateExpYears = candidateData?.candidateInfo?.totalExperience || 0;
+    const yearsRange = jobData?.yearsOfExperience?.match(/\((\d+)-(\d+)/);
+    const jobExpYears = jobData?.yearsOfExperience === "5+ years"
+        ? 5
+        : yearsRange
+            ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2
+            : 0;
+    const candidateExpLevel = candidateData?.candidateInfo?.experienceLevel;
+    const jobExpLevel = jobData?.experience;
 
-console.log(jobData, "jobData");
-console.log(candidateData, "candidateData");
+    console.log(jobData, "jobData");
+    console.log(candidateData, "candidateData");
 
-// Check for matches
-const industryMatch = candidateIndustry === jobIndustry;
-const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill));
-const mediumSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
-const lowSkillsMatch = candidateSkills.every(skill => !jobSkills.includes(skill));
-const expMatch = candidateExpYears >= jobExpYears;
-const medExpMatch = candidateExpYears - jobExpYears <= 1.5 && candidateExpYears - jobExpYears >= -1.5;
-const lowExpMatch = candidateExpYears < jobExpYears;
-const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresher";
+    // Check for matches
+    const industryMatch = candidateIndustry === jobIndustry;
+    const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill));
+    const mediumSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill));
+    const lowSkillsMatch = candidateSkills.every(skill => !jobSkills.includes(skill));
+    const expMatch = candidateExpYears >= jobExpYears;
+    const medExpMatch = candidateExpYears - jobExpYears <= 1.5 && candidateExpYears - jobExpYears >= -1.5;
+    const lowExpMatch = candidateExpYears < jobExpYears;
+    const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresher";
 
-// Calculate score based on match type (1-5 scale)
-let score;
-if (perfectSkillsMatch && expMatch && industryMatch) {
-    score = 5.0; // Perfect all-round match
-}
-// Near Perfect Matches (4.5)
-else if (
-    (perfectSkillsMatch && expMatch && !industryMatch) || // Perfect skills/exp, different industry
-    (expMatch && industryMatch) || // Experience and industry match
-    (freshGradMatch && industryMatch) // Fresh grad in right industry
-) {
-    score = 4.5;
-}
-// Strong Matches (4.0)
-else if (
-    (medExpMatch && mediumSkillsMatch && industryMatch) || // Good all-round match
-    (perfectSkillsMatch && medExpMatch) // Perfect skills with okay experience
-) {
-    score = 4.0;
-}
-// Good Matches (3.5)
-else if (
-    (perfectSkillsMatch && medExpMatch && industryMatch) || // Perfect skills, okay exp, same industry
-    (mediumSkillsMatch && expMatch && industryMatch) // Some skills, good exp, same industry
-) {
-    score = 3.5;
-}
-// Worth Considering (3.0)
-else if (
-    (medExpMatch && mediumSkillsMatch && !industryMatch) || // Good match but different industry
-    (freshGradMatch && !industryMatch) || // Fresh grad different industry
-    (perfectSkillsMatch && medExpMatch && !industryMatch) // Perfect skills but different industry
-) {
-    score = 3.0;
-}
-// Potential but Risky (2.0)
-else if (
-    (perfectSkillsMatch && lowExpMatch && industryMatch) || // Right skills but underexperienced
-    (mediumSkillsMatch && lowExpMatch && industryMatch) // Some skills but underexperienced
-) {
-    score = 2.0;
-}
-// Low Matches (1.0)
-else if (
-    (lowSkillsMatch && lowExpMatch) || // No matching skills and underexperienced
-    (perfectSkillsMatch && lowExpMatch && !industryMatch) // Right skills but wrong industry and experience
-) {
-    score = 1.0;
-}
-// Default case for any remaining scenarios
-else {
-    score = 1.5;
-}
+    // Calculate score based on match type (1-5 scale)
+    let score;
+    if (perfectSkillsMatch && expMatch && industryMatch) {
+        score = 5.0; // Perfect all-round match
+    }
+    // Near Perfect Matches (4.5)
+    else if (
+        (perfectSkillsMatch && expMatch && !industryMatch) || // Perfect skills/exp, different industry
+        (expMatch && industryMatch) || // Experience and industry match
+        (freshGradMatch && industryMatch) // Fresh grad in right industry
+    ) {
+        score = 4.5;
+    }
+    // Strong Matches (4.0)
+    else if (
+        (medExpMatch && mediumSkillsMatch && industryMatch) || // Good all-round match
+        (perfectSkillsMatch && medExpMatch) // Perfect skills with okay experience
+    ) {
+        score = 4.0;
+    }
+    // Good Matches (3.5)
+    else if (
+        (perfectSkillsMatch && medExpMatch && industryMatch) || // Perfect skills, okay exp, same industry
+        (mediumSkillsMatch && expMatch && industryMatch) // Some skills, good exp, same industry
+    ) {
+        score = 3.5;
+    }
+    // Worth Considering (3.0)
+    else if (
+        (medExpMatch && mediumSkillsMatch && !industryMatch) || // Good match but different industry
+        (freshGradMatch && !industryMatch) || // Fresh grad different industry
+        (perfectSkillsMatch && medExpMatch && !industryMatch) // Perfect skills but different industry
+    ) {
+        score = 3.0;
+    }
+    // Potential but Risky (2.0)
+    else if (
+        (perfectSkillsMatch && lowExpMatch && industryMatch) || // Right skills but underexperienced
+        (mediumSkillsMatch && lowExpMatch && industryMatch) // Some skills but underexperienced
+    ) {
+        score = 2.0;
+    }
+    // Low Matches (1.0)
+    else if (
+        (lowSkillsMatch && lowExpMatch) || // No matching skills and underexperienced
+        (perfectSkillsMatch && lowExpMatch && !industryMatch) // Right skills but wrong industry and experience
+    ) {
+        score = 1.0;
+    }
+    // Default case for any remaining scenarios
+    else {
+        score = 1.5;
+    }
 
-// Count matching skills for additional context
-const matchingSkillsCount = jobSkills.filter(skill => 
-    candidateSkills.includes(skill)
-).length;
+    // Count matching skills for additional context
+    const matchingSkillsCount = jobSkills.filter(skill =>
+        candidateSkills.includes(skill)
+    ).length;
 
-return {
-    candidateData,
-    totalScore: score,
-    matchingSkillsCount,
-    experienceMatch: expMatch || medExpMatch,
-    industryMatch,
-    skillsMatch: perfectSkillsMatch || mediumSkillsMatch
-};
+    return {
+        candidateData,
+        totalScore: score,
+        matchingSkillsCount,
+        experienceMatch: expMatch || medExpMatch,
+        industryMatch,
+        skillsMatch: perfectSkillsMatch || mediumSkillsMatch
+    };
 }
 
 function CandidateList({ jobApplications }) {
@@ -150,16 +150,16 @@ function CandidateList({ jobApplications }) {
                         try {
                             const jobID = jobApplicant?.jobID;
                             const candidateID = jobApplicant?.candidateUserID;
-    
+
                             if (!jobID || !candidateID) {
                                 console.warn('Missing jobID or candidateID:', { jobID, candidateID });
                                 return null;
                             }
-    
+
                             // Fetch job and candidate details
                             const jobResponse = await fetch(`/api/jobs/${jobID}`);
                             const candidateResponse = await fetch(`/api/profiles/${candidateID}`);
-    
+
                             // Check individual responses
                             if (!jobResponse.ok) {
                                 throw new Error(`Job API error: ${jobResponse.status}`);
@@ -167,18 +167,18 @@ function CandidateList({ jobApplications }) {
                             if (!candidateResponse.ok) {
                                 throw new Error(`Profile API error: ${candidateResponse.status}`);
                             }
-    
+
                             const jobData = await jobResponse.json();
                             const candidateData = await candidateResponse.json();
-    
+
                             // Validate required data
                             if (!jobData || !candidateData) {
                                 throw new Error('Missing job or candidate data');
                             }
-    
+
                             // Calculate match scores
                             const matchScores = calculateMatchScore(candidateData, jobData);
-    
+
                             return {
                                 ...jobApplicant,
                                 candidateDetails: candidateData?.candidateInfo,
@@ -191,7 +191,7 @@ function CandidateList({ jobApplications }) {
                         }
                     })
                 );
-    
+
 
                 if (isMounted) {
                     // Filter out null values from failed fetches
@@ -243,7 +243,7 @@ function CandidateList({ jobApplications }) {
         console.log(swipedCandidates, "swipedCandidates");
         // Add candidate id to the state triggering the CSS animation
         setSwipedCandidates(prev => [...prev, candidateUserID]);
-       
+
         // Wait for the animation to complete (here 500ms, adjust as needed)
         setTimeout(() => {
             // Now update application status with 'Selected'
@@ -316,17 +316,17 @@ function CandidateList({ jobApplications }) {
             toast.error("No resume available");
             return;
         }
-    
+
 
         // Determine the correct path based on the resume string format
-        const storagePath = candidate.resume.startsWith('public/') 
+        const storagePath = candidate.resume.startsWith('public/')
             ? candidate.resume.substring(7) // Remove 'public/' prefix
             : `public/${candidate.resume}`;  // Add 'public/' prefix
-    
+
         const { data } = supabaseClient.storage
             .from('rekrutor-public')
             .getPublicUrl(storagePath);
-    
+
         console.log('Storage path:', storagePath);
         console.log('Public URL:', data?.publicUrl);
 
@@ -441,73 +441,74 @@ function CandidateList({ jobApplications }) {
                 const isDetailView = currentCandidateDetails?.userId === candidate.candidateUserID;
                 const isSwipedRight = swipedCandidates.includes(candidate.candidateUserID);
                 return (
-                    
-                    <div 
-                        key={candidate?.candidateUserID} 
-                        className={`card shadow-lg w-[300px] ${
-                            isSwipedRight ? 'swipeRight' : ''
-                        } ${
-                            slidingCardId === candidate?.candidateUserID ? 'slide-left' : ''
-                        }`}
+
+                    <div
+                        key={candidate?.candidateUserID}
+                        className={`card shadow-lg w-[300px] ${isSwipedRight ? 'swipeRight' : ''
+                            } ${slidingCardId === candidate?.candidateUserID ? 'slide-left' : ''
+                            }`}
                         data-state="#about"
                     >
                         {!isDetailView ? (
                             // Original card view
                             <>
-                                <div className="card-header">
-                                    <h1 className="card-fullname text-gray-900">{candidate?.candidateDetails?.name}</h1>
-                                    <h2 className="card-jobtitle">
-                                        {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
-                                    </h2>
-                                </div>
-                                <div className="card-main">
-                                    <div className="card-content">
-                                        <div className="card-subtitle text-center mt-[110px] text-gray-900">Match Score</div>
-                                        <div className="flex justify-center transform -translate-y-[80px]">
-                                            <span
-                                                className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
-                                                    ? "bg-green-500 text-white"
-                                                    : candidate.totalScore >= 1
-                                                        ? "bg-yellow-500 text-black"
-                                                        : "bg-red-500 text-white"
-                                                    }`}
-                                            >{console.log(candidate)}
-                                                {candidate.totalScore.toFixed(2)}
-                                            </span>
+                                <div className="card-main-front">
+                                    <div className="card-container">
+                                        <div className="card-header ">
+                                            <h1 className="card-fullname-front text-gray-900">{candidate?.candidateDetails?.name}</h1>
+                                            <h2 className="card-jobtitle-front">
+                                                {candidate?.candidateDetails?.totalExperience === "" ? "Fresher" : candidate?.candidateDetails?.currentCompany}
+                                            </h2>
                                         </div>
-                                        <div className="card-desc mt-1 transform -translate-y-[80px]">
-                                            <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
-                                                {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
-                                            </p>
-                                            <div className="flex flex-wrap gap-1 justify-center">
-                                                {displaySkills.skills.map((skill, index) => (
+                                        <div className="card-main">
+                                            <div className="card-content">
+                                                <div className="match-score-front text-center text-gray-900">Match Score</div>
+                                                <div className="flex justify-center mt-[70px]">
                                                     <span
-                                                        key={index}
-                                                        className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
-                                                            ? 'bg-green-800 text-white'
-                                                            : 'bg-yellow-100 text-white font-bold'
+                                                        className={`inline-block px-2 py-0.5 rounded-lg font-bold justify-center ${candidate.totalScore >= 1.5
+                                                            ? "bg-green-900 text-white"
+                                                            : candidate.totalScore >= 1
+                                                                ? "bg-orange-400 text-black"
+                                                                : "bg-red-500 text-white"
                                                             }`}
-                                                    >
-                                                        {skill}
+                                                    >{console.log(candidate)}
+                                                        {candidate.totalScore.toFixed(2)}
                                                     </span>
-                                                ))}
+                                                </div>
+                                                <div className="card-desc mt-1">
+                                                    <p className="text-sm text-black-600 mb-1 text-center font-bold mt-3">
+                                                        {displaySkills.isMatching ? 'Matching Skills:' : 'Top Skills:'}
+                                                    </p>
+                                                    <div className="card-skills-front flex flex-wrap gap-1 justify-center">
+                                                        {displaySkills.skills.map((skill, index) => (
+                                                            <span
+                                                                key={index}
+                                                                className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
+                                                                    ? 'bg-green-800 text-white'
+                                                                    : 'bg-yellow-100 text-white font-bold'
+                                                                    }`}
+                                                            >
+                                                                {skill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
+                                        <div>
+                                            <Button
+                                                className="view-profile-btn-front justify-center hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
+                                                onClick={() => {
+                                                    const candidateDetailswithId = { ...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status }
+                                                    setCurrentCandidateDetails(candidateDetailswithId);
+                                                }}
+                                            >
+                                                View Profile
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-center transform -translate-y-[70px]">
-                                        <Button
-                                            className="justify-center hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
-                                            onClick={() => {
-                                                const candidateDetailswithId = { ...candidate.candidateDetails, userId: candidate.candidateUserID, status: candidate.status }
-                                                setCurrentCandidateDetails(candidateDetailswithId);
-                                            }}
-                                        >
-                                            View Profile
-                                        </Button>
-                                    </div>
-
                                 </div>
-                                <h2 className="card-subtitle text-center mt-[-80px]">
+                                <h2 className="status-indicator-front text-center">
                                     <div className="text-sm text-white mb-4 flex justify-center">
                                         {candidate.status.slice(-1)[0] === "Rejected" ? (
                                             <div className="bg-red-500 rounded-full px-2 py-1 text-center">Rejected Candidate</div>
@@ -519,6 +520,7 @@ function CandidateList({ jobApplications }) {
                                         ) : null}
                                     </div>
                                 </h2>
+
                             </>
                         ) : (
                             <>
@@ -557,9 +559,9 @@ function CandidateList({ jobApplications }) {
                                         {candidate?.candidateDetails?.experienceLevel === 'Experienced' && (
                                             <div className="ml-2 mr-2">
                                                 {/* <h2 className="text-medium font-semibold mb-0 ">Professional Details</h2> */}
-                                                <p className="text-center text-gray-900 font-bold mt-2"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} - {candidate?.candidateDetails?.currentPosition}, {candidate?.candidateDetails?.currentJobLocation}</span></p> 
+                                                <p className="text-center text-gray-900 font-bold mt-2"><span className="text-sm"> {candidate?.candidateDetails?.currentCompany} - {candidate?.candidateDetails?.currentPosition}, {candidate?.candidateDetails?.currentJobLocation}</span></p>
                                                 <div className="flex justify-center">
-                                                <span className="text-sm bg-green-900 rounded-full px-2 py-1"> ${candidate?.candidateDetails?.currentSalary}/year</span>
+                                                    <span className="text-sm bg-green-900 rounded-full px-2 py-1"> ${candidate?.candidateDetails?.currentSalary}/year</span>
                                                 </div>
                                                 <p className="text-center text-gray-900"><span className="text-sm"> {candidate?.candidateDetails?.noticePeriod}</span><span className="text-gray-500 text-sm"> Notice Period</span></p>
                                                 {candidate.candidateDetails?.previousCompanies?.length > 0 ? (
@@ -568,7 +570,7 @@ function CandidateList({ jobApplications }) {
                                                         {candidate.candidateDetails.previousCompanies.map((company, index) => (
 
                                                             <p key={index} className="mb-2 text-black rounded-full text-sm mr-4 ml-1">
-                                                               • {company.companyName} - {company.position} [{company.startDate.slice(0, 4)} - {company.endDate.slice(0, 4)}]
+                                                                • {company.companyName} - {company.position} [{company.startDate.slice(0, 4)} - {company.endDate.slice(0, 4)}]
                                                             </p>
 
                                                         ))}
@@ -578,7 +580,7 @@ function CandidateList({ jobApplications }) {
                                                     <p className="text-sm ml-2 text-center">No previous companies</p>
                                                 )}
                                                 <div className="flex justify-center mt-0 mb-0">
-                                                <p><span className="font-semibold text-sm text-gray-900">Work Exp:</span><span className="text-sm text-gray-900"> {candidate?.candidateDetails?.totalExperience} years</span></p>
+                                                    <p><span className="font-semibold text-sm text-gray-900">Work Exp:</span><span className="text-sm text-gray-900"> {candidate?.candidateDetails?.totalExperience} years</span></p>
                                                 </div>
                                             </div>
 
@@ -650,16 +652,16 @@ function CandidateList({ jobApplications }) {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                                 </svg>
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 className="hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
                                                 onClick={() => handlePreviewResume(candidate.candidateDetails)}>
-                                                    Resume
-                                                </Button>
-                                                <Button 
+                                                Resume
+                                            </Button>
+                                            <Button
                                                 className="hover:scale-105 hover:bg-gray-900 hover:text-white transition-all duration-300"
                                                 onClick={() => handlePreviewVideoCV(candidate.candidateDetails)}>
-                                                    Video CV
-                                                </Button>
+                                                Video CV
+                                            </Button>
                                             <Button
                                                 onClick={() => handleSelectCandidate(candidate.candidateUserID, 'Selected')}
                                                 // disabled={candidate.status.slice(-1)[0] === "Selected"}
@@ -813,7 +815,7 @@ function CandidateList({ jobApplications }) {
 
 
                                     const finalReason = rejectionReason === "Other" ? otherReason : rejectionReason;
-                                    
+
                                     // Set the specific card ID that should slide
                                     setSlidingCardId(currentCandidateDetails?.userId);
 

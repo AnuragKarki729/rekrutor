@@ -41,7 +41,7 @@ emailLogSchema.statics.canSendEmail = async function(candidateEmail, recruiterEm
     
     // const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     
-    const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    const sixHoursAgo = new Date(Date.now() - 60 * 1000);
 
     const jobIdObj = typeof jobId === 'string' ? new mongoose.Types.ObjectId(jobId) : jobId;
 

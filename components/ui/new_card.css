@@ -6,10 +6,13 @@
 
 .card-container {
   max-width: 320px;
+  height: 90%;
   margin: auto;
-  
-
-
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+  top: 0;
 }
 
 .card {
@@ -21,19 +24,15 @@
   min-height: 350px;
   max-height: 380px;
   max-width: 400px;
-  margin: auto;
-  position: relative;
+  margin: 0 auto;
   z-index: 1;
-  
   border: 5px solid black;
   background: linear-gradient(135deg, #ffffff 1%, #ffffff 50%);
-  
   color: white;
   display: flex;
   transition: 1s;
   flex-direction: column;
   border-radius: 10px;
-  margin-bottom: 1;
   box-shadow: 0 50px 50px rgba(0, 0, 0, 0), 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -116,11 +115,8 @@
   height: 200px;
   flex-shrink: 0;
   width: 100%;
-  transition: 0.3s;
-
-  * {
-    transition: 0.3s;
-  }
+  transition: 0.8s;
+  
 }
 
 .card-cover {
@@ -185,23 +181,35 @@
   bottom: 100px;
   flex: 1;
   animation: slideIn 0.8s ease-out;  /* Added animation */
-
   
   display: flex;
   padding-top: 10px;
   flex-direction: column;
 }
 
-.card-subtitle {
+.card-main-front {
+  position: relative;
+  bottom: 10px;
+  flex: 1;
+  animation: slideIn 0.8s ease-out;  /* Added animation */
+  max-height: 380px;
+  display: flex;
+  padding-top: 10px;
+  flex-direction: column;
+  transition: 0.8s;
+}
 
+.card-subtitle {
   font-weight: 70;
+  border-color: #2b2c48;
+  border-width: 2px;
+  border-style: solid;
   font-size: 17px;
-  color:rgb(0, 0, 0);
-  bottom: 65;
+  color: rgb(0, 0, 0);
+  bottom: 165;
   margin-bottom: 15px;
   position: relative;
-  animation: slideIn 0.8s ease-out;  /* Added animation */
-
+  animation: slideIn 0.8s ease-out;
 }
 
 .card-content {
@@ -225,8 +233,6 @@
 
 }
 
-
-
 .card-buttons {
   display: flex;
   background-color: #fff;
@@ -234,7 +240,7 @@
   position: sticky;
   bottom: 0;
   left: 0;
-  animation: slideIn 0.8s ease-out;  /* Added animation */
+  animation: slideIn 0.8s ease-out;
 
   
   button {
@@ -328,5 +334,95 @@
     opacity: 1;
   }
 }
+
+.card-fullname-front {
+  position: absolute;
+  bottom: 150px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  left: 50%;
+  color: #333;
+}
+
+.card-jobtitle-front {
+  position: absolute;
+  bottom: 125px;
+  font-size: 18px;
+  white-space: nowrap;
+  font-weight: 1000;
+  text-align: center;
+  letter-spacing: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #080808;
+  animation: slideIn 0.8s ease-out;
+}
+
+.card-skills-front {
+  position: absolute;
+  width: 300px;
+ 
+  left: 50%;
+  transform: translateX(-50%);
+  
+}
+
+.skill-tag-front {
+  background: #006400;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  white-space: nowrap;
+  
+}
+
+.match-score-front {
+  position: absolute;
+  width: 300px;
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: black;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.status-indicator-front {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgb(13, 12, 12);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 14px;
+  bottom: 15%;
+  width: 300px;
+}
+
+.view-profile-btn-front {
+  position: absolute;
+  bottom: 0%;
+  left: -5%;
+  transform: translateX(0%);
+  background: #1a1a2e;
+  color: white;
+  font-size: 14px;
+  border-width: 4px;
+  border-color: rgb(20, 20, 20);
+  /* padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px; */
+}
+
+
 
 

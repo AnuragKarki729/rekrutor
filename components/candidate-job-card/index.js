@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState } from "react"
+import { Fragment, useState, useEffect } from "react"
 import CommonCard from "../common-card"
 import {
     Drawer,
@@ -25,8 +25,72 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
     const [slideDirection, setSlideDirection] = useState('');
     const [isRemoving, setIsRemoving] = useState(false);
     const [showVacancyClosed, setShowVacancyClosed] = useState(false);
+    const [recruiterEmail, setRecruiterEmail] = useState(null);
+    const [recruiterRating, setRecruiterRating] = useState(null);
+    const [recruiterReviews, setRecruiterReviews] = useState([]);
 
-    console.log(jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()))
+    useEffect(() => {
+        async function fetchRecruiterEmail() {
+            if (!jobItem?.recruiterId) return;
+
+            try {
+                const response = await fetch(`/api/profiles/${jobItem.recruiterId}`);
+                if (!response.ok) throw new Error('Failed to fetch recruiter');
+
+                const recruiterData = await response.json();
+                console.log(recruiterData, 'recruiterData')
+                // Access email from the candidateInfo object in the profile
+                const role = recruiterData.role
+                const email = recruiterData.email
+                const recrutierMail = recruiterData.role === 'recruiter' ? email : null
+
+                setRecruiterEmail(recrutierMail);
+                console.log(recrutierMail, 'recrutierMail')
+
+                console.log(role, 'recruiterEmail')
+            } catch (error) {
+                console.error('Error fetching recruiter:', error);
+            }
+
+        }
+
+        fetchRecruiterEmail();
+    }, [jobItem?.recruiterId]);
+
+    useEffect(() => {
+        async function fetchRecruiterRating() {
+            if (!jobItem?.recruiterId) return;
+
+            try {
+                const response = await fetch(`/api/recruiter-ratings/${jobItem.recruiterId}`);
+                if (!response.ok) throw new Error('Failed to fetch recruiter ratings');
+
+                const ratingsData = await response.json();
+
+                // Calculate average rating
+                const avgRating = ratingsData.length > 0
+                    ? ratingsData.reduce((acc, curr) => acc + curr.rating, 0) / ratingsData.length
+                    : null;
+
+                setRecruiterRating(avgRating);
+                setRecruiterReviews(ratingsData.map(rating => rating.review).filter(Boolean));
+            } catch (error) {
+                console.error('Error fetching recruiter ratings:', error);
+            }
+        }
+
+        fetchRecruiterRating();
+    }, [jobItem?.recruiterId]);
+
+    const isPersonalEmail = (email) => {
+        if (!email) return false;
+        const personalDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'msn.com', 'live.com', 'aol.com', 'zoho.com', 'yandex.com', 'mail.com', 'inbox.com', 'mail.ru', 'yahoo.co.in', 'yahoo.co.uk', 'yahoo.com.au', 'yahoo.com.sg', 'yahoo.com.hk', 'yahoo.com.ph', 'yahoo.com.sa', 'yahoo.com.eg',
+            'yahoo.com.tr', 'yahoo.com.mx', 'yahoo.com.ar', 'yahoo.com.br', 'yahoo.com.sa', 'yahoo.com.eg', 'yahoo.com.tr', 'yahoo.com.mx', 'yahoo.com.ar', 'yahoo.com.br'];
+        return personalDomains.some(domain => email.toLowerCase().endsWith(domain));
+    };
+
+
+
     const jobExperience = parseFloat(jobItem?.experience?.match(/[\d.]+/)?.[0]) || 0
     const candidateExperience = profileInfo?.candidateInfo?.totalExperience || 0
     const candidateSkills = profileInfo?.candidateInfo?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
@@ -225,32 +289,24 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
             <div className="relative mt-5">
                 <div
                     className={`transition-all duration-[1500ms] ease-in-out ${isRemoving && slideDirection === 'right-up'
-                            ? 'transform translate-x-full -translate-y-full opacity-0'
-                            : isRemoving && slideDirection === 'left-down'
-                                ? 'transform -translate-x-full translate-y-full opacity-0'
-                                : ''
+                        ? 'transform translate-x-full -translate-y-full opacity-0'
+                        : isRemoving && slideDirection === 'left-down'
+                            ? 'transform -translate-x-full translate-y-full opacity-0'
+                            : ''
                         }`}
                 >
                     <Drawer open={showJobDetailsDrawer} onOpenChange={setShowJobDetailsDrawer}>
+
                         <CommonCard
-                            className="w-[1000px] h-[500px]"
                             icon={!showJobDetailsDrawer ? (
                                 <div className="flex items-center">
-                                    <JobIcon industry={jobItem?.industry} className="h-25 w-25" />
 
-                                    {isJobApplied && (
-                                        <div className="relative-top-2 right-2 bg-green-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
-
-
-                                            Applied
-                                        </div>
-                                    )}
 
                                     {jobItem?.hiredFlag && (
                                         <>
                                             <div
                                                 onClick={() => setShowVacancyClosed(true)}
-                                                className="relative-top-2 right-2 bg-red-500 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer hover:bg-red-600"
+                                                className="right-2 bg-red-500 text-black text-center px-2 py-2 rounded-full text-sm font-medium shadow-md cursor-pointer hover:bg-red-600"
                                             >
                                                 Vacancy Closed
                                             </div>
@@ -291,8 +347,16 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                             )}
                                         </>
                                     )}
+                                    <JobIcon
+                                        industry={jobItem?.industry} className="h-25 w-25" />
 
-
+                                    {isJobApplied && (
+                                        <div className="right-2 bg-green-500 text-black text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="text-2xl font-bold">{jobItem?.type} {jobItem?.title}</div>
@@ -307,6 +371,49 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                 <>
                                     <p className="text-sm text-gray-600">{jobItem?.companyName} | {jobItem?.location}</p>
                                     <p className="text-sm text-gray-600 font-semibold">{jobItem?.industry} Industry </p>
+                                    <div className="flex items-center justify-center mb-[-30px] mt-1">
+                                    {isPersonalEmail(recruiterEmail) && (
+                                        <div className="group relative">
+                                            <div className="relative-top-2 right-2 w-fit bg-yellow-900 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                                ⚠️
+                                            </div>
+                                            <div className="absolute invisible text-center 
+                                        group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                                        bg-black text-white bg-opacity-90 font-semibold text-xs rounded py-1 px-2 w-40
+                                        bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
+                                                Recruiter has used personal email to post vacancy
+                                                {/* Arrow */}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {recruiterRating !== null && (
+                                        <div className="group relative ml-2">
+                                            <div className="flex items-center w-fit bg-gray-800 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                                <span className="mr-1 text-yellow-400">★</span>
+                                                <span>{recruiterRating.toFixed(1)}</span>
+                                            </div>
+                                            <div className="absolute invisible 
+                                                text-center 
+                                                group-hover:visible opacity-0 group-hover:opacity-100 border-gray-900 hover:bg-gray-100 transition-opacity duration-300 
+                                                bg-white border border-gray-200 text-black font-medium text-xs rounded-lg py-2 px-3 w-40 h-[70px]
+                                                left-1/2 bottom-8 transform -translate-x-1/2 mb-2 z-50 shadow-lg">
+                                                {recruiterReviews.length > 0 ? (
+                                                    <>
+                                                        <div className="font-bold mb-1">Review:</div>
+                                                        {recruiterReviews.slice(0, 3).map((review, index) => (
+                                                            <div key={index} className="mb-1 pb-1 text-black font-bold border-b border-gray-100 last:border-0">
+                                                                &quot;{review}&quot;
+                                                            </div>
+                                                        ))}
+                                                    </>
+                                                ) : (
+                                                    "No reviews yet"
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                    </div>
 
 
                                     {showMatchDetails && (
@@ -375,10 +482,10 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                 </div>
                             )}
                             footerContent={
-                                <div className="ml-[-15px] flex space-x-1 ">
-
+                                <div className="flex space-x-1 justify-center items-center">
                                     <Button
-                                        className="h-7 w-7 bg-red-600 hover:bg-red-700 hover:scale-110 transform transition-all duration-200 ease-in-out text-white rounded-full p-0 disabled:cursor-not-allowed"
+                                        className=" h-7 w-7 bg-red-600 hover:bg-red-700 hover:scale-110 transform transition-all duration-200 ease-in-out text-white rounded-full 
+                                        p-0 disabled:cursor-not-allowed"
                                         onClick={handleJobReject}
                                         disabled={jobItem?.hiredFlag || applying}
                                     >
@@ -410,11 +517,10 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                     <Button
                                         onClick={handleJobApply}
                                         disabled={jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1 || applying || jobItem?.hiredFlag}
-                                        className={`h-7 w-7 p-0 rounded-full hover:scale-110 transform transition-all duration-200 ease-in-out ${
-                                            jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
+                                        className={`h-7 w-7 p-0 rounded-full hover:scale-110 transform transition-all duration-200 ease-in-out ${jobApplications.findIndex((item) => item.jobID === jobItem._id) > -1
                                             ? 'bg-green-500 text-white cursor-not-allowed'
                                             : 'bg-green-600 hover:bg-green-700 text-white'
-                                        }`}
+                                            }`}
                                     >
                                         {applying ? '...' :
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
