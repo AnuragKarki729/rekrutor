@@ -300,9 +300,29 @@ export const postNewJobFormControls = [
             'Education',
             'Manufacturing',
             'Retail',
+            'Agriculture',
+            'Construction',
+            'Transportation',
+            'Entertainment',
+            'Real Estate',
+            'Insurance',
+            'Law & Law Enforcement',
+            'Public Administration',
+            'Aerospace and Engineering',
+            'Fashion',
+            'Food and Beverage',
             'Other'
         ],
-            },
+    },
+    {
+        label: 'Specify Industry',
+        name: 'otherIndustry',
+        placeholder: 'Please specify the industry',
+        componentType: 'text',
+        showWhen: (formData) => 
+            formData.industry === 'Other'
+    },
+
     {
         label: 'Salary Offered (USD/year)',
         name: 'salary',
@@ -312,15 +332,7 @@ export const postNewJobFormControls = [
         min: 0,
         showWhen: (formData) => formData.experience === 'Experienced'
     },
-    {
-        label: 'Specify Industry',
-        name: 'otherIndustry',
-        placeholder: 'Please specify the industry',
-        componentType: 'text',
-        showWhen: (formData) => 
-            formData.experience === 'Experienced' && 
-            formData.industry === 'Other'
-    },
+    
     {
         label: 'Description',
         name: 'description',
