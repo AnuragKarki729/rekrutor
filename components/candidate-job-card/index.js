@@ -287,6 +287,51 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
     return (
         <Fragment>
             <div className="relative mt-5">
+                {/* Modify the top-right badges container positioning */}
+                <div className="absolute top-2 right-[100px] flex items-center gap-2 z-10">
+                    {isPersonalEmail(recruiterEmail) && (
+                        <div className="group relative">
+                            <div className="bg-yellow-900 cursor-pointer text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                ⚠️
+                            </div>
+                            <div className="absolute invisible 
+                                text-center 
+                                group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                                bg-black text-white bg-opacity-90 font-semibold text-xs rounded py-1 px-2 w-40
+                                bottom-full right-0 mb-2 z-50">
+                                Recruiter has used personal email to post vacancy
+                            </div>
+                        </div>
+                    )}
+
+                    {recruiterRating !== null && (
+                        <div className="group relative">
+                            <div className="flex items-center cursor-pointer bg-gray-800 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
+                                <span className="mr-1 text-yellow-400">★</span>
+                                <span>{recruiterRating.toFixed(1)}</span>
+                            </div>
+                            <div className="absolute invisible 
+                                text-center 
+                                group-hover:visible opacity-0 group-hover:opacity-100 border-gray-900 hover:bg-gray-100 transition-opacity duration-300 
+                                bg-white border border-gray-200 text-black font-medium text-xs rounded-lg py-2 px-3 w-40
+                                bottom-full right-0 mb-2 z-50 shadow-lg">
+                                {recruiterReviews.length > 0 ? (
+                                    <>
+                                        <div className="font-bold mb-1">Review:</div>
+                                        {recruiterReviews.slice(0, 3).map((review, index) => (
+                                            <div key={index} className="mb-1 pb-1 text-black font-bold border-b border-gray-100 last:border-0">
+                                                &quot;{review}&quot;
+                                            </div>
+                                        ))}
+                                    </>
+                                ) : (
+                                    "No reviews yet"
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 <div
                     className={`transition-all duration-[1500ms] ease-in-out ${isRemoving && slideDirection === 'right-up'
                         ? 'transform translate-x-full -translate-y-full opacity-0'
@@ -298,6 +343,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                     <Drawer open={showJobDetailsDrawer} onOpenChange={setShowJobDetailsDrawer}>
 
                         <CommonCard
+                            className="overflow-visible"
                             icon={!showJobDetailsDrawer ? (
                                 <div className="flex items-center">
 
@@ -372,47 +418,6 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                     <p className="text-sm text-gray-600">{jobItem?.companyName} | {jobItem?.location}</p>
                                     <p className="text-sm text-gray-600 font-semibold">{jobItem?.industry} Industry </p>
                                     <div className="flex items-center justify-center mb-[-30px] mt-1">
-                                    {isPersonalEmail(recruiterEmail) && (
-                                        <div className="group relative">
-                                            <div className="relative-top-2 right-2 w-fit bg-yellow-900 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
-                                                ⚠️
-                                            </div>
-                                            <div className="absolute invisible text-center 
-                                        group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
-                                        bg-black text-white bg-opacity-90 font-semibold text-xs rounded py-1 px-2 w-40
-                                        bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
-                                                Recruiter has used personal email to post vacancy
-                                                {/* Arrow */}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {recruiterRating !== null && (
-                                        <div className="group relative ml-2">
-                                            <div className="flex items-center w-fit bg-gray-800 text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
-                                                <span className="mr-1 text-yellow-400">★</span>
-                                                <span>{recruiterRating.toFixed(1)}</span>
-                                            </div>
-                                            <div className="absolute invisible 
-                                                text-center 
-                                                group-hover:visible opacity-0 group-hover:opacity-100 border-gray-900 hover:bg-gray-100 transition-opacity duration-300 
-                                                bg-white border border-gray-200 text-black font-medium text-xs rounded-lg py-2 px-3 w-40 h-[70px]
-                                                left-1/2 bottom-8 transform -translate-x-1/2 mb-2 z-50 shadow-lg">
-                                                {recruiterReviews.length > 0 ? (
-                                                    <>
-                                                        <div className="font-bold mb-1">Review:</div>
-                                                        {recruiterReviews.slice(0, 3).map((review, index) => (
-                                                            <div key={index} className="mb-1 pb-1 text-black font-bold border-b border-gray-100 last:border-0">
-                                                                &quot;{review}&quot;
-                                                            </div>
-                                                        ))}
-                                                    </>
-                                                ) : (
-                                                    "No reviews yet"
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
                                     </div>
 
 
