@@ -322,6 +322,34 @@ function CommonForm({ action, buttonText, isBtnDisabled, formControls, btnType, 
           </Box>
         );
 
+      case "jobDescriptionFile":
+        return (
+          <Box className="mt-6 mb-6">
+            <label
+                htmlFor={getCurrentControl.name}
+                className="block text-sm font-medium text-gray-700"
+              >
+                Upload your Job File | <span className="text-gray-400 text-sm"> Fast Track your job posting</span>
+              </label>
+              <input
+                id={getCurrentControl.name}
+                type="file"
+                accept=".pdf"
+                onChange={(event) => {
+                  if (event.target.files && event.target.files.length > 0) {
+                    const selectedFile = event.target.files[0];
+                    setFormData((prev) => ({
+                      ...prev,
+                      [getCurrentControl.name]: selectedFile.name,
+                    }));
+                    handleFileChange(event);
+                  }
+                }}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-white file:text-sm file:font-medium"
+                disabled={getCurrentControl.disabled}
+              />
+            </Box>
+          );
       case "previousCompanies":
         if (getCurrentControl.showWhen && !getCurrentControl.showWhen(formData)) {
           return null;

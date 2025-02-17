@@ -243,6 +243,7 @@ export const initialCandidateAccountFormData = {
 
 
 export const postNewJobFormControls = [
+    
     {
         label: 'Company Name',
         name: 'companyName',
@@ -349,6 +350,7 @@ export const postNewJobFormControls = [
 ]
 
 export const initialPostNewJobFormData = {
+    
     companyName: '',
     title: '',
     type: '',
