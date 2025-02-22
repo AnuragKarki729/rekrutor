@@ -68,10 +68,10 @@ function CandidateActivity({ jobList, jobApplicants }) {
                                                             <span>{finalFilteredItem?.companyName}</span>
                                                             <span>{finalFilteredItem?.industry} Industry | {finalFilteredItem?.location} {finalFilteredItem?.salary === undefined ? "" : "| $" + finalFilteredItem?.salary + "/yr"}</span>
                                                             <span className={`${status === "Applied"
-                                                                    ? "bg-blue-500 mt-2 border-[3px] border-black"
+                                                                    ? "bg-blue-500 mt-2"
                                                                     : status === "Selected"
-                                                                        ? "bg-green-500 mt-2 border-[3px] border-black"
-                                                                        : "bg-red-500 mt-2 border-[3px] border-black"
+                                                                        ? "bg-green-500 mt-2"
+                                                                        : "bg-red-500 mt-2"
 
 
                                                                     } text-white px-2 py-2 rounded-full text-sm text-center`}

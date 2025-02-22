@@ -65,6 +65,7 @@ function Header({ user, profileInfo }) {
                 {/* Mobile Menu */}
                 <Sheet>
                     <SheetTrigger asChild>
+                        <div className="lg:hidden flex ml-[20px] gap-[150px] items-center space-x-2 rounded-full">
                         <Button variant="ghost" className="lg:hidden -ml-4 px-4 rounded-full bg-transparent hover:scale-[1.5] transition-all duration-300 hover:border-[2px] hover:border-gray-900">
                             <AlignJustify className="h-5 w-5" />
                             <DialogTitle className="sr-only">
@@ -72,28 +73,69 @@ function Header({ user, profileInfo }) {
 
                             </DialogTitle>
                         </Button>
+                        <Image
+                                    src="/logo.png"
+                                    width={250}
+                                    height={0}
+                                    alt="reKrutor Logo"
+                                    layout="intrinsic" // Automatically adjusts height based on width
+                                    className="rounded-md opacity-100" style={{padding: "10px 20px",
+                                        backgroundColor: "transparent", // Background is transparent
+                                        color: "black",
+                                        fontWeight: "bold",
+                                        border: "none",
+                                        cursor: "pointer" // All-around shadow
+                                         // Centers text inside the button
+                                        }}
+                                />
+                        </div>
                     </SheetTrigger>
 
                     <SheetContent side="left" className="w-[300px] sm:w-[240px] rounded-3xl border-[4px] border-gray-900">
-                        <Link href={'/'} className="flex items-center space-x-2 bg-red-200 rounded-full">
-                            <Image
-                                src="/logo.png"
-                                width={200}
-                                height={100}
-                                alt="reKrutor Logo"
-                                
+                        <Link href={'/'} className="flex items-center space-x-2">
+                            <div style={{
+                                display: "inline-block",
+                                textAlign: "center",
+                                overflow: "hidden"
+                            }}><Image
+                                    src="/logo.png"
+                                    width={250}
+                                    height={0}
+                                    alt="reKrutor Logo"
+                                    layout="intrinsic" // Automatically adjusts height based on width
+                                    className="rounded-md opacity-100" style={{padding: "10px 20px",
+                                        backgroundColor: "transparent", // Background is transparent
+                                        color: "black",
+                                        fontWeight: "bold",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        boxShadow: "0px 10px 20px rgba(53, 53, 53, 0.5)", // All-around shadow
+                                         // Centers text inside the button
+                                        }}
+                                /></div></Link>
 
-                            /></Link>
-
-                        <nav className="mt-1 flex flex-col space-y-3">
+                        <nav className="mt-[20px] flex flex-col space-y-3">
                             {menuItems.map(menuItem =>
                                 menuItem.show ? (
                                     <Link
                                         key={menuItem.id}
                                         href={menuItem.path}
                                         onClick={() => sessionStorage.removeItem("filterParams")}
-                                        className="flex items-center space-x-2 text-lg font-medium border-[2px] border-gray-900 rounded-full px-4 py-2 transition-colors hover:text-black hover:font-bold hover:scale-[1.02] transition-all duration-300 "
-                                    >
+                                        className="flex items-center space-x-[5px] text-lg font-medium hover:scale-[1.05] transition-all duration-300"
+                                        style={{
+                                            padding: "10px 20px",
+                                            backgroundColor: "transparent", // Background is transparent
+                                            color: "black",
+                                            fontWeight: "bold",
+                                            border: "none",
+                                            cursor: "pointer",
+                                            boxShadow: "0px 10px 20px rgba(53, 53, 53, 0.5)", // All-around shadow
+                                            textAlign: "center", // Centers text inside the button
+                                            display: "flex", // Flex to align text properly
+                                            justifyContent: "center",
+                                            borderRadius: "40px", // Centers horizontally
+                                            alignItems: "center" // Centers vertically
+                                        }}>
                                         {menuItem.label}
                                     </Link>
 
@@ -102,7 +144,21 @@ function Header({ user, profileInfo }) {
                             {user && (
                                 <button
                                     onClick={handleSignOut}
-                                    className="flex items-center space-x-2 text-lg border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-red-500 transition-colors hover:text-red-600"
+                                    className="text-lg hover:font-bold hover:scale-[1.05] transition-all duration-300 border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-gray-700 transition-colors hover:text-black"
+                                    style={{
+                                        padding: "10px 20px",
+                                        backgroundColor: "transparent", // Background is transparent
+                                        color: "black",
+                                        fontWeight: "bold",
+                                        border: "none",
+                                        cursor: "pointer",
+                                        boxShadow: "0px 10px 20px rgba(253, 11, 11, 0.5)", // All-around shadow
+                                        textAlign: "center", // Centers text inside the button
+                                        display: "flex", // Flex to align text properly
+                                        justifyContent: "center",
+                                        borderRadius: "40px", // Centers horizontally
+                                        alignItems: "center" // Centers vertically
+                                    }}
                                 >
                                     Logout
                                 </button>
@@ -117,14 +173,14 @@ function Header({ user, profileInfo }) {
                     className="hidden lg:flex items-center space-x-2 font-bold text-2xl hover:opacity-90 transition-opacity"
                 >
                     <Image
-                                src="/logo.png"
-                                width={100}
-                                height={10}
-                                alt="reKrutor Logo"
-                                className="h-auto w-auto rounded-md opacity-90 border-t-[5px] border-b-[5px] border-gray-500"
-                                
+                        src="/logo.png"
+                        width={180}
+                        height={0}
+                        alt="reKrutor Logo"
+                        className="h-auto w-auto rounded-md opacity-100"
 
-                            />
+
+                    />
                 </Link>
 
                 {/* Desktop Navigation */}
@@ -134,7 +190,21 @@ function Header({ user, profileInfo }) {
                             key={menuItem.id}
                             href={menuItem.path}
                             onClick={() => sessionStorage.removeItem("filterParams")}
-                            className="text-lg hover:font-bold hover:scale-[1.02] transition-all duration-300 border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-gray-700 transition-colors hover:text-black"
+                            className="text-medium hover:font-bold hover:scale-[1.05] transition-all duration-300 border-[2px] border-gray-900 rounded-full px-4 py-2 font-medium text-gray-700 transition-colors hover:text-black"
+                            style={{
+                                padding: "10px 20px",
+                                backgroundColor: "transparent", // Background is transparent
+                                color: "black",
+                                fontWeight: "bold",
+                                border: "none",
+                                cursor: "pointer",
+                                boxShadow: "0px 10px 20px rgba(129, 129, 129,0.5)", // All-around shadow
+                                textAlign: "center", // Centers text inside the button
+                                display: "flex", // Flex to align text properly
+                                justifyContent: "center",
+                                borderRadius: "40px", // Centers horizontally
+                                alignItems: "center" // Centers vertically
+                            }}
                         >
                             {menuItem.label}
                         </Link>
