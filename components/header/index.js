@@ -7,8 +7,11 @@ import Link from "next/link";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { UserButton, useClerk } from "@clerk/nextjs";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+
 function Header({ user, profileInfo }) {
     const { signOut } = useClerk()
+    const pathname = usePathname()
 
     const handleSignOut = async () => {
         try {
@@ -17,7 +20,7 @@ function Header({ user, profileInfo }) {
             //console.log("Sign-out successful!");
             window.location.href = "/sign-in";
         } catch (error) {
-            //console.error("Sign-out failed:", error);
+            console.error("Sign-out failed:", error);
         }
     };
 
@@ -57,6 +60,7 @@ function Header({ user, profileInfo }) {
         { id: 'account', label: 'Account', path: '/account', show: user },
     ]
 
+   
     return (
         <div className="sticky top-0 z-50 w-full border-[2px] border-gray-900 rounded-full backdrop-blur" style={{ background: "linear-gradient(98.24deg,rgba(251, 251, 251, 0.64) 10%,rgba(156, 156, 251, 0.48) 50.4%, #EBECF7 90%)" }}>
             <header className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -84,7 +88,8 @@ function Header({ user, profileInfo }) {
                                         color: "black",
                                         fontWeight: "bold",
                                         border: "none",
-                                        cursor: "pointer" // All-around shadow
+                                        cursor: "pointer",
+                                        disabled: true // All-around shadow
                                          // Centers text inside the button
                                         }}
                                 />
@@ -114,14 +119,16 @@ function Header({ user, profileInfo }) {
                                         }}
                                 /></div></Link>
 
-                        <nav className="mt-[20px] flex flex-col space-y-3">
+                        <nav className="mt-[20px] flex flex-col space-y-3 ">
                             {menuItems.map(menuItem =>
                                 menuItem.show ? (
                                     <Link
                                         key={menuItem.id}
                                         href={menuItem.path}
                                         onClick={() => sessionStorage.removeItem("filterParams")}
-                                        className="flex items-center space-x-[5px] text-lg font-medium hover:scale-[1.05] transition-all duration-300"
+                                        className="flex items-center space-x-[5px] 
+                                        text-lg font-medium hover:scale-[1.05] 
+                                        transition-all duration-300"
                                         style={{
                                             padding: "10px 20px",
                                             backgroundColor: "transparent", // Background is transparent
