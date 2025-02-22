@@ -18,9 +18,9 @@ export default function ResumeTest() {
         method: 'POST',
         body: formData,
       });
-      console.log(response);
+      //console.log(response);
       const data = await response.json();
-      console.log(data);
+      //console.log(data);
       setResumeData(data);
     } catch (error) {
       console.error('Error analyzing resume:', error);
@@ -49,7 +49,7 @@ export default function ResumeTest() {
         <div className="mt-4 space-y-4">
           <div className="p-4 border rounded">
             <h2 className="text-xl font-semibold mb-2">Personal Information</h2>
-            {console.log(resumeData.personal_info)}
+            {/* {console.log(resumeData.personal_info)} */}
             <p>Email: {resumeData.personal_info.email}</p>
             <p>Phone: {resumeData.personal_info.phone}</p>
           </div>

@@ -9,8 +9,8 @@ export async function PATCH(req, { params }) {
         const { id } = params;
         const { aiSummary } = await req.json();
         
-        console.log('route hit')
-        console.log(id, aiSummary !== null ? 'true' : 'false')
+        //console.log('route hit')
+        //console.log(id, aiSummary !== null ? 'true' : 'false')
 
         const updatedProfile = await Profile.findOneAndUpdate(
             { userId: id },
@@ -18,7 +18,7 @@ export async function PATCH(req, { params }) {
             { new: true }
         );
 
-        console.log('updatedProfile', updatedProfile)
+        //console.log('updatedProfile', updatedProfile)
 
         if (!updatedProfile) {
             return NextResponse.json({ message: 'Profile not found' }, { status: 404 });
@@ -26,7 +26,7 @@ export async function PATCH(req, { params }) {
 
         return NextResponse.json({ message: 'Profile updated successfully' }, { status: 200 });
     } catch (error) {
-        console.error('Error updating profile:', error);
+        //console.error('Error updating profile:', error);
         return NextResponse.json({ message: 'Error updating profile' }, { status: 500 });
     }
 } 

@@ -74,7 +74,7 @@ export async function fetchJobsForCandidateAction(filterParams = {}) {
         }
     });
     
-    console.log('MongoDB Query:', query); // Debug log
+    // console.log('MongoDB Query:', query); // Debug log
     const result = await Job.find(query);
     return JSON.parse(JSON.stringify(result));
 }
@@ -143,7 +143,7 @@ export async function updateJobApplicationAction(data, pathToRevalidate) {
             { new: true } // Return the updated document
         );
 
-        console.log('Result', result)
+        // console.log('Result', result)
 
         revalidatePath(pathToRevalidate);
 

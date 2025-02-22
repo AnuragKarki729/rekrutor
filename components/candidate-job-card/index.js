@@ -38,16 +38,16 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                 if (!response.ok) throw new Error('Failed to fetch recruiter');
 
                 const recruiterData = await response.json();
-                console.log(recruiterData, 'recruiterData')
+                // console.log(recruiterData, 'recruiterData')
                 // Access email from the candidateInfo object in the profile
                 const role = recruiterData.role
                 const email = recruiterData.email
                 const recrutierMail = recruiterData.role === 'recruiter' ? email : null
 
                 setRecruiterEmail(recrutierMail);
-                console.log(recrutierMail, 'recrutierMail')
+                // console.log(recrutierMail, 'recrutierMail')
 
-                console.log(role, 'recruiterEmail')
+                // console.log(role, 'recruiterEmail')
             } catch (error) {
                 console.error('Error fetching recruiter:', error);
             }
@@ -97,12 +97,12 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
     const jobSkills = jobItem?.skills?.split(",").map(skill => skill.trim().toLowerCase()) || []
 
     const ExperienceGap = jobExperience - candidateExperience
-    console.log(jobItem, 'JobItem')
+    // console.log(jobItem, 'JobItem')
 
     const isJobApplied = jobApplications.some(
         application => application.jobID === jobItem._id && application.status[0] === "Applied"
     );
-    console.log(isJobApplied, 'isJobApplied', jobItem._id)
+    // console.log(isJobApplied, 'isJobApplied', jobItem._id)
     // Calculate match potential
     const calculateMatchPotential = () => {
         // Get candidate and job details
@@ -119,7 +119,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
 
             jobExpYears = yearsRange ? (parseInt(yearsRange[1]) + parseInt(yearsRange[2])) / 2 : 0;
         }
-        console.log(jobItem.yearsOfExperience, 'jobExpYears:', jobExpYears);
+        // console.log(jobItem.yearsOfExperience, 'jobExpYears:', jobExpYears);
         const candidateExpLevel = profileInfo?.candidateInfo?.experienceLevel
         const jobExpLevel = jobItem?.experience
 
@@ -129,12 +129,12 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
 
         // Check for skills match
         const perfectSkillsMatch = jobSkills.every(skill => candidateSkills.includes(skill))
-        console.log(perfectSkillsMatch, 'perfectSkillsMatch')
+        // console.log(perfectSkillsMatch, 'perfectSkillsMatch')
         const mediumSkillsMatch = candidateSkills.some(skill => jobSkills.includes(skill))
         const lowSkillsMatch = candidateSkills.every(skill => !jobSkills.includes(skill))
         // Check for experience match
         const expMatch = candidateExpYears >= jobExpYears
-        console.log(expMatch, 'expMatch')
+        // console.log(expMatch, 'expMatch')
         const medExpMatch = candidateExpYears - jobExpYears <= 1.5 && candidateExpYears - jobExpYears >= -1.5
         const lowExpMatch = candidateExpYears < jobExpYears
         const freshGradMatch = candidateExpLevel === "Fresher" && jobExpLevel === "Fresher"
@@ -191,7 +191,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
         }
     }
 
-    console.log(jobApplications, 'jobApplications')
+    // console.log(jobApplications, 'jobApplications')
 
 
     async function handleJobApply() {
@@ -305,9 +305,11 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
                                         <div className="absolute top-2 right-[100px] flex items-center gap-2 z-10">
                                             {isPersonalEmail(recruiterEmail) && (
                                                 <div className="group relative">
-                                                    <div className="bg-yellow-900 cursor-pointer text-white text-center px-2 py-2 rounded-full text-sm font-medium shadow-md">
-                                                        ⚠️
-                                                    </div>
+                                                    <div className="cursor-pointer bg-yellow-500 text-white flex items-center justify-center w-8 h-8 rounded-full shadow-md">
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+    </svg>
+</div>
                                                     <div className="absolute invisible 
                                 text-center 
                                 group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
@@ -422,7 +424,7 @@ function CandidateJobCard({ jobItem, profileInfo, jobApplications, onApplication
 
                                         {showMatchDetails && (
                                             <>
-                                                <div className="text-lg font-bold mb-2">Why {matchPotential}?</div>
+                                                <div className="text-lg font-bold mb-2">{matchPotential === "Qualifications" ? "Compare Qualifications" : `Why ${matchPotential}?`}</div>
                                                 <div className="mb-4">
                                                     <h3 className="text-sm font-semibold mb-2">Job Qualifications</h3>
                                                     <p className="text-xs mb-1">

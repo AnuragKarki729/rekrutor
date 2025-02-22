@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CommonCard from "../common-card";
 import JobIcon from "../job-icon";
+import Loading from "@/components/Loading";
 
 const ApplicantList = ({ userId }) => {
     const [jobs, setJobs] = useState([]);
@@ -128,7 +129,7 @@ const ApplicantList = ({ userId }) => {
     );
 
     if (loading) {
-        return <div className="text-center p-4">Loading...</div>;
+        return <Loading />;
     }
 
     const renderApplicantCard = (applicant) => {

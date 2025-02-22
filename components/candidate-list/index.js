@@ -34,8 +34,8 @@ function calculateMatchScore(candidateData, jobData) {
     const candidateExpLevel = candidateData?.candidateInfo?.experienceLevel;
     const jobExpLevel = jobData?.experience;
 
-    console.log(jobData, "jobData");
-    console.log(candidateData, "candidateData");
+    //console.log(jobData, "jobData");
+    //console.log(candidateData, "candidateData");
 
     // Check for matches
     const industryMatch = candidateIndustry === jobIndustry;
@@ -239,8 +239,8 @@ function CandidateList({ jobApplications }) {
     }, []);
 
     async function handleSelectCandidate(candidateUserID) {
-        console.log(candidateUserID, "candidateUserID");
-        console.log(swipedCandidates, "swipedCandidates");
+        //console.log(candidateUserID, "candidateUserID");
+        //console.log(swipedCandidates, "swipedCandidates");
         // Add candidate id to the state triggering the CSS animation
         setSwipedCandidates(prev => [...prev, candidateUserID]);
 
@@ -254,10 +254,10 @@ function CandidateList({ jobApplications }) {
 
     // Handle showing candidate details in the modal
     async function handleUpdateJobStatus(candidateUserID, getCurrentStatus, rejectionReason) {
-        console.log(candidatesWithDetails, "candidatesWithDetails");
-        console.log(getCurrentStatus, "getCurrentStatus");
-        console.log(rejectionReason, "rejectionReason");
-        console.log(candidateUserID, "candidateUserID");
+        //console.log(candidatesWithDetails, "candidatesWithDetails");
+        //console.log(getCurrentStatus, "getCurrentStatus");
+        //console.log(rejectionReason, "rejectionReason");
+        //console.log(candidateUserID, "candidateUserID");
         const candidate = candidatesWithDetails.find((item) => item.candidateUserID === candidateUserID);
         if (!candidate) return console.log("No candidate", candidateUserID);
 
@@ -327,15 +327,15 @@ function CandidateList({ jobApplications }) {
             .from('rekrutor-public')
             .getPublicUrl(storagePath);
 
-        console.log('Storage path:', storagePath);
-        console.log('Public URL:', data?.publicUrl);
+        //console.log('Storage path:', storagePath);
+        //console.log('Public URL:', data?.publicUrl);
 
         if (data?.publicUrl && data.publicUrl.endsWith('.pdf')) {
-            console.log(data.publicUrl, "data.publicUrl");
+            //console.log(data.publicUrl, "data.publicUrl");
             setCurrentPDFUrl(data.publicUrl);
             setIsPDFOpen(true);
         } else {
-            console.log(data.publicUrl, "data.publicUrl");
+            //console.log(data.publicUrl, "data.publicUrl");
             setResumeUrl(data.publicUrl); // Set the resume URL for the iframe
             setShowResumeModal(true);
         }
@@ -365,7 +365,7 @@ function CandidateList({ jobApplications }) {
             videoUrl,
             reason,
         };
-        console.log('Attempting to send report data:', reportData);
+        //console.log('Attempting to send report data:', reportData);
 
         try {
             const response = await fetch('/api/video-reports', {
@@ -377,7 +377,7 @@ function CandidateList({ jobApplications }) {
             });
 
             const responseData = await response.json();
-            console.log('Response from server:', responseData);
+            // console.log('Response from server:', responseData);
 
             if (!response.ok) {
                 throw new Error(responseData.details || 'Failed to report video');
@@ -471,7 +471,8 @@ function CandidateList({ jobApplications }) {
                                                                 ? "bg-orange-400 text-black"
                                                                 : "bg-red-500 text-white"
                                                             }`}
-                                                    >{console.log(candidate)}
+                                                    >
+                                                        {/* {console.log(candidate)} */}
                                                         {candidate.totalScore.toFixed(2)}
                                                     </span>
                                                 </div>
@@ -753,7 +754,7 @@ function CandidateList({ jobApplications }) {
                                 <Button
                                     className="absolute top-4 left-4 bg-red-500 hover:bg-red-600"
                                     onClick={() => {
-                                        console.log('Current video URL when opening report dialog:', videoUrl);
+                                        //console.log('Current video URL when opening report dialog:', videoUrl);
                                         setShowReportDialog(true);
                                     }}
                                 >
@@ -877,7 +878,7 @@ function CandidateList({ jobApplications }) {
                                         toast.error("Please select a reason for reporting");
                                         return;
                                     }
-                                    console.log("Current video URL:", videoUrl);
+                                    //console.log("Current video URL:", videoUrl);
 
 
                                     if (!videoUrl) {

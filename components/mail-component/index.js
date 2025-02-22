@@ -96,7 +96,7 @@ export default function MailComponent({
             if (!response.ok) throw new Error('Failed to fetch job details');
 
             const jobData = await response.json();
-            console.log(jobData, "jobData")
+            //console.log(jobData, "jobData")
             setCurrentRecruiterId(jobData.recruiterId);
             setShowRatingModal(true);
         } catch (error) {
@@ -155,9 +155,9 @@ export default function MailComponent({
         }
     };
 
-    console.log(selectedData, "selectedData")
-    console.log(rejectedData, "rejectedData")
-    console.log(appliedData, "appliedData")
+    // console.log(selectedData, "selectedData")
+    //console.log(rejectedData, "rejectedData")
+    //console.log(appliedData, "appliedData")
     return (
         <div className='mt-4 bg-transparent' >
 

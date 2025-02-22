@@ -19,7 +19,7 @@ export async function POST(req) {
         const fileType = uploadedFile.type;
         let extractedText = '';
 
-        console.log(`Processing File: ${uploadedFile.name} (Type: ${fileType})`);
+        //console.log(`Processing File: ${uploadedFile.name} (Type: ${fileType})`);
 
         // ✅ Handle PDF Files
         if (fileType === "application/pdf") {
@@ -35,7 +35,7 @@ export async function POST(req) {
             return NextResponse.json({ error: "Unsupported file type" }, { status: 415 });
         }
 
-        console.log("Extracted Text:", extractedText);
+        //console.log("Extracted Text:", extractedText);
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -64,7 +64,7 @@ export async function POST(req) {
         const result = await model.generateContent([prompt]);
         const response = await result.response;
         const jobData = response.text();
-        console.log("jobData", jobData)
+        //console.log("jobData", jobData)
         // Parse the response to ensure valid JSON
         const cleanedJobData = jobData.replace(/```json|```/g, '').trim();
 

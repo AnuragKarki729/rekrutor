@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useRouter } from "next/navigation";
 
 function CandidateActivity({ jobList, jobApplicants }) {
-    console.log(jobList, jobApplicants);
+    //console.log(jobList, jobApplicants);
     const router = useRouter();
     // Extract unique statuses based on the last value of the status array
 
@@ -55,7 +55,7 @@ function CandidateActivity({ jobList, jobApplicants }) {
                                                     jobApplication.status.slice(-1)[0] === status
                                             );
 
-                                            console.log("relatedAPplication", relatedApplication)
+                                            //console.log("relatedAPplication", relatedApplication)
                                             return (
                                                 <ActivityCard
                                                     key={finalFilteredItem._id}

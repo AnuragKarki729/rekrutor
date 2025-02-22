@@ -12,7 +12,7 @@ export async function POST(req) {
         
         const { recruiterEmail, candidateName, candidateEmail, jobTitle, status, companyName, jobId } = await req.json();
         
-        console.log('Received request with jobId:', jobId);
+        //console.log('Received request with jobId:', jobId);
 
 
         if (!recruiterEmail || !candidateName || !candidateEmail || !jobTitle || !status || !jobId) {
@@ -97,8 +97,8 @@ ${candidateName}`;
 
         // Create Gmail URL
         const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${recruiterEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(getEmailBody())}`;
-        console.log(gmailUrl, "gmailUrl")
-        console.log(jobId, "jobId")
+        //console.log(gmailUrl, "gmailUrl")
+        //console.log(jobId, "jobId")
 
         // Create new email log
         const newEmailLog = await EmailLog.create({
@@ -109,7 +109,7 @@ ${candidateName}`;
             senderRole: 'candidate'
         });
 
-        console.log('Created email log:', newEmailLog);
+        //console.log('Created email log:', newEmailLog);
         
         return new Response(
             JSON.stringify({

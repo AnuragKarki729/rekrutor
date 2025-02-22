@@ -41,7 +41,7 @@ const ResumeUploadButton = () => {
         }
 
         const { extractedText } = await textResponse.json();
-        console.log('Extracted text:', extractedText);
+        //console.log('Extracted text:', extractedText);
 
         // Then, send to resume parser API
         const parseResponse = await fetch('/api/parse-resume', {
@@ -54,7 +54,7 @@ const ResumeUploadButton = () => {
         }
 
         const parsedData = await parseResponse.json();
-        console.log('Parsed resume data:', parsedData);
+        //console.log('Parsed resume data:', parsedData);
 
         // Update form data with parsed skills
         if (parsedData.skills && parsedData.skills.length > 0) {

@@ -12,12 +12,12 @@ function Header({ user, profileInfo }) {
 
     const handleSignOut = async () => {
         try {
-            console.log("Signing out...");
+            //console.log("Signing out...");
             await signOut();
-            console.log("Sign-out successful!");
+            //console.log("Sign-out successful!");
             window.location.href = "/sign-in";
         } catch (error) {
-            console.error("Sign-out failed:", error);
+            //console.error("Sign-out failed:", error);
         }
     };
 
@@ -65,7 +65,7 @@ function Header({ user, profileInfo }) {
                 {/* Mobile Menu */}
                 <Sheet>
                     <SheetTrigger asChild>
-                        <div className="lg:hidden flex ml-[20px] gap-[150px] items-center space-x-2 rounded-full">
+                        <div className="lg:hidden flex ml-[0px] gap-[150px] items-center space-x-2 rounded-full">
                         <Button variant="ghost" className="lg:hidden -ml-4 px-4 rounded-full bg-transparent hover:scale-[1.5] transition-all duration-300 hover:border-[2px] hover:border-gray-900">
                             <AlignJustify className="h-5 w-5" />
                             <DialogTitle className="sr-only">

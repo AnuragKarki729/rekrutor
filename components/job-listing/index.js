@@ -16,9 +16,9 @@ import { Alert, AlertDescription } from "../ui/alert"
 
 
 function JobListing({ user, profileInfo, initialJobList, jobList, jobApplications, filterCategories, initialSearchTerm }) {
-    console.log("All Jobs:", jobList);
-    console.log("Job Applications:", jobApplications);
-    console.log("Profile Info:", profileInfo);
+    //console.log("All Jobs:", jobList);
+    //console.log("Job Applications:", jobApplications);
+    //console.log("Profile Info:", profileInfo);
 
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -51,7 +51,7 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [removedJobs, setRemovedJobs] = useState(new Set());
 
-    console.log(initialJobList, 'initialJobList')
+    //console.log(initialJobList, 'initialJobList')
 
     useEffect(() => {
         if (initialSearchTerm) {
@@ -79,7 +79,7 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                         job.skills?.toLowerCase().includes(term.toLowerCase()) ||
                         job.type?.toLowerCase().includes(term.toLowerCase())
                     ));
-                    console.log('Filtered jobs:', filtered);
+                    //console.log('Filtered jobs:', filtered);
                     setSearchedJobs(filtered);
 
                     copyFilter.search = term;
@@ -131,15 +131,15 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
 
     useEffect(() => {
         if (filterParams && Object.keys(filterParams).length > 0) {
-            console.log("Search Params:", searchParams.toString());
-            console.log("Filter Params:", filterParams);
+            //console.log("Search Params:", searchParams.toString());
+            //console.log("Filter Params:", filterParams);
 
             let url = formUrlQuery({
                 params: searchParams.toString(),
                 dataToAdd: filterParams
             });
 
-            console.log("Generated URL:", url); // Log the generated URL
+            //console.log("Generated URL:", url); // Log the generated URL
             router.push(url, { scroll: false });
         }
     }, [filterParams, searchParams]);
@@ -168,8 +168,8 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
             }
         )
     );
-    console.log("Job List:", jobList);
-    console.log()
+    // console.log("Job List:", jobList);
+    //console.log("Applied Jobs:", appliedJobs);
 
 
     useEffect(() => {
@@ -391,16 +391,20 @@ function JobListing({ user, profileInfo, initialJobList, jobList, jobApplication
                                             key={tab}
                                             value={tab}
                                             disabled={filteredJobList[tab].length === 0}
-                                            className="text-xs sm:text-sm lg:text-base px-2 sm:px-3 py-1.5 sm:py-2 rounded-full whitespace-nowrap bg-transparent hover:scale-110 transform transition-all duration-200 ease-in-out cursor-pointer hover:bg-blue-200 hover:rounded-full"
+                                            className="text-xs font-bold sm:text-sm lg:text-base px-2 sm:px-3 py-1.5 sm:py-2 rounded-full whitespace-nowrap bg-transparent hover:scale-105 transform transition-all duration-200 ease-in-out cursor-pointer
+                                            text-gray-600 
+                                            hover:border-black hover:rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-black"
+                                            
                                         >
                                             {tab}
-                                            {filteredJobList[tab].length > 0 && (
-                                                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-blue-300 rounded-full">
+                                            {filteredJobList[tab].length > 0 && filteredJobList[tab].length <= 5 && (
+                                                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-blue-300 rounded-full"
+                                                >
                                                     {filteredJobList[tab].length}
                                                 </span>
                                             )}
                                             {filteredJobList[tab].length > 5 && (
-                                                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs">
+                                                <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs bg-blue-300 rounded-full">
                                                     5+
                                                 </span>
                                             )}

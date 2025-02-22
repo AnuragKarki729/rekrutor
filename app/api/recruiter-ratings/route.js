@@ -5,7 +5,7 @@ export async function POST(req) {
     try {
         await connectToDatabase()
         const { recruiterId, candidateId, rating, review } = await req.json()
-        console.log(recruiterId, candidateId, rating, review, "recruiterId, candidateId, rating, review")
+        //console.log(recruiterId, candidateId, rating, review, "recruiterId, candidateId, rating, review")
         
         // Validate input
         if (!recruiterId || !candidateId || !rating || !review) {
@@ -64,7 +64,7 @@ export async function POST(req) {
         })
 
     } catch (error) {
-        console.error('Error submitting rating:', error)
+        //console.error('Error submitting rating:', error)
         return Response.json({ error: 'Failed to submit rating' }, { status: 500 })
     }
 }

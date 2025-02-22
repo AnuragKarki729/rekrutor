@@ -63,7 +63,7 @@ function PostNewJob({ profileInfo, user, jobToEdit = null, mode = "create" }) {
 
     async function handleFileUpload(event) {
         const file = event.target.files[0]
-        console.log("file", file)
+        //console.log("file", file)
         if (!file) return
 
         try {
@@ -97,7 +97,7 @@ function PostNewJob({ profileInfo, user, jobToEdit = null, mode = "create" }) {
 
             const jobData = await response.json()
 
-            console.log(jobData)
+            //console.log(jobData)
             // Auto-fill the form with the extracted data
             setJobFormData(prev => ({
                 ...prev,

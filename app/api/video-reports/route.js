@@ -8,8 +8,8 @@ export async function POST(request) {
         const body = await request.json();
         
         // Add debug logging
-        console.log('Model schema:', VideoReport.schema.obj);
-        console.log('Attempting to create report with data:', body);
+        //console.log('Model schema:', VideoReport.schema.obj);
+        //console.log('Attempting to create report with data:', body);
         
         // Add validation
         if (!body.videoUrl) {
@@ -31,11 +31,11 @@ export async function POST(request) {
             reason: body.reason
         });
 
-        console.log('Created report:', report);
+        //console.log('Created report:', report);
 
         return NextResponse.json({ success: true, report });
     } catch (error) {
-        console.error('Error creating video report:', error);
+        //console.error('Error creating video report:', error);
         return NextResponse.json(
             { 
                 error: 'Failed to create video report', 

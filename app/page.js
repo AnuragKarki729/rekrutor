@@ -8,35 +8,35 @@ import Image from "next/image";
 
 async function Home() {
   const user = await currentUser();
-  console.log(user, "currentUser");
+  //console.log(user, "currentUser");
 
   // If no user is logged in, redirect to the login page
   if (!user) {
-    console.log("No user logged in, redirecting to login");
+    //console.log("No user logged in, redirecting to login");
     redirect("/sign-in");
     return null;
   }
 
   // Check email domain
   const email = user.emailAddresses[0]?.emailAddress;
-  console.log("User email:", email);
+  //console.log("User email:", email);
   
   const isGmail = email?.toLowerCase().endsWith('@gmail.com');
   const isCompanyEmail = !isGmail && email?.includes('@');
   
-  console.log({
-    isGmail,
-    isCompanyEmail,
-    emailDomain: email?.split('@')[1]
-  });
+  //console.log({
+  //  isGmail,
+  //  isCompanyEmail,
+  //  emailDomain: email?.split('@')[1]
+  //});
 
   // Fetch profile information from the database
   const profileInfo = await fetchProfileAction(user.id);
-  console.log(profileInfo, "profileInfo");
+  //console.log(profileInfo, "profileInfo");
 
   // If the user does not have a profile, redirect to the onboarding page
   if (!profileInfo?._id) {
-    console.log("No profile found, redirecting to onboard");
+    //console.log("No profile found, redirecting to onboard");
     redirect("/onboard");
     return null; // Stop further rendering
   }

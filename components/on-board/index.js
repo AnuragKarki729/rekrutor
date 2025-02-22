@@ -67,7 +67,7 @@ function OnBoard(){
     useEffect(() => {
         const email = user?.primaryEmailAddress?.emailAddress
         const isGmail = email?.toLowerCase().endsWith('@gmail.com')
-        console.log(user?.id)
+        //console.log(user?.id)
         const typeParam = searchParams.get('type')
         if (typeParam) {
             setCurrentTab(typeParam)
@@ -135,7 +135,7 @@ function OnBoard(){
                 const formData = new FormData();
                 formData.append('file', renamedFile);
     
-                console.log('Sending file to parser...');
+                //console.log('Sending file to parser...');
     
                 // Parse resume first to get skills
                 const parseResponse = await fetch('/api/parse-resume', {
@@ -150,7 +150,7 @@ function OnBoard(){
                 }
     
                 const parsedData = await parseResponse.json();
-                console.log('Parsed resume data:', parsedData);
+                //console.log('Parsed resume data:', parsedData);
 
                 
                 try {
@@ -211,7 +211,7 @@ function OnBoard(){
                     upsert: true  // Changed to true to overwrite if file exists
                 });
 
-            console.log(data, error);
+            //console.log(data, error);
 
             if (data) {
                 setCandidateFormData((prev) => ({
@@ -225,7 +225,7 @@ function OnBoard(){
     }, [file]);
 
     function handleCandidateFormValid() {
-        console.log("Candidate form data:", candidateFormData, " ", user);
+        //console.log("Candidate form data:", candidateFormData, " ", user);
         // Get only the required fields from candidateOnBoardFormControls
         const requiredFields = candidateOnBoardFormControls
             .filter(control => 

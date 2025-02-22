@@ -45,7 +45,7 @@ function CandidateVideo() {
         const summary = profile?.candidateInfo?.aiSummary || "";
         setAiSummary(summary); // Set AI summary from profile
         setEditedSummary(summary); // Initialize edited summary
-        console.log('Profile data:', profile?.candidateInfo);
+        //console.log('Profile data:', profile?.candidateInfo);
       } catch (error) {
         console.error("Error fetching previous data:", error);
       }
@@ -122,8 +122,8 @@ function CandidateVideo() {
         })
         .join('\n');
 
-      console.log('Formatted Text:', formattedText);
-      console.log(profileData)
+      //console.log('Formatted Text:', formattedText);
+      //console.log(profileData)
 
 
     
@@ -141,7 +141,7 @@ function CandidateVideo() {
 
       const { summary } = await summaryResponse.json();
       setAiSummary(JSON.stringify(summary)); // Store the summary in state
-      console.log('Generated Summary:', summary);
+      //console.log('Generated Summary:', summary);
 
       const updateResponse = await fetch(`/api/profiles/ai-summary/${user.id}`, {
         method: 'PATCH',
@@ -161,7 +161,7 @@ function CandidateVideo() {
       setEditedSummary(summary);
     
 
-      console.log(profileData)
+      //console.log(profileData)
   
       
       toast.success('Summary generated successfully!');
@@ -289,7 +289,7 @@ function CandidateVideo() {
       // Delete previous video if exists
       if (previousVideo) {
         const oldFileName = previousVideo.split('/').pop();
-        console.log("Old file name:", oldFileName);
+        //console.log("Old file name:", oldFileName);
         await supabaseClient.storage
           .from("rekrutor-public")
           .remove([`videos/${oldFileName}`]);
@@ -306,7 +306,7 @@ function CandidateVideo() {
           upsert: false,
         });
 
-        console.log("Upload data:", uploadData);
+      //console.log("Upload data:", uploadData);
 
       if (error) throw error;
 
@@ -333,7 +333,7 @@ function CandidateVideo() {
       }
 
       const updateData = await response.json();
-      console.log("Video CV updated successfully:", updateData);
+      // console.log("Video CV updated successfully:", updateData);
 
       // Update the UI to show new video
       setPreviousVideo(publicUrl);
@@ -480,7 +480,7 @@ function CandidateVideo() {
             </div>
           )}
         </div>
-        {console.log("hello ", editedSummary===""? "true": "false")}
+        {/* {console.log("hello ", editedSummary===""? "true": "false")} */}
 
         <div className="flex space-x-4 mt-6">
           <button

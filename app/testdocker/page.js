@@ -31,7 +31,7 @@ export default function TestDocker() {
                 const base64Content = e.target.result.split(',')[1];
                 
                 try {
-                    console.log('Sending request...');
+                    //console.log('Sending request...');
                     const response = await fetch(`${API_URL}/parse-resume`, {
                         method: 'POST',
                         headers: {
@@ -45,14 +45,14 @@ export default function TestDocker() {
                     });
 
                     const text = await response.text();
-                    console.log('Raw response:', text);
+                    //console.log('Raw response:', text);
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
 
                     const data = JSON.parse(text);
-                    console.log('Parsed response:', data);
+                    //console.log('Parsed response:', data);
 
                     if (data.error) {
                         throw new Error(data.error);
@@ -60,14 +60,14 @@ export default function TestDocker() {
 
                     setResult(data);
                 } catch (error) {
-                    console.error('Request error:', error);
+                    //console.error('Request error:', error);
                     setError(error.message);
                 }
             };
             
             reader.readAsDataURL(selectedFile);
         } catch (error) {
-            console.error('File reading error:', error);
+            // console.error('File reading error:', error);
             setError(error.message);
         } finally {
             setIsLoading(false);

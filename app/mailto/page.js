@@ -16,7 +16,7 @@ export default async function MailPage() {
 
 
   const userInfo = await fetchProfileAction(userID);
-  console.log(userInfo)
+  //console.log(userInfo)
   const role = userInfo?.role;
   const userEmail = userInfo.email;
   const userName = role === 'candidate' ? userInfo?.candidateInfo?.name : 
@@ -30,7 +30,7 @@ export default async function MailPage() {
     const jobList = await fetchJobsForCandidateAction();
     const jobApplicants = await fetchJobApplicationsForCandidate(userID);
 
-    console.log(jobList, "jobList")
+    //console.log(jobList, "jobList")
 
     const selectedJobApplications = jobApplicants.filter(
       (application) => application.status.slice(-1)[0] === 'Selected'
@@ -125,7 +125,7 @@ export default async function MailPage() {
 
     const selectedData = selectedJobApplications.map((application) => {
         const jobDetails = jobList.find((job) => job._id === application.jobID);
-        console.log(jobDetails, "jobDetails")
+        //console.log(jobDetails, "jobDetails")
         
         return [
             application.email,      // Candidate email

@@ -9,8 +9,8 @@ export async function PATCH(req, { params }) {
         const { id } = params;
         const { parsedResponse } = await req.json();
         
-        console.log('route hit')
-        console.log(id, parsedResponse !== null ? 'true' : 'false')
+        //console.log('route hit')
+        //console.log(id, parsedResponse !== null ? 'true' : 'false')
 
 
         const updatedProfile = await Profile.findOneAndUpdate(
@@ -19,7 +19,7 @@ export async function PATCH(req, { params }) {
             { new: true }
         );
 
-        console.log('updatedProfile', updatedProfile)
+        //console.log('updatedProfile', updatedProfile)
 
         if (!updatedProfile) {
             return NextResponse.json({ message: 'Profile not found' }, { status: 404 });

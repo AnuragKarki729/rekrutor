@@ -8,7 +8,7 @@ export async function PUT(request, { params }) {
         await connectToDB()
         const { id } = params
         const { hiredFlag } = await request.json()
-        console.log(hiredFlag)
+        //console.log(hiredFlag)
         const status = hiredFlag === 'Hired' ? true : false
         const updatedJob = await Job.findByIdAndUpdate(
             id,

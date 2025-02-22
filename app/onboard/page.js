@@ -6,7 +6,7 @@ import Loading from "@/components/Loading";
 
 async function onBoardPage({ searchParams }) {
     const user = await currentUser();
-    console.log("Current User:", user);
+    //console.log("Current User:", user);
 
     if (!user) {
         console.error("User is not logged in");
@@ -19,7 +19,7 @@ async function onBoardPage({ searchParams }) {
     const isGmail = email?.toLowerCase().endsWith('@gmail.com');
     
     const profileInfo = await fetchProfileAction(user.id);
-    console.log("Profile Info:", profileInfo);
+    //console.log("Profile Info:", profileInfo);
 
     // Handle existing profiles
     if (profileInfo?._id) {
@@ -38,7 +38,7 @@ async function onBoardPage({ searchParams }) {
         return;
     }
 
-    console.log("Rendering OnBoard component");
+    //console.log("Rendering OnBoard component");
     
     return <OnBoard />;
 }
