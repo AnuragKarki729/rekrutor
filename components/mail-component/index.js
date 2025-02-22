@@ -171,21 +171,30 @@ export default function MailComponent({
                         <TabsList className="grid grid-cols-3 gap-4 bg-transparent">
                             <TabsTrigger
                                 value="selected"
-                                className="text-gray-900 border-[3px] border-gray-900 rounded-full hover:text-green-800 data-[state=active]:text-green-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
+                                className="text-gray-900 rounded-full hover:scale-105 transition-all duration-300 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
+                                style={{
+                                    boxShadow: "0px 5px 10px rgba(53, 53, 53, 0.5)", // All-around shadow
+                                }}
                             >
                                 Selected
                             </TabsTrigger>
 
                             <TabsTrigger
                                 value="applied"
-                                className="border-[3px] border-gray-900 rounded-full text-gray-900 hover:text-purple-800 data-[state=active]:text-purple-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
+                                className="rounded-full text-gray-900 hover:scale-105 transition-all duration-300 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
+                                style={{
+                                    boxShadow: "0px 5px 10px rgba(53, 53, 53, 0.5)", // All-around shadow
+                                }}
                             >
                                 Applied
                             </TabsTrigger>
 
                             <TabsTrigger
                                 value="rejected"
-                                className="text-gray-900 hover:text-red-800 border-[3px] border-gray-900 rounded-full data-[state=active]:text-red-700 data-[state=active]:bg-blue-300 text-lg font-bold transition-all"
+                                className="text-gray-900 hover:text-gray-900 rounded-full data-[state=active]:bg-blue-300 text-lg font-bold transition-all hover:scale-105 duration-300"
+                                style={{
+                                    boxShadow: "0px 5px 10px rgba(53, 53, 53, 0.5)", // All-around shadow
+                                }}
                             >
                                 Rejected
 

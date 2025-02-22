@@ -27,9 +27,16 @@ function CandidateActivity({ jobList, jobApplicants }) {
             <Tabs defaultValue={uniqueStatusArray[0] || "Applied"} className="w-full">
                 <div className="flex items-baseline justify-between pb-6 pt-24">
                     <h1 className="text-4xl font-bold tracking-tight text-gray-950">Your Activity</h1>
-                    <TabsList className="bg-transparent backdrop-blur-sm">
+                    <TabsList className="bg-transparent backdrop-blur-sm gap-2">
                         {uniqueStatusArray.map((status, index) => (
-                            <TabsTrigger key={index} value={status} className="font-bold data-[state=active]:bg-blue-300 border-[3px] border-gray-900 rounded-full text-lg">
+                            <TabsTrigger key={index} value={status} className="font-bold hover:scale-105 transition-all duration-300 data-[state=active]:bg-blue-300 rounded-full text-lg"
+                             style={{
+                           
+                            boxShadow: "0px 5px 10px rgba(53, 53, 53, 0.5)", // All-around shadow
+                        
+                                 }}
+                            >
+
                                 {status}
                             </TabsTrigger>
                         ))}
