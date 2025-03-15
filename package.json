@@ -39,6 +39,7 @@
     "nodemailer": "^6.9.16",
     "officeparser": "^5.1.1",
     "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
     "pdf2json": "^3.1.5",
     "query-string": "^9.1.1",
     "react": "19.0.0-rc-66855b96-20241106",

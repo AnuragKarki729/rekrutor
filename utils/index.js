@@ -169,7 +169,7 @@ export const candidateOnBoardFormControls = [
         label: 'Profile Links',
         name: 'profileLinks',
         placeholder: 'LinkedIn, GitHub, Portfolio (separate with commas)',
-        componentType: 'text'
+        componentType: 'links'
     },
     {
         label: 'Industry',
@@ -183,9 +183,15 @@ export const candidateOnBoardFormControls = [
             'Education',
             'Manufacturing',
             'Retail',
+            'Agriculture',
+            'Construction',
+            'Transportation',
+            'Entertainment',
+            'Real Estate',
+            'Insurance',
             'Other'
         ],
-        showWhen: (formData) => formData.experienceLevel === 'Experienced'
+        showWhen: (formData) => formData.experienceLevel === 'Experienced' || formData.experienceLevel === 'Fresher'
     },
     {
         label: 'Specify Industry',
