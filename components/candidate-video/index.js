@@ -149,7 +149,7 @@ function CandidateVideo() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          aiSummary: summary  // This is the key change - remove nested candidateInfo
+          aiSummary: summary  
         }),
       });
 

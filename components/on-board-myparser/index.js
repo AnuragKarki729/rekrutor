@@ -119,7 +119,7 @@ function OnBoard() {
                         method: 'POST',
                         body: formData
                     }),
-                    // Second parser (better at links and education)
+                    
                     fetch('https://resume-parser-api-903918110499.us-east1.run.app/parse', {
                         method: 'POST',
                         body: formData

@@ -43,33 +43,33 @@ const normalizeCountryName = (country) => {
     return country;
 };
 
-function LoadingOverlay() {
-    const [loadingText, setLoadingText] = useState("Parsing resume...");
+// function LoadingOverlay() {
+//     const [loadingText, setLoadingText] = useState("Parsing resume...");
 
-    useEffect(() => {
-        const timer1 = setTimeout(() => {
-            setLoadingText("Let's see your skills...");
-        }, 3000);
+//     useEffect(() => {
+//         const timer1 = setTimeout(() => {
+//             setLoadingText("Let's see your skills...");
+//         }, 3000);
 
-        const timer2 = setTimeout(() => {
-            setLoadingText("Almost there...");
-        }, 6000);
+//         const timer2 = setTimeout(() => {
+//             setLoadingText("Almost there...");
+//         }, 6000);
 
-        return () => {
-            clearTimeout(timer1);
-            clearTimeout(timer2);
-        };
-    }, []);
+//         return () => {
+//             clearTimeout(timer1);
+//             clearTimeout(timer2);
+//         };
+//     }, []);
 
-    return (
-        <div className="loading-overlay">
-            <div className="flex flex-col items-center gap-4">
-                <div className="loader"></div>
-                <div className="text-white text-xl">{loadingText}</div>
-            </div>
-        </div>
-    );
-}
+//     return (
+//         <div className="loading-overlay">
+//             <div className="flex flex-col items-center gap-4">
+//                 <div className="loader"></div>
+//                 <div className="text-white text-xl">{loadingText}</div>
+//             </div>
+//         </div>
+//     );
+// }
 
 function OnBoard() {
     const searchParams = useSearchParams()
@@ -336,9 +336,7 @@ function OnBoard() {
 
     return(
         <div className="relative">
-            {loading && (
-                <LoadingOverlay/>
-            )}
+            
 
             <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
                 <CancelSignupButton />
@@ -368,7 +366,7 @@ function OnBoard() {
                             </TabsList>
                         </div>
 
-                        {isParsing && <LoadingOverlay/>}
+                      
 
                         <div className="mt-8">
                             <TabsContent value="candidate" className="space-y-6">

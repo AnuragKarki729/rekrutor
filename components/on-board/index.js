@@ -109,89 +109,154 @@ function OnBoard(){
         window.history.pushState({}, '', url)
     }
 
+    const normalizeCountryName = (country) => {
+        if (!country) return '';
+        
+        const countryMappings = {
+            'United States': 'United States of America (the)',
+            'USA': 'United States of America (the)',
+            'US': 'United States of America (the)',
+            'UK': 'United Kingdom of Great Britain and Northern Ireland (the)',
+            'Britain': 'United Kingdom of Great Britain and Northern Ireland (the)',
+            'Great Britain': 'United Kingdom of Great Britain and Northern Ireland (the)',
+            'UAE': 'United Arab Emirates (the)',
+            'United Arab Emirates': 'United Arab Emirates (the)',
+            'Remote': 'REMOTE',
+            'remote': 'REMOTE',
+        };
+
+        return countryMappings[country] || country;
+    };
+
+    function calculateTotalExperience(previousCompanies) {
+        if (!Array.isArray(previousCompanies) || previousCompanies.length === 0) {
+            return 0;
+        }
+
+        return previousCompanies.reduce((total, company) => {
+            if (!company.startDate || !company.endDate) return total;
+
+            const start = new Date(company.startDate);
+            const end = new Date(company.endDate);
+            const diffInMonths = (end.getFullYear() - start.getFullYear()) * 12 + 
+                (end.getMonth() - start.getMonth());
+            
+            return total + Math.max(0, diffInMonths);
+        }, 0) / 12; // Convert months to years
+    }
+
     async function handleFileChange(event) {
         const selectedFile = event.target.files[0];
         if (selectedFile) {
             try {
-                setIsParsing(true)
-                // Get file extension
-                const fileExt = selectedFile.name.split('.').pop();
+                setIsParsing(true);
                 
-                // Get user's first and last name from form data
-                const firstName = candidateFormData.name?.split(' ')[0] || '';
-                const lastName = candidateFormData.name?.split(' ').slice(1).join('') || '';
-
-                const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
-                `${firstName}_${lastName}_Resume.${fileExt}`;
-    
-                // Create new file with custom name
-                const renamedFile = new File(
-                    [selectedFile],
-                    newFileName,
-                    { type: selectedFile.type }
-                );
-    
-                // Create FormData
+                // Create FormData for Gemini parser
                 const formData = new FormData();
-                formData.append('file', renamedFile);
-    
-                //console.log('Sending file to parser...');
-    
-                // Parse resume first to get skills
-                const parseResponse = await fetch('/api/parse-resume', {
+                formData.append('file', selectedFile);
+
+                // Use Gemini parser
+                const parseResponse = await fetch('/api/gemini-parser', {
                     method: 'POST',
                     body: formData
                 });
 
                 if (!parseResponse.ok) {
-                    const errorText = await parseResponse.text();
-                    console.error('Parse response error:', errorText);
-                    throw new Error('Failed to parse resume');
+                    throw new Error(`HTTP error! status: ${parseResponse.status}`);
                 }
-    
-                const parsedData = await parseResponse.json();
-                //console.log('Parsed resume data:', parsedData);
 
-                
-                try {
-                    // Update profile with parsed response
-                    const updateProfileResponse = await fetch(`/api/profiles/parsed-response/${user?.id}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            parsedResponse: JSON.stringify(parsedData)
-                        })
-                    });
-                
-                    if (!updateProfileResponse.ok) {
-                        throw new Error('Failed to update profile with parsed response');
+                const result = await parseResponse.json();
+                console.log('Parsed resume data:', result);
+
+                if (result.success && result.data) {
+                    const formattedData = {
+                        ...result.data,
+                        skills: Array.isArray(result.data.skills) 
+                            ? result.data.skills.join(', ') 
+                            : result.data.skills || '',
+                        profileLinks: Array.isArray(result.data.profileLinks) 
+                            ? result.data.profileLinks.join(', ') 
+                            : result.data.profileLinks || ''
+                    };
+
+                    // Base form data
+                    const newFormData = {
+                        name: formattedData.name || '',
+                        college: formattedData.college || '',
+                        collegeLocation: normalizeCountryName(formattedData.collegeLocation),
+                        experienceLevel: formattedData.experienceLevel || '',
+                        preferedJobLocation: normalizeCountryName(formattedData.preferedJobLocation),
+                        skills: formattedData.skills,
+                        profileLinks: formattedData.profileLinks,
+                        industry: formattedData.industry || 'Other',
+                        otherIndustry: formattedData.industry === 'Other' ? 
+                            (formattedData.otherIndustry || '') : '',
+                        previousCompanies: [], // Initialize empty array
+                        totalExperience: 0 // Initialize total experience
+                    };
+
+                    // Handle experience-specific fields
+                    if (formattedData.experienceLevel === 'Experienced') {
+                        const hasCurrentJob = formattedData.currentCompany && 
+                            formattedData.currentCompany !== 'Unemployed';
+
+                        newFormData.currentCompany = hasCurrentJob ? 
+                            formattedData.currentCompany : 'Unemployed';
+                        newFormData.currentPosition = hasCurrentJob ? 
+                            formattedData.currentPosition : '-';
+                        newFormData.currentJobLocation = hasCurrentJob ? 
+                            normalizeCountryName(formattedData.currentJobLocation) : '-';
+                        newFormData.currentSalary = formattedData.currentSalary || '-';
+                        newFormData.noticePeriod = formattedData.noticePeriod || 'Immediate';
+                        
+                        // Handle previous companies
+                        if (Array.isArray(formattedData.previousCompanies)) {
+                            newFormData.previousCompanies = formattedData.previousCompanies
+                                .filter(company => company.endDate && 
+                                    !company.endDate.toLowerCase().includes('present'))
+                                .map(company => ({
+                                    companyName: company.companyName || '',
+                                    position: company.position || '',
+                                    startDate: company.startDate?.substring(0, 7) || '',
+                                    endDate: company.endDate?.substring(0, 7) || ''
+                                }));
+
+                            // Calculate total experience
+                            newFormData.totalExperience = calculateTotalExperience(newFormData.previousCompanies);
+                        }
+                    } else {
+                        // For freshers
+                        newFormData.currentCompany = '';
+                        newFormData.currentPosition = '';
+                        newFormData.currentJobLocation = '';
+                        newFormData.currentSalary = '';
+                        newFormData.noticePeriod = '';
+                        newFormData.previousCompanies = [];
+                        newFormData.totalExperience = 0;
                     }
-                } catch (error) {
-                    console.error('Error updating profile with parsed response:', error);
+
+                    setCandidateFormData(newFormData);
+
+                    // Handle file upload to Supabase
+                    const fileExt = selectedFile.name.split('.').pop();
+                    const firstName = newFormData.name?.split(' ')[0] || '';
+                    const lastName = newFormData.name?.split(' ').slice(1).join('') || '';
+                    const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
+                        `${firstName}_${lastName}_Resume.${fileExt}`;
+
+                    const renamedFile = new File(
+                        [selectedFile],
+                        newFileName,
+                        { type: selectedFile.type }
+                    );
+
+                    setFile(renamedFile);
                 }
-                
-                // Update form data with parsed skills
-                if (parsedData.name && parsedData.name.length > 0) {
-                    setCandidateFormData(prev => ({
-                        ...prev,
-                        name: parsedData.name
-                    }));
-                }
-                if (parsedData.skills && parsedData.skills.length > 0) {
-                    setCandidateFormData(prev => ({
-                        ...prev,
-                        skills: parsedData.skills.join(', ') // Convert array to comma-separated string
-                    }));
-                }
-    
-                // Continue with text extraction and file upload
-                setFile(renamedFile);
+
             } catch (error) {
                 console.error('Error processing file:', error);
             } finally {
-                setIsParsing(false)
+                setIsParsing(false);
             }
         }
     }
@@ -254,7 +319,10 @@ function OnBoard(){
         try {
             setLoading(true)
             const data = currentTab === 'candidate' ? {
-                candidateInfo: candidateFormData,
+                candidateInfo: {
+                    ...candidateFormData,
+                    totalExperience: candidateFormData.totalExperience || 0 // Ensure totalExperience is included
+                },
                 role: 'candidate',
                 isPremiumUser: false,
                 userId: user?.id,
