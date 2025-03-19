@@ -303,7 +303,7 @@ function CandidateVideo() {
         .from("rekrutor-public")
         .upload(`videos/${fileName}`, blob, {
           cacheControl: "3600",
-          upsert: false,
+          upsert: true,
         });
 
       //console.log("Upload data:", uploadData);

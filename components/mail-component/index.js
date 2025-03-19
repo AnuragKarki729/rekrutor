@@ -420,7 +420,7 @@ export default function MailComponent({
                 onClick={() => setSelectedRating(star)}
                 className={`text-3xl transition-colors duration-200 ${
                     star <= selectedRating 
-                        ? 'text-yellow-600 hover:text-yellow-500' 
+                        ? 'text-yellow-700 hover:text-yellow-500' 
                         : 'text-gray-400 hover:text-yellow-400'
                 }`}
             >

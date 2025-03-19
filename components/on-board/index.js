@@ -150,7 +150,34 @@ function OnBoard(){
         if (selectedFile) {
             try {
                 setIsParsing(true);
-                
+
+                // First, upload the file to Supabase
+                const fileExt = selectedFile.name.split('.').pop();
+                const fileName = `${Date.now()}_${selectedFile.name}`; // Add timestamp to prevent naming conflicts
+
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from("rekrutor-public")
+                    .upload(`public/${fileName}`, selectedFile, {
+                        cacheControl: "3600",
+                        upsert: true
+                    });
+
+                if (uploadError) {
+                    console.error('Upload error:', uploadError);
+                    throw new Error('Failed to upload file');
+                }
+
+                // Get the public URL of the uploaded file
+                const { data: { publicUrl } } = supabaseClient.storage
+                    .from("rekrutor-public")
+                    .getPublicUrl(`public/${fileName}`);
+
+                // Update form data with the file information
+                setCandidateFormData(prev => ({
+                    ...prev,
+                    resume: fileName
+                }));
+
                 // Create FormData for Gemini parser
                 const formData = new FormData();
                 formData.append('file', selectedFile);
@@ -162,7 +189,9 @@ function OnBoard(){
                 });
 
                 if (!parseResponse.ok) {
-                    throw new Error(`HTTP error! status: ${parseResponse.status}`);
+                    const errorText = await parseResponse.text();
+                    console.error('Parse response error:', errorText);
+                    throw new Error('Failed to parse resume');
                 }
 
                 const result = await parseResponse.json();
@@ -179,115 +208,33 @@ function OnBoard(){
                             : result.data.profileLinks || ''
                     };
 
-                    // Base form data
-                    const newFormData = {
-                        name: formattedData.name || '',
-                        college: formattedData.college || '',
-                        collegeLocation: normalizeCountryName(formattedData.collegeLocation),
-                        experienceLevel: formattedData.experienceLevel || '',
-                        preferedJobLocation: normalizeCountryName(formattedData.preferedJobLocation),
-                        skills: formattedData.skills,
-                        profileLinks: formattedData.profileLinks,
+                    // Update form data with parsed information
+                    setCandidateFormData(prev => ({
+                        ...prev,
+                        name: formattedData.name || prev.name,
+                        college: formattedData.college || prev.college,
+                        collegeLocation: normalizeCountryName(formattedData.collegeLocation) || prev.collegeLocation,
+                        experienceLevel: formattedData.experienceLevel || prev.experienceLevel,
+                        preferedJobLocation: normalizeCountryName(formattedData.preferedJobLocation) || prev.preferedJobLocation,
+                        skills: formattedData.skills || prev.skills,
+                        profileLinks: formattedData.profileLinks || prev.profileLinks,
                         industry: formattedData.industry || 'Other',
                         otherIndustry: formattedData.industry === 'Other' ? 
                             (formattedData.otherIndustry || '') : '',
-                        previousCompanies: [], // Initialize empty array
-                        totalExperience: 0 // Initialize total experience
-                    };
-
-                    // Handle experience-specific fields
-                    if (formattedData.experienceLevel === 'Experienced') {
-                        const hasCurrentJob = formattedData.currentCompany && 
-                            formattedData.currentCompany !== 'Unemployed';
-
-                        newFormData.currentCompany = hasCurrentJob ? 
-                            formattedData.currentCompany : 'Unemployed';
-                        newFormData.currentPosition = hasCurrentJob ? 
-                            formattedData.currentPosition : '-';
-                        newFormData.currentJobLocation = hasCurrentJob ? 
-                            normalizeCountryName(formattedData.currentJobLocation) : '-';
-                        newFormData.currentSalary = formattedData.currentSalary || '-';
-                        newFormData.noticePeriod = formattedData.noticePeriod || 'Immediate';
-                        
-                        // Handle previous companies
-                        if (Array.isArray(formattedData.previousCompanies)) {
-                            newFormData.previousCompanies = formattedData.previousCompanies
-                                .filter(company => company.endDate && 
-                                    !company.endDate.toLowerCase().includes('present'))
-                                .map(company => ({
-                                    companyName: company.companyName || '',
-                                    position: company.position || '',
-                                    startDate: company.startDate?.substring(0, 7) || '',
-                                    endDate: company.endDate?.substring(0, 7) || ''
-                                }));
-
-                            // Calculate total experience
-                            newFormData.totalExperience = calculateTotalExperience(newFormData.previousCompanies);
-                        }
-                    } else {
-                        // For freshers
-                        newFormData.currentCompany = '';
-                        newFormData.currentPosition = '';
-                        newFormData.currentJobLocation = '';
-                        newFormData.currentSalary = '';
-                        newFormData.noticePeriod = '';
-                        newFormData.previousCompanies = [];
-                        newFormData.totalExperience = 0;
-                    }
-
-                    setCandidateFormData(newFormData);
-
-                    // Handle file upload to Supabase
-                    const fileExt = selectedFile.name.split('.').pop();
-                    const firstName = newFormData.name?.split(' ')[0] || '';
-                    const lastName = newFormData.name?.split(' ').slice(1).join('') || '';
-                    const newFileName = firstName === '' || lastName === '' ? selectedFile.name : 
-                        `${firstName}_${lastName}_Resume.${fileExt}`;
-
-                    const renamedFile = new File(
-                        [selectedFile],
-                        newFileName,
-                        { type: selectedFile.type }
-                    );
-
-                    setFile(renamedFile);
+                        resume: fileName, // Keep the uploaded file name
+                        totalExperience: calculateTotalExperience(formattedData.previousCompanies || [])
+                    }));
                 }
 
             } catch (error) {
                 console.error('Error processing file:', error);
+                // Show error to user
+                alert('Error processing file: ' + error.message);
             } finally {
                 setIsParsing(false);
             }
         }
     }
-
-
-    useEffect(() => {
-        const uploadFile = async () => {
-            if (!file) {
-                console.error("No file selected for upload.");
-                return;
-            }
-
-            const { data, error } = await supabaseClient.storage
-                .from("rekrutor-public")
-                .upload(`/public/${file.name}`, file, {
-                    cacheControl: "3600",
-                    upsert: true  // Changed to true to overwrite if file exists
-                });
-
-            //console.log(data, error);
-
-            if (data) {
-                setCandidateFormData((prev) => ({
-                    ...prev,
-                    resume: file.name,
-                }));
-            }
-        };
-
-        if (file) uploadFile();
-    }, [file]);
 
     function handleCandidateFormValid() {
         //console.log("Candidate form data:", candidateFormData, " ", user);

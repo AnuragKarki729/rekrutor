@@ -486,7 +486,7 @@ function CandidateList({ jobApplications }) {
                                                                 key={index}
                                                                 className={`text-xs px-2 py-1 rounded text-center ${displaySkills.isMatching
                                                                     ? 'bg-green-800 text-white'
-                                                                    : 'bg-yellow-100 text-white font-bold'
+                                                                    : 'bg-yellow-800 text-white font-bold'
                                                                     }`}
                                                             >
                                                                 {skill}
